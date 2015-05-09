@@ -15,10 +15,10 @@
 	-o output file
 	-v version
 	-l lossless
-	-s 
+	-s scale
 	-h help
 	-R recursive
-	
+
 */
 
 cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
@@ -36,16 +36,16 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 				break;
 			case '?':
 				if (optopt == 'q' || optopt == 'e' || optopt == 'o' || optopt == 's') {
-          			//fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-          			//Arguments without values
-          			exit(-1);
+					//fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+					//Arguments without values
+					exit(-1);
 				}
-        		else if (isprint(optopt))  {
-          			fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-        		}
-          		else {
+				else if (isprint(optopt))  {
+					fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+				}
+				else {
 					fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
-          		}
+				}
 				break;
 			case 'q':
 				qvalue = optarg;
@@ -54,15 +54,15 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 				evalue = optarg;
 				break;
 			default:
-        		abort();
+				abort();
 		}
 	}
-	
+
 	return parameters;
 }
 
 int main (int argc, char *argv[]) {
-	
+
 	cclt_compress_parameters parameters;
 
 	//Check if there's at least one argument
@@ -70,7 +70,7 @@ int main (int argc, char *argv[]) {
 		printf("CCLT requires at least one argument. Aborting.\n");
 		return -1;
 	}
-	
+
 	parameters = parse_arguments(argc, argv);
 
 	return 0;
