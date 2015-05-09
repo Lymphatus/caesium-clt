@@ -10,7 +10,7 @@ void cclt_compress(char* output_file, unsigned char* image_buffer)
   struct jpeg_compress_struct cinfo;
 
   struct jpeg_error_mgr jerr;
-  FILE * outfile;               /* target file */
+  FILE * outfile;               
   JSAMPROW row_pointer[1];      /* pointer to JSAMPLE row[s] */
   int row_stride;               /* physical row width in image buffer */
 
