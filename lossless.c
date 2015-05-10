@@ -6,10 +6,9 @@
 #include "lossless.h"
 
 int cclt_optimize(char* input_file, char* output_file) {
-
 	//File pointer for both input and output
 	FILE* fp; 
-
+	
 	//Those will hold the input/output structs
 	struct jpeg_decompress_struct srcinfo;
   	struct jpeg_compress_struct dstinfo;
@@ -33,7 +32,7 @@ int cclt_optimize(char* input_file, char* output_file) {
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-    	printf("Failed to open file \"%s\"\n", input_file);
+    	printf("INPUT: Failed to open file \"%s\"\n", input_file);
     	return -1;
     }
 	
@@ -56,11 +55,11 @@ int cclt_optimize(char* input_file, char* output_file) {
     fclose(fp);
 
 	//Open the output one instead
-    fp = fopen(output_file, "w");
+    fp = fopen(output_file, "w+");
     //Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-    	printf("Failed to open file \"%s\"\n", output_file);
+    	printf("OUTPUT: Failed to open file \"%s\"\n", output_file);
     	return -2;
     }
 	
