@@ -53,6 +53,14 @@ int cclt_optimize(char* input_file, char* output_file) {
 
 	//We don't need the input file anymore
     fclose(fp);
+    
+    //Create the output path if does not exists
+    if (mkdir(pars.output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
+		if (errno != EEXIST) {
+			perror("mkdir");
+			exit(-5);
+		}
+	}
 
 	//Open the output one instead
     fp = fopen(output_file, "w+");
