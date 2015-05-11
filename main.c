@@ -143,16 +143,17 @@ int main (int argc, char *argv[]) {
 	
 	
 		
-	for (int i = 0; i < pars.input_files_count; i++) {
-		
+	for (int i = 0; i < pars.input_files_count; i++) {	
 		char* output_filename = pars.output_folder;
 		char* i_tmp = (char*) malloc (strlen(pars.input_files[i]) * sizeof(char));
+		
 		strcpy(i_tmp, pars.input_files[i]);
 		if (output_filename[strlen(pars.output_folder -1)] != '/') {
 			strcat(pars.output_folder, "/");
 		}
 		
-		output_filename = strcat(pars.output_folder, i_tmp);
+		output_filename = strcat(pars.output_folder, get_filename_with_extension(i_tmp));
+		printf("%s\n", pars.input_files[i]);
 		cclt_optimize(pars.input_files[i], output_filename);
 	}
 		

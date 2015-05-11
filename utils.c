@@ -5,6 +5,7 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <jpeglib.h>
+#include <string.h>
 
 #include "utils.h"
 
@@ -71,4 +72,14 @@ void print_progress(int current, int max, char* message) {
 	if (current == max) {
 		fprintf(stdout, "\e[?25h\n");
 	}
+}
+
+char* get_filename_with_extension(char* full_path) {
+	char* dest;
+		
+	dest = strrchr(full_path, '/') + 1;
+	
+	printf("%s\n", dest);
+	
+	return dest;
 }

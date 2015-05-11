@@ -23,5 +23,6 @@ cclt_compress_parameters initialize_compression_parameters();
 int string_to_int(char* in_string);
 void print_help();
 void print_progress(int current, int max, char* message);
+char* get_filename_with_extension(char* full_path);
 
 #endif
