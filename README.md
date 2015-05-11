@@ -1,5 +1,5 @@
 # CaesiumCLT
-Caesium Command Line Tools
+<strong>Caesium Command Line Tools</strong>
 
 Usage: cclt [OPTION] INPUT...
 Compress your pictures up to 90% without visible quality loss.
