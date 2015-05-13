@@ -28,15 +28,14 @@ cclt_compress_parameters initialize_compression_parameters() {
 }
 
 int string_to_int(char* in_string) {
-	int value = 0;
+	long value = 0;
 	char* endptr;
 	errno = 0; //Error checking
 
 	value = strtol(in_string, &endptr, 0); //Convert the string
 	
 	//Check errors
-	if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN))
-            || (errno != 0 && value == 0)) {
+	if ((errno == ERANGE) || (errno != 0 && value == 0)) {
         perror("strtol");
         exit(-8);
     }
@@ -52,14 +51,14 @@ int string_to_int(char* in_string) {
 void print_help() {
 	fprintf(stdout,
 		"Usage: cclt [OPTION] INPUT...\n"
-		"Compress your pictures up to 90% without visible quality loss.\n\n"
+		"Compress your pictures up to 90%% without visible quality loss.\n\n"
 
 		"Options:\n"
 			"\t-q\tset output file quality between [1-100], ignored for non-JPEGs\n"
 			"\t-e\tkeeps EXIF info during compression\n"
 			"\t-o\tcompress to custom folder\n"
 			"\t-l\tuse lossless optimization\n"
-			"\t-s\tscale to value, expressed as percentage (e.g. 20%)\n"
+			"\t-s\tscale to value, expressed as percentage (e.g. 20%%)\n"
 			"\t-R\tif input is a folder, scan subfolders too\n"
 			"\t-h\tdisplay this help and exit\n"
 			"\t-v\toutput version information and exit\n");
@@ -68,7 +67,7 @@ void print_help() {
 
 void print_progress(int current, int max, char* message) {
 	fprintf(stdout, "\e[?25l");
-	fprintf(stdout, "\r%s[%d\%]", message, current * 100 / max);
+	fprintf(stdout, "\r%s[%d%%]", message, current * 100 / max);
 	if (current == max) {
 		fprintf(stdout, "\e[?25h\n");
 	}

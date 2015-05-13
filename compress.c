@@ -47,12 +47,12 @@ void cclt_compress(char* output_file, unsigned char* image_buffer)
 
 	while (cinfo.next_scanline < cinfo.image_height) {
 
-	printf("%d%\r", cinfo.next_scanline * 100 / cinfo.image_height);
+	printf("%d%%\r", cinfo.next_scanline * 100 / cinfo.image_height);
 
 	row_pointer[0] = &image_buffer[cinfo.next_scanline * row_stride];
 	(void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
 	}
-	printf("%d%\n", cinfo.next_scanline * 100 / cinfo.image_height);
+	printf("%d%%\n", cinfo.next_scanline * 100 / cinfo.image_height);
 
 
 	jpeg_finish_compress(&cinfo);

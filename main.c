@@ -98,7 +98,7 @@ int main (int argc, char *argv[]) {
 	
 	
 	//Either -l or -q must be set but not together
-	if ((pars.lossless == 1) ^ (pars.quality > 0) == 0) {
+	if ((pars.lossless == 1) ^ (pars.quality > 0 == 0)) {
 		//Both or none are set
 		if (pars.lossless == 1 && pars.quality != -1) {
 			fprintf(stderr, "-l option can't be used with -q. Either use one or the other. Aborting.\n");
@@ -140,21 +140,33 @@ int main (int argc, char *argv[]) {
 			}
 		}
 	}
-	
-	
-		
+
+
+	//This is the main loop. It iterates through all the input files provided.
+	//It also extract the original filename to be saved in the new destination.
+	//TODO Provide support for folder structure.	
 	for (int i = 0; i < pars.input_files_count; i++) {	
-		char* output_filename = pars.output_folder;
+		char* output_filename = (char*) malloc (strlen(pars.output_folder) * sizeof(char));
 		char* i_tmp = (char*) malloc (strlen(pars.input_files[i]) * sizeof(char));
 		
 		strcpy(i_tmp, pars.input_files[i]);
-		if (output_filename[strlen(pars.output_folder -1)] != '/') {
-			strcat(pars.output_folder, "/");
+		strcpy(output_filename, pars.output_folder);
+
+		if (output_filename[strlen(pars.output_folder - 1)] != '/') {
+			strcat(output_filename, "/");
 		}
 		
-		output_filename = strcat(pars.output_folder, get_filename_with_extension(i_tmp));
-		printf("%s\n", pars.input_files[i]);
-		cclt_optimize(pars.input_files[i], output_filename);
+		output_filename = strcat(output_filename, get_filename_with_extension(i_tmp));
+
+		//cclt_optimize(pars.input_files[i], output_filename);
+
+		//TODO Perform the required instructions
+		//TODO Provide progress support
+		//INPUT: pars.input_files[i] | OUTPUT: output_filename
+
+		//Free allocated memory
+		free(output_filename);
+		free(i_tmp);
 	}
 		
 	exit(0);
