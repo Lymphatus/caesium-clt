@@ -31,6 +31,6 @@ Note that CCLT started along with Caesium 2.0.0 so it uses its versioning system
 ----------
 
 ###### RESOURCES
-* Caesium website - [http://saerasoft.com/caesium]()
-* CCLT Git Repository - [https://github.com/Lymphatus/CaesiumCLT]()
-* Author website - [SaeraSoft - http://saerasoft.com](http://saerasoft.com)
+* Caesium website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium)
+* CCLT Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/CaesiumCLT)
+* Author website - SaeraSoft - [http://saerasoft.com](http://saerasoft.com)
