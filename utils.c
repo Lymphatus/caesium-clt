@@ -23,7 +23,6 @@ cclt_compress_parameters initialize_compression_parameters() {
 	par.exif_copy = 0;
 	par.lossless = 0;
 	par.input_files_count = 0;
-	//par.input_files = (char**) malloc (55 * sizeof(char));
 	return par;
 }
 
@@ -50,6 +49,7 @@ int string_to_int(char* in_string) {
 
 void print_help() {
 	fprintf(stdout,
+		"CCLT - Caesium Command Line Tools\n\n"
 		"Usage: cclt [OPTION] INPUT...\n"
 		"Compress your pictures up to 90%% without visible quality loss.\n\n"
 
@@ -61,7 +61,7 @@ void print_help() {
 			"\t-s\tscale to value, expressed as percentage (e.g. 20%%)\n"
 			"\t-R\tif input is a folder, scan subfolders too\n"
 			"\t-h\tdisplay this help and exit\n"
-			"\t-v\toutput version information and exit\n");
+			"\t-v\toutput version information and exit\n\n");
 	exit(0);
 }
 
@@ -76,9 +76,6 @@ void print_progress(int current, int max, char* message) {
 char* get_filename_with_extension(char* full_path) {
 	char* dest;
 		
-	dest = strrchr(full_path, '/') + 1;
-	
-	printf("%s\n", dest);
-	
+	dest = strrchr(full_path, '/') + 1;	
 	return dest;
 }

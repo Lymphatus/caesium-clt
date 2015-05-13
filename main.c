@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h> 
 #include <sys/stat.h>
 
 #include "lossless.h"
@@ -24,6 +25,8 @@
 	-R recursive
 */
 
+//TODO Use a general fuction to support folder separators
+
 cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 	
 	//Initialize default params
@@ -34,7 +37,7 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
 			switch (c) {
 				case 'v':
-					printf("CCLT - Caesium Command Line Tool - Version %s (Build: %d)\n", VERSION, BUILD);
+					printf("CCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", VERSION, BUILD);
 					exit(0);
 					break;
 				case '?':
@@ -91,19 +94,18 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 }
 
 int main (int argc, char *argv[]) {
+	struct stat st_buf;
 	errno = 0;
 	//Parse arguments
 	cclt_compress_parameters pars = parse_arguments(argc, argv);
 	
-	
-	
 	//Either -l or -q must be set but not together
-	if ((pars.lossless == 1) ^ (pars.quality > 0 == 0)) {
+	if (!((pars.lossless == 1) ^ (pars.quality > 0))) {
 		//Both or none are set
-		if (pars.lossless == 1 && pars.quality != -1) {
+		if (pars.lossless == 1 && pars.quality > 0) {
 			fprintf(stderr, "-l option can't be used with -q. Either use one or the other. Aborting.\n");
 			exit(-1);
-		} else if (pars.lossless == 0 && pars.quality == -1) {
+		} else if (pars.lossless == 0 && pars.quality <= 0) {
 			fprintf(stderr, "Either -l or -q must be set. Aborting.\n");
 			exit(-2);
 		}
@@ -152,16 +154,40 @@ int main (int argc, char *argv[]) {
 		strcpy(i_tmp, pars.input_files[i]);
 		strcpy(output_filename, pars.output_folder);
 
+		//Append / if was not entered by user
 		if (output_filename[strlen(pars.output_folder - 1)] != '/') {
 			strcat(output_filename, "/");
 		}
 		
 		output_filename = strcat(output_filename, get_filename_with_extension(i_tmp));
 
-		//cclt_optimize(pars.input_files[i], output_filename);
+		//TODO OVERALL progress update?
+		//print_progress(i + 1, pars.input_files_count, "Progress: ");
+
+		//If the input is a folder, skip
+		int status = stat (pars.input_files[i], &st_buf);
+	    if (status != 0) {
+	        fprintf(stderr, "Failed to get file stats. Aborting.\n");
+			exit(-11);
+	    }
+
+	    if (S_ISDIR (st_buf.st_mode)) {
+	    	//TODO If we find a folder, we need to get into it if -R is set
+        	continue;
+    	}
+
+		//TODO Do we want a more verbose output?
+		fprintf(stdout, "%s\n", pars.input_files[i]);
+
+		//Lossless optmization requested
+		if (pars.lossless != 0) {
+			cclt_optimize(pars.input_files[i], output_filename);
+		} else {
+			//TODO Standard compression requested
+		}
 
 		//TODO Perform the required instructions
-		//TODO Provide progress support
+		//TODO Provide complete progress support
 		//INPUT: pars.input_files[i] | OUTPUT: output_filename
 
 		//Free allocated memory
