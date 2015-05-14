@@ -1,0 +1,18 @@
+Installation Instructions
+*************************
+
+   Copyright (C) 2015 Matteo Paonessa
+
+   Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.  This file is offered as-is,
+without warranty of any kind.
+
+Basic Installation
+==================
+
+   By now there's no makefile for this utility.
+Anyway, you can compile it by yourself with a command like
+'gcc src/*.c -o bin/caesiumclt -ljpeg -std=c99'. This will compile to
+bin dir where you can grab the 'caesiumclt' binary and put wherever you
+want to.
