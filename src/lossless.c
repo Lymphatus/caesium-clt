@@ -65,7 +65,9 @@ int cclt_optimize(char* input_file, char* output_file) {
 	
 	//CRITICAL - This is the optimization step
     dstinfo.optimize_coding = TRUE;
-	
+    jpeg_simple_progression(&dstinfo);
+    //dstinfo.dct_method = JDCT_ISLOW;
+
 	//Set the output file parameters
     jpeg_stdio_dest(&dstinfo, fp);
 	

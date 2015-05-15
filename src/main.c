@@ -6,6 +6,7 @@
 #include <string.h>
 #include <dirent.h> 
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include "lossless.h"
 #include "compress.h"
@@ -96,6 +97,8 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 int main (int argc, char *argv[]) {
 	struct stat st_buf;
 	errno = 0;
+	off_t i_t_size = 0, o_t_size = 0;
+
 	//Parse arguments
 	cclt_compress_parameters pars = parse_arguments(argc, argv);
 	
@@ -147,7 +150,9 @@ int main (int argc, char *argv[]) {
 	//This is the main loop. It iterates through all the input files provided.
 	//It also extract the original filename to be saved in the new destination.
 	//TODO Provide support for folder structure.	
-	for (int i = 0; i < pars.input_files_count; i++) {	
+	for (int i = 0; i < pars.input_files_count; i++) {
+		off_t i_size, o_size;
+		int status; //Pointer for stat() call
 		char* output_filename = (char*) malloc (strlen(pars.output_folder) * sizeof(char));
 		char* i_tmp = (char*) malloc (strlen(pars.input_files[i]) * sizeof(char));
 		
@@ -164,20 +169,26 @@ int main (int argc, char *argv[]) {
 		//TODO OVERALL progress update?
 		//print_progress(i + 1, pars.input_files_count, "Progress: ");
 
-		//If the input is a folder, skip
-		int status = stat (pars.input_files[i], &st_buf);
+		//Get input stats
+		status = stat(pars.input_files[i], &st_buf);
 	    if (status != 0) {
-	        fprintf(stderr, "Failed to get file stats. Aborting.\n");
+	        fprintf(stderr, "Failed to get input file stats. Aborting.\n");
 			exit(-11);
 	    }
 
+	    //If the input is a folder, skip
 	    if (S_ISDIR (st_buf.st_mode)) {
 	    	//TODO If we find a folder, we need to get into it if -R is set
         	continue;
     	}
 
+    	//Get input file size
+    	//On 32bit system, compile with -D_FILE_OFFSET_BITS=64
+    	i_size = st_buf.st_size;
+    	i_t_size += i_size;
+
 		//TODO Do we want a more verbose output?
-		fprintf(stdout, "%s\n", pars.input_files[i]);
+		fprintf(stdout, "Compressing: %s -> %s\n", pars.input_files[i], output_filename);
 
 		//Lossless optmization requested
 		if (pars.lossless != 0) {
@@ -186,14 +197,31 @@ int main (int argc, char *argv[]) {
 			//TODO Standard compression requested
 		}
 
+		//Get output stats
+		status = stat(output_filename, &st_buf);
+	    if (status != 0) {
+	    	//TODO This is not critical
+	        fprintf(stderr, "Failed to get output file stats. Aborting.\n");
+			exit(-12);
+	    }
+	    o_size = st_buf.st_size;
+	    o_t_size += o_size;
+
+	    fprintf(stdout, "%d bytes -> %d bytes [%.2f%%]\n",
+			i_size, o_size, ((float) o_size - i_size) * 100 / i_size);
+
 		//TODO Perform the required instructions
 		//TODO Provide complete progress support
 		//INPUT: pars.input_files[i] | OUTPUT: output_filename
 
 		//Free allocated memory
-		free(output_filename);
-		free(i_tmp);
+		//TODO Causing segfaults
+		//free(output_filename);
+		//free(i_tmp);
 	}
+
+	fprintf(stdout, "Compression completed.\n%d bytes -> %d bytes [%.2f%%]\n",
+		i_t_size, o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size);
 		
 	exit(0);
 }
