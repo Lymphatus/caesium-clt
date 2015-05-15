@@ -15,7 +15,6 @@
 ----------
 
 ###### INSTALLATION
-No makefile available yet. You need to geeky compile all manually at this stage.
 See INSTALL for more details.
 
 ----------

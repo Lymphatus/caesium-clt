@@ -11,8 +11,13 @@ without warranty of any kind.
 Basic Installation
 ==================
 
-   By now there's no makefile for this utility.
-Anyway, you can compile it by yourself with a command like
-'gcc src/*.c -o bin/caesiumclt -ljpeg -std=c99'. This will compile to
-bin dir where you can grab the 'caesiumclt' binary and put wherever you
-want to.
+   You should be able to compile this software the standard way.
+Unpack the archive (if not cloned from GIT), enter the directory
+and compile the program.
+The sequence should be something like:
+
+	$ tar xfv caesiumclt-*.tar.gz
+	$ cd caesiumclt-*
+	$ ./configure
+	$ make
+	$ sudo make install

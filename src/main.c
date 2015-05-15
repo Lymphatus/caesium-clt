@@ -12,8 +12,8 @@
 #include "compress.h"
 #include "utils.h"
 
-#define VERSION "1.9.9 BETA"
-#define BUILD 20150509
+#define APP_VERSION "1.9.9 BETA"
+#define BUILD 20150515
 
 /* PARAMETERS:
 	-q quality
@@ -38,7 +38,7 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
 			switch (c) {
 				case 'v':
-					printf("CCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", VERSION, BUILD);
+					printf("CCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", APP_VERSION, BUILD);
 					exit(0);
 					break;
 				case '?':
@@ -207,8 +207,8 @@ int main (int argc, char *argv[]) {
 	    o_size = st_buf.st_size;
 	    o_t_size += o_size;
 
-	    fprintf(stdout, "%d bytes -> %d bytes [%.2f%%]\n",
-			i_size, o_size, ((float) o_size - i_size) * 100 / i_size);
+	    fprintf(stdout, "%ld bytes -> %ld bytes [%.2f%%]\n",
+			(long) i_size, (long) o_size, ((float) o_size - i_size) * 100 / i_size);
 
 		//TODO Perform the required instructions
 		//TODO Provide complete progress support
@@ -220,8 +220,8 @@ int main (int argc, char *argv[]) {
 		//free(i_tmp);
 	}
 
-	fprintf(stdout, "Compression completed.\n%d bytes -> %d bytes [%.2f%%]\n",
-		i_t_size, o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size);
+	fprintf(stdout, "Compression completed.\n%ld bytes -> %ld bytes [%.2f%%]\n",
+		(long) i_t_size, (long) o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size);
 		
 	exit(0);
 }
