@@ -4,10 +4,11 @@
 #include <stdlib.h>
 
 #include "lossless.h"
+#include "utils.h"
 
-int cclt_optimize(char* input_file, char* output_file) {
+int cclt_optimize(char* input_file, char* output_file, int exif_flag) {
 	//File pointer for both input and output
-	FILE* fp; 
+	FILE* fp;
 	
 	//Those will hold the input/output structs
 	struct jpeg_decompress_struct srcinfo;
@@ -17,8 +18,8 @@ int cclt_optimize(char* input_file, char* output_file) {
   	struct jpeg_error_mgr jsrcerr, jdsterr;
 
 	//Input/Output array coefficents
-  	jvirt_barray_ptr * src_coef_arrays;
-  	jvirt_barray_ptr * dst_coef_arrays;
+  	jvirt_barray_ptr* src_coef_arrays;
+  	jvirt_barray_ptr* dst_coef_arrays;
 
 	//Set errors and create the compress/decompress istances
   	srcinfo.err = jpeg_std_error(&jsrcerr);
@@ -38,12 +39,20 @@ int cclt_optimize(char* input_file, char* output_file) {
 	
 	//Create the IO istance for the input file
     jpeg_stdio_src(&srcinfo, fp);
+
+    //Save EXIF info
+    if (exif_flag == 1) {
+    	for (int m = 0; m < 16; m++) {
+      	jpeg_save_markers(&srcinfo, JPEG_APP0 + m, 0xFFFF);
+  		}
+ 	}
     
     //Read the input headers
   	(void) jpeg_read_header(&srcinfo, TRUE);
 
 	//Read input coefficents
   	src_coef_arrays = jpeg_read_coefficients(&srcinfo);
+  	//jcopy_markers_setup(&srcinfo, copyoption);
 	
 	//Copy parameters
   	jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
@@ -56,7 +65,7 @@ int cclt_optimize(char* input_file, char* output_file) {
 
 	//Open the output one instead
     fp = fopen(output_file, "w+");
-    //Check for errors
+	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
     	printf("OUTPUT: Failed to open file \"%s\"\n", output_file);
@@ -66,13 +75,18 @@ int cclt_optimize(char* input_file, char* output_file) {
 	//CRITICAL - This is the optimization step
     dstinfo.optimize_coding = TRUE;
     jpeg_simple_progression(&dstinfo);
-    //dstinfo.dct_method = JDCT_ISLOW;
 
 	//Set the output file parameters
     jpeg_stdio_dest(&dstinfo, fp);
+    
 	
 	//Actually write the coefficents
     jpeg_write_coefficients(&dstinfo, dst_coef_arrays);
+
+    //Write EXIF
+    if (exif_flag == 1) {
+    	jcopy_markers_execute(&srcinfo, &dstinfo);
+	}
     
     //Free memory and finish
     jpeg_finish_compress(&dstinfo);

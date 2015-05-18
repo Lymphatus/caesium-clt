@@ -12,87 +12,18 @@
 #include "compress.h"
 #include "utils.h"
 
-#define APP_VERSION "1.9.9 BETA"
-#define BUILD 20150515
-
 /* PARAMETERS:
 	-q quality
-	-e exif
-	-o output folder
-	-v version
-	-l lossless
-	-s scale
-	-h help
+	-e exif v
+	-o output folder v
+	-v version v
+	-l lossless v
+	-s scale 
+	-h help v
 	-R recursive
 */
 
 //TODO Use a general fuction to support folder separators
-
-cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
-	
-	//Initialize default params
-	cclt_compress_parameters parameters = initialize_compression_parameters();
-	int c;
-
-	while (optind < argc) {
-		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
-			switch (c) {
-				case 'v':
-					printf("CCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", APP_VERSION, BUILD);
-					exit(0);
-					break;
-				case '?':
-					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
-						fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-						//Arguments without values
-						exit(-1);
-					}
-					else if (isprint(optopt))  {
-						fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-					}
-					else {
-						fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
-					}
-					break;
-				case ':':
-					fprintf(stderr, "Parameter expected.\n");
-					break;
-				case 'q':
-					parameters.quality = string_to_int(optarg);
-					break;
-				case 'e':
-					parameters.exif_copy = 1;
-					break;
-				case 'l':
-					parameters.lossless = 1;
-					break;
-				case 'o':
-					parameters.output_folder = optarg;
-					break;
-				case 's':
-					parameters.scaling_factor = string_to_int(optarg);
-					break;
-				case 'h':
-					print_help();
-					break;
-				default:
-					abort();
-			}
-		} else {
-			int i = 0;
-			parameters.input_files = (char**) malloc ((argc - optind) * sizeof (char*));
-			while (optind < argc) {
-				parameters.input_files[i] = (char*) malloc (strlen(argv[optind]) * sizeof(char)); //TODO Necessary??
-				parameters.input_files[i] = argv[optind];
-				parameters.input_files_count = i + 1;
-				optind++;
-				i++;
-			}
-		}
-	}
-
-	return parameters;
-}
 
 int main (int argc, char *argv[]) {
 	struct stat st_buf;
@@ -138,9 +69,8 @@ int main (int argc, char *argv[]) {
 		fprintf(stderr, "No -o option pointing to the destination folder. Aborting.\n");
 		exit(-4);
 	} else {
-		if (mkdir(pars.output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
+		if (mkpath(pars.output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
 			if (errno != EEXIST) {
-				perror("mkdir");
 				exit(-5);
 			}
 		}
@@ -153,7 +83,7 @@ int main (int argc, char *argv[]) {
 	for (int i = 0; i < pars.input_files_count; i++) {
 		off_t i_size, o_size;
 		int status; //Pointer for stat() call
-		char* output_filename = (char*) malloc (strlen(pars.output_folder) * sizeof(char));
+		char* output_filename = (char*) malloc ((strlen(pars.output_folder) + 2) * sizeof(char));
 		char* i_tmp = (char*) malloc (strlen(pars.input_files[i]) * sizeof(char));
 		
 		strcpy(i_tmp, pars.input_files[i]);
@@ -163,7 +93,9 @@ int main (int argc, char *argv[]) {
 		if (output_filename[strlen(pars.output_folder - 1)] != '/') {
 			strcat(output_filename, "/");
 		}
-		
+
+		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(get_filename_with_extension(i_tmp)) + 1) * sizeof(char));
+
 		output_filename = strcat(output_filename, get_filename_with_extension(i_tmp));
 
 		//TODO OVERALL progress update?
@@ -183,7 +115,6 @@ int main (int argc, char *argv[]) {
     	}
 
     	//Get input file size
-    	//On 32bit system, compile with -D_FILE_OFFSET_BITS=64
     	i_size = st_buf.st_size;
     	i_t_size += i_size;
 
@@ -192,9 +123,12 @@ int main (int argc, char *argv[]) {
 
 		//Lossless optmization requested
 		if (pars.lossless != 0) {
-			cclt_optimize(pars.input_files[i], output_filename);
+
+			cclt_optimize(pars.input_files[i], output_filename, pars.exif_copy);
 		} else {
 			//TODO Standard compression requested
+			unsigned char* buffer = cclt_decompress(pars.input_files[i], &pars);
+			cclt_compress(output_filename, buffer, &pars);
 		}
 
 		//Get output stats

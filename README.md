@@ -20,7 +20,9 @@ See INSTALL for more details.
 ----------
 
 ###### TODO
-A lot of things. A more detailed list will come later on.
+* Lossy compression
+* Lossless scale
+* 
 
 ----------
 
