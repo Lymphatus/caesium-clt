@@ -7,13 +7,14 @@
 #include <dirent.h> 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <libexif/exif-data.h>
 
 #include "lossless.h"
 #include "compress.h"
 #include "utils.h"
 
 /* PARAMETERS:
-	-q quality
+	-q quality v
 	-e exif v
 	-o output folder v
 	-v version v
@@ -123,12 +124,12 @@ int main (int argc, char *argv[]) {
 
 		//Lossless optmization requested
 		if (pars.lossless != 0) {
-
-			cclt_optimize(pars.input_files[i], output_filename, pars.exif_copy);
+			cclt_optimize(pars.input_files[i], output_filename, pars.exif_copy, pars.input_files[i]);
 		} else {
 			//TODO Standard compression requested
-			unsigned char* buffer = cclt_decompress(pars.input_files[i], &pars);
-			cclt_compress(output_filename, buffer, &pars);
+			//unsigned char* buffer = cclt_decompress(pars.input_files[i], &pars);
+			//cclt_compress(output_filename, buffer, &pars);
+			cclt_compress_routine(pars.input_files[i], output_filename, &pars);
 		}
 
 		//Get output stats

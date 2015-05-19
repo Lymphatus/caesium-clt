@@ -7,60 +7,45 @@
 #include "compress.h"
 #include "utils.h"
 
-void cclt_compress(char* output_file, unsigned char* image_buffer, cclt_compress_parameters* pars)
-{
-	struct jpeg_compress_struct cinfo;
+//TODO Error handling
 
-	struct jpeg_error_mgr jerr;
-	FILE * outfile;
-	JSAMPROW row_pointer[1];
-	int row_stride;
+void cclt_compress(char* output_file, unsigned char* image_buffer, cclt_compress_parameters* pars) {
+	FILE* fp;
+	tjhandle tjCompressHandle;
+	unsigned char* output_buffer;
+	int status;
+	unsigned long output_size = 0;
 
-	if ((outfile = fopen(output_file, "wb")) == NULL) {
-		fprintf(stderr, "can't open %s\n", output_file);
-		exit(1);
-	}
+	fp = fopen(output_file, "wb");
 
-	cinfo.err = jpeg_std_error(&jerr);
+	//Check for errors
+	//TODO Use UNIX error messages
+	if (fp == NULL) {
+    	printf("INPUT: Failed to open output \"%s\"\n", output_file);
+    	return;
+    }
 
-	jpeg_create_compress(&cinfo);
-	jpeg_stdio_dest(&cinfo, outfile);
+    output_buffer = NULL;
+    tjCompressHandle = tjInitCompress();
 
-	cinfo.image_width = pars->width;
-	cinfo.image_height = pars->height;
-	cinfo.input_components = 3;
-	cinfo.in_color_space = JCS_RGB;
-
-	jpeg_set_defaults(&cinfo);
-
-	cinfo.dct_method = pars->dct_method;
-	cinfo.optimize_coding = TRUE;
-	cinfo.smoothing_factor = pars->smoothing_factor;
-	jpeg_set_quality(&cinfo, pars->quality, TRUE);
-	jpeg_set_colorspace(&cinfo, JCS_RGB);
-
-
-
-	jpeg_start_compress(&cinfo, TRUE);
-
-	row_stride = pars->width * 3;
+    status = tjCompress2(tjCompressHandle,
+    	image_buffer,
+    	pars->width,
+    	0,
+    	pars->height,
+    	pars->color_space,
+    	&output_buffer,
+    	&output_size,
+    	pars->subsample,
+    	pars->quality,
+    	pars->dct_method);
 
 
-	while (cinfo.next_scanline < cinfo.image_height) {
+    fwrite(output_buffer, 1, output_size, fp);
 
-	//printf("%d%%\r", cinfo.next_scanline * 100 / cinfo.image_height);
-
-		row_pointer[0] = &image_buffer[cinfo.next_scanline * row_stride];
-		(void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
-	}
-	//printf("%d%%\n", cinfo.next_scanline * 100 / cinfo.image_height);
-
-
-	jpeg_finish_compress(&cinfo);
-	fclose(outfile);
-
-
-	jpeg_destroy_compress(&cinfo);
+    fclose(fp);
+    tjDestroy(tjCompressHandle);
+    tjFree(output_buffer);
 
 }
 
@@ -85,7 +70,7 @@ unsigned char* cclt_decompress(char* fileName, cclt_compress_parameters* pars) {
 
     int destWidth = fileWidth;
     int destHeight = fileHeight;
-    pars->color_space = jpegSubsamp;
+    pars->subsample = jpegSubsamp;
 
 
 
@@ -99,8 +84,10 @@ unsigned char* cclt_decompress(char* fileName, cclt_compress_parameters* pars) {
                                  destWidth,
                                  0,
                                  destHeight,
-                                 TJPF_RGB,
+                                 pars->color_space,
                                  TJFLAG_ACCURATEDCT);
+
+    tjDestroy(tjDecompressHandle);
 
     pars->width = destWidth;
     pars->height = destHeight;

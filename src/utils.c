@@ -5,6 +5,7 @@
 #include <setjmp.h>
 #include <stdio.h>
 #include <jpeglib.h>
+#include <turbojpeg.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <getopt.h>
@@ -12,6 +13,8 @@
 
 
 #include "utils.h"
+#include "compress.h"
+#include "lossless.h"
 
 cclt_compress_parameters initialize_compression_parameters() {
 	cclt_compress_parameters par;
@@ -19,10 +22,9 @@ cclt_compress_parameters initialize_compression_parameters() {
 	par.quality = 0;
 	par.width = 0;
 	par.height = 0;
-	par.smoothing_factor = 100;
 	par.scaling_factor = 100;
-	par.color_space = JCS_RGB;
-	par.dct_method = JDCT_ISLOW;
+	par.color_space = TJPF_RGB;
+	par.dct_method = TJFLAG_FASTDCT;
 	par.output_folder = NULL;
 	par.exif_copy = 0;
 	par.lossless = 0;
@@ -199,3 +201,10 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 
 	return parameters;
 }
+
+void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
+	cclt_compress(output, cclt_decompress(input, pars), pars);
+	cclt_optimize(output, output, pars->exif_copy, input);
+}
+
+
