@@ -5,7 +5,7 @@
 #include <turbojpeg.h>
 
 #define APP_VERSION "1.9.9 BETA"
-#define BUILD 20150515
+#define BUILD 20150519
 
 typedef struct cclt_compress_parameters {
 	int quality;
