@@ -4,7 +4,7 @@
 ----------
 
 ###### REQUIREMENTS
-* [libjpeg](http://www.ijg.org/libjpeg)
+* [libjpeg-turbo](http://libjpeg-turbo.org/)
 
 ----------
 
