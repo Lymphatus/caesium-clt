@@ -19,7 +19,7 @@
 	-o output folder v
 	-v version v
 	-l lossless v
-	-s scale 
+	-s scale v
 	-h help v
 	-R recursive
 */
@@ -75,6 +75,11 @@ int main (int argc, char *argv[]) {
 				exit(-5);
 			}
 		}
+	}
+
+	if ((pars.lossless == 1) && (pars.scaling_factor != 100)) {
+		fprintf(stderr, "Lossless scaling is not supported. Use -q instead. Aborting.\n");
+		exit(-13);
 	}
 
 

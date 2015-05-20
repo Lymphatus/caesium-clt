@@ -1,5 +1,5 @@
-# Caesium Command Line Tools
-#### CCLT - v 1.9.9 BETA (build 20150519) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
+## Caesium Command Line Tools
+##### CCLT - v 1.9.9 BETA (build 20150519) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
 
 ----------
 
@@ -20,8 +20,8 @@ See INSTALL for more details.
 ----------
 
 ###### TODO
-* Lossless scale
 * Recursive folder support
+* PNG and GIF lossless optimization
 
 ----------
 

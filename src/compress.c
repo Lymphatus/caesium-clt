@@ -3,6 +3,7 @@
 #include <jpeglib.h>
 #include <turbojpeg.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "compress.h"
 #include "utils.h"
@@ -51,6 +52,8 @@ void cclt_compress(char* output_file, unsigned char* image_buffer, cclt_compress
 
 unsigned char* cclt_decompress(char* fileName, cclt_compress_parameters* pars) {
 
+	//TODO I/O Error handling
+
     FILE *file = NULL;
     int res = 0;
     long int sourceJpegBufferSize = 0;
@@ -68,29 +71,27 @@ unsigned char* cclt_decompress(char* fileName, cclt_compress_parameters* pars) {
     tjDecompressHandle = tjInitDecompress();
     res = tjDecompressHeader2(tjDecompressHandle, sourceJpegBuffer, sourceJpegBufferSize, &fileWidth, &fileHeight, &jpegSubsamp);
 
-    int destWidth = fileWidth;
-    int destHeight = fileHeight;
+    pars->width = ceil(fileWidth * ((double) pars->scaling_factor / 100));
+    pars->height = ceil(fileHeight * ((double) pars->scaling_factor / 100));
     pars->subsample = jpegSubsamp;
 
+    if (pars->subsample == TJSAMP_GRAY) {
+    	pars->color_space = TJPF_GRAY;
+    }
 
-
-    unsigned char* temp = tjAlloc(destHeight * destWidth * tjPixelSize[TJPF_RGB]);
-
+    unsigned char* temp = tjAlloc(pars->width * pars->height * tjPixelSize[pars->color_space]);
 
     res = tjDecompress2(tjDecompressHandle,
                                  sourceJpegBuffer,
                                  sourceJpegBufferSize,
                                  temp,
-                                 destWidth,
+                                 pars->width,
                                  0,
-                                 destHeight,
+                                 pars->height,
                                  pars->color_space,
                                  TJFLAG_ACCURATEDCT);
 
     tjDestroy(tjDecompressHandle);
-
-    pars->width = destWidth;
-    pars->height = destHeight;
 
     return temp;
 }
