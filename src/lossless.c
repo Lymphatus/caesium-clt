@@ -3,6 +3,7 @@
 #include <jpeglib.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 #include "lossless.h"
 #include "utils.h"

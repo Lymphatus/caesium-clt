@@ -3,6 +3,7 @@
 
 #include <jpeglib.h>
 #include <turbojpeg.h>
+#include <sys/types.h>
 
 #define APP_VERSION "1.9.9 BETA"
 #define BUILD 20150519

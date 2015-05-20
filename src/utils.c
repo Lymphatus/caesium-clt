@@ -1,3 +1,5 @@
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <stdio.h>
@@ -7,9 +9,9 @@
 #include <jpeglib.h>
 #include <turbojpeg.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <getopt.h>
 #include <ctype.h>
+#include <linux/limits.h>
 
 
 #include "utils.h"
@@ -83,6 +85,7 @@ void print_progress(int current, int max, char* message) {
 //TODO Recheck
 int mkpath(const char *pathname, mode_t mode) {
 
+	//Need include in Linux, not on OSX
 	char parent[PATH_MAX], *p;
 	/* make a parent directory path */
 	strncpy(parent, pathname, sizeof(parent));
