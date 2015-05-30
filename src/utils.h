@@ -21,6 +21,7 @@ typedef struct cclt_compress_parameters {
 	char** input_files;
 	int input_files_count;
 	enum TJSAMP subsample;
+	int recursive;
 } cclt_compress_parameters;
 
 cclt_compress_parameters initialize_compression_parameters();

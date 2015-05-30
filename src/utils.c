@@ -11,7 +11,11 @@
 #include <string.h>
 #include <getopt.h>
 #include <ctype.h>
-#include <linux/limits.h>
+#include <dirent.h>
+
+#ifdef __linux
+	#include <linux/limits.h>
+#endif
 
 
 #include "utils.h"
@@ -31,6 +35,7 @@ cclt_compress_parameters initialize_compression_parameters() {
 	par.exif_copy = 0;
 	par.lossless = 0;
 	par.input_files_count = 0;
+	par.recursive = 0;
 
 	return par;
 }
@@ -93,14 +98,17 @@ int mkpath(const char *pathname, mode_t mode) {
 	for(p = parent + strlen(parent); *p != '/' && p != parent; p--);
 	*p = '\0';
 	/* try make parent directory */
-	if(p != parent && mkpath(parent, mode) != 0)
-	return -1;
+	if(p != parent && mkpath(parent, mode) != 0) {
+		return -1;
+	}
 	/* make this one if parent has been made */
-	if(mkdir(pathname, mode) == 0)
-	return 0;
+	if(mkdir(pathname, mode) == 0) {
+		return 0;
+	}
 	/* if it already exists that is fine */
-	if(errno == EEXIST)
-	return 0;
+	if (errno == EEXIST) {
+		return 0;
+	}
 	return -1;
 }
 
@@ -186,6 +194,9 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 				case 'h':
 					print_help();
 					break;
+				case 'R':
+					parameters.recursive = 1;
+					break;
 				default:
 					abort();
 			}
@@ -210,4 +221,67 @@ void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* 
 	cclt_optimize(output, output, pars->exif_copy, input);
 }
 
+char** scan_folder(char* dir, int depth) {
+	int i = 0;
+	DIR *dp;
+    struct dirent *entry;
+    struct stat statbuf;
+    char** files = (char**) malloc(sizeof(char*));
+    if ((dp = opendir(dir)) == NULL) {
+        fprintf(stderr, "Cannot open %s. Aborting.\n", dir);
+        exit(-14);
+    }
+    chdir(dir);
+    while ((entry = readdir(dp)) != NULL) {
+        lstat(entry->d_name, &statbuf);
+        if (S_ISDIR(statbuf.st_mode)) {
+            if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) {
+                continue;
+            }
+            files = (char**) realloc(files, sizeof(files) + sizeof(char*));
+            printf("QUI\n");
+            files[i] = entry->d_name;
+            i++;
+            scan_folder(entry->d_name, depth+4);
+        }
+        else {
+        	files = (char**) realloc(files, sizeof(files) + sizeof(char*));
+        	printf("QUI\n");
+            files[i] = entry->d_name;
+            i++;
+        }
+    }
+
+    chdir("..");
+    closedir(dp);
+	printf("SEG\n");
+    return *files;
+}
+
+void printdir(char *dir, int depth)
+{
+    DIR *dp;
+    struct dirent *entry;
+    struct stat statbuf;
+    if((dp = opendir(dir)) == NULL) {
+        fprintf(stderr,"cannot open directory: %s\n", dir);
+        return;
+    }
+    chdir(dir);
+    while((entry = readdir(dp)) != NULL) {
+        lstat(entry->d_name,&statbuf);
+        if(S_ISDIR(statbuf.st_mode)) {
+            /* Found a directory, but ignore . and .. */
+            if(strcmp(".",entry->d_name) == 0 ||
+                strcmp("..",entry->d_name) == 0)
+                continue;
+            printf("%*s%s/\n",depth,"",entry->d_name);
+            /* Recurse at a new indent level */
+            printdir(entry->d_name,depth+4);
+        }
+        else printf("%*s%s\n",depth,"",entry->d_name);
+    }
+    chdir("..");
+    closedir(dp);
+}
 
