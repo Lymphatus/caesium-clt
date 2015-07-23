@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 #define APP_VERSION "1.9.9 BETA"
-#define BUILD 20150519
+#define BUILD 20150723
 
 typedef struct cclt_compress_parameters {
 	int quality;
@@ -24,6 +24,12 @@ typedef struct cclt_compress_parameters {
 	int recursive;
 } cclt_compress_parameters;
 
+enum image_type {
+	JPEG,
+	PNG,
+	UNKN,
+};
+
 cclt_compress_parameters initialize_compression_parameters();
 
 int string_to_int(char* in_string);
@@ -34,5 +40,6 @@ void jcopy_markers_execute (j_decompress_ptr srcinfo, j_compress_ptr dstinfo);
 int mkpath(const char *pathname, mode_t mode);
 cclt_compress_parameters parse_arguments(int argc, char* argv[]);
 void cclt_compress_routine(char* input, char* output,cclt_compress_parameters* pars);
+enum image_type detect_image_type(char* path);
 
 #endif

@@ -120,33 +120,6 @@ char* get_filename_with_extension(char* full_path) {
 	return dest;
 }
 
-void jcopy_markers_execute (j_decompress_ptr srcinfo, j_compress_ptr dstinfo) {
-  jpeg_saved_marker_ptr marker;
-
-  for (marker = srcinfo->marker_list; marker != NULL; marker = marker->next) {
-    if (dstinfo->write_JFIF_header &&
-        marker->marker == JPEG_APP0 &&
-        marker->data_length >= 5 &&
-        GETJOCTET(marker->data[0]) == 0x4A &&
-        GETJOCTET(marker->data[1]) == 0x46 &&
-        GETJOCTET(marker->data[2]) == 0x49 &&
-        GETJOCTET(marker->data[3]) == 0x46 &&
-        GETJOCTET(marker->data[4]) == 0)
-      continue;                 
-    if (dstinfo->write_Adobe_marker &&
-        marker->marker == JPEG_APP0+14 &&
-        marker->data_length >= 5 &&
-        GETJOCTET(marker->data[0]) == 0x41 &&
-        GETJOCTET(marker->data[1]) == 0x64 &&
-        GETJOCTET(marker->data[2]) == 0x6F &&
-        GETJOCTET(marker->data[3]) == 0x62 &&
-        GETJOCTET(marker->data[4]) == 0x65)
-      continue;                 
-    jpeg_write_marker(dstinfo, marker->marker,
-                      marker->data, marker->data_length);
-  }
-}
-
 cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 	
 	//Initialize default params
@@ -217,8 +190,15 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 }
 
 void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
-	cclt_compress(output, cclt_decompress(input, pars), pars);
-	cclt_optimize(output, output, pars->exif_copy, input);
+	enum image_type type = detect_image_type(input);
+	if (type == JPEG) {
+		cclt_compress(output, cclt_decompress(input, pars), pars);
+		cclt_optimize(output, output, pars->exif_copy, input);
+	} else if (type == PNG) {
+		printf("PNG detected. Still to implement.\n");
+	} else {
+		return;
+	}
 }
 
 char** scan_folder(char* dir, int depth) {
@@ -255,7 +235,7 @@ char** scan_folder(char* dir, int depth) {
     chdir("..");
     closedir(dp);
 	printf("SEG\n");
-    return *files;
+    return files;
 }
 
 void printdir(char *dir, int depth)
@@ -283,5 +263,35 @@ void printdir(char *dir, int depth)
     }
     chdir("..");
     closedir(dp);
+}
+
+enum image_type detect_image_type(char* path) {
+	FILE* fp;
+	unsigned char* type_buffer = valloc(2);
+
+	fp = fopen(path, "r");
+
+	if (fp == NULL) {
+		fprintf(stderr, "Cannot open input file for type detection. Aborting.\n");
+		exit(-14);
+	}
+
+	if (fread(type_buffer, 1, 2, fp) < 2) {
+		fprintf(stderr, "Cannot read file type. Aborting.\n");
+		exit(-15);
+	}
+
+	fclose(fp);
+
+	if (((int) type_buffer[0] == 0xFF) && ((int) type_buffer[1] == 0xD8)) {
+		free(type_buffer);
+		return JPEG;
+	} else if (((int) type_buffer[0] == 0x89) && ((int) type_buffer[1] == 0x50)) {
+		free(type_buffer);
+		return PNG;
+	} else {
+		fprintf(stderr, "Unsupported file type. Skipping.\n");
+		return UNKN;
+	}
 }
 

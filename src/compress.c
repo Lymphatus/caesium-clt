@@ -61,6 +61,7 @@ unsigned char* cclt_decompress(char* fileName, cclt_compress_parameters* pars) {
     tjhandle tjDecompressHandle;
     int fileWidth = 0, fileHeight = 0, jpegSubsamp = 0;
 
+    //TODO No error checks here
     file = fopen(fileName, "rb");
     res = fseek(file, 0, SEEK_END);
     sourceJpegBufferSize = ftell(file);

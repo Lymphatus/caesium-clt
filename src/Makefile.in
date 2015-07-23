@@ -102,7 +102,7 @@ am_caesiumclt_OBJECTS = caesiumclt-main.$(OBJEXT) \
 	caesiumclt-utils.$(OBJEXT) caesiumclt-lossless.$(OBJEXT) \
 	caesiumclt-compress.$(OBJEXT)
 caesiumclt_OBJECTS = $(am_caesiumclt_OBJECTS)
-caesiumclt_LDADD = $(LDADD)
+caesiumclt_DEPENDENCIES =
 caesiumclt_LINK = $(CCLD) $(caesiumclt_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -253,8 +253,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 caesiumclt_SOURCES = main.c utils.c lossless.c compress.c
-caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -ljpeg -lturbojpeg -lm -std=c99
-caesiumclt_OBJCFLAGS = -D_FILE_OFFSET_BITS=64 -ljpeg -lturbojpeg -lm
+caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -std=c99
+caesiumclt_LDADD = -ljpeg -lturbojpeg -lm
 all: all-am
 
 .SUFFIXES:

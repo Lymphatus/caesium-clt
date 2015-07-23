@@ -31,7 +31,7 @@ struct jpeg_decompress_struct cclt_get_markers(char* input) {
 
     //Save EXIF info
 	for (int m = 0; m < 16; m++) {
-      	jpeg_save_markers(&einfo, JPEG_APP0 + m, 0xFFFF);
+            jpeg_save_markers(&einfo, JPEG_APP0 + m, 0xFFFF);
  	}
 
  	jpeg_read_header(&einfo, TRUE);

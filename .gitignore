@@ -2,3 +2,4 @@ output/*
 samples/*
 tmp/*
 build/*
+autom4te.cache

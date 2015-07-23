@@ -38,6 +38,7 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 	}
 
 	while (i < n) {
+
 		off_t i_size, o_size;
 		int status; //Pointer for stat() call
 		char* output_filename = (char*) malloc ((strlen(output_folder) + 2) * sizeof(char));
@@ -90,6 +91,8 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
     		//free(new_files);
     		continue;
     	}
+
+    	
 
     	//Get input file size
     	i_size = st_buf.st_size;
@@ -187,7 +190,7 @@ int main (int argc, char *argv[]) {
 
 	cclt_start(pars.input_files, pars.input_files_count, pars.output_folder, &pars, &i_t_size, &o_t_size);
 
-	fprintf(stdout, "Compression completed.\n%ld bytes -> %ld bytes [%.2f%%]\n",
+	fprintf(stdout, "-------------------------------\nCompression completed.\n%ld bytes -> %ld bytes [%.2f%%]\n",
 		(long) i_t_size, (long) o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size);
 		
 	exit(0);
