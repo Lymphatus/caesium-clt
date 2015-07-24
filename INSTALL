@@ -21,3 +21,11 @@ The sequence should be something like:
 	$ ./configure
 	$ make
 	$ sudo make install
+
+Cloning from git
+==================
+	$ git clone https://github.com/Lymphatus/CaesiumCLT
+	$ cd CaesiumCLT
+	$ ./configure
+	$ make
+	$ sudo make install
