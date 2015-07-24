@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include <dirent.h> 
+#include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -28,6 +29,7 @@
 //TODO Use a general fuction to support folder separators
 
 void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
+
 	struct stat st_buf;
 	int i = 0, lossless = pars->lossless, exif = pars->exif_copy, recursive = pars->recursive;
 
@@ -52,8 +54,10 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 			strcat(output_filename, "/");
 		}
 
-		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(get_filename_with_extension(i_tmp)) + 1) * sizeof(char));
-		output_filename = strcat(output_filename, get_filename_with_extension(i_tmp));
+		//fprintf(stderr, "%s - %lu\n", output_filename, strlen(output_filename) + strlen(get_filename_with_extension(i_tmp)) + 1);
+
+		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(i_tmp)) + 1) * sizeof(char));
+		output_filename = strcat(output_filename, basename(i_tmp));
 
 		//TODO OVERALL progress update?
 		//print_progress(i + 1, pars.input_files_count, "Progress: ");

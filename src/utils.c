@@ -112,14 +112,6 @@ int mkpath(const char *pathname, mode_t mode) {
 	return -1;
 }
 
-char* get_filename_with_extension(char* full_path) {
-	char* dest;
-		
-	dest = strrchr(full_path, '/') + 1;	
-
-	return dest;
-}
-
 cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 	
 	//Initialize default params
