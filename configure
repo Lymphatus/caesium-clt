@@ -3854,6 +3854,8 @@ fi
 ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
+#TODO Check for turbojpeg instead
+
 
 # Check whether --with-libjpeg was given.
 if test "${with_libjpeg+set}" = set; then :

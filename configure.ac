@@ -15,6 +15,8 @@ AC_CONFIG_FILES([
  src/Makefile
 ])
 
+#TODO Check for turbojpeg instead
+
 AC_ARG_WITH(libjpeg, [  --libjpeg=DIR	  libjpeg is installed in ],
 	[if test $withval != yes; then
 	   	jpeginfo_cv_libjpeg=$withval

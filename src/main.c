@@ -9,19 +9,19 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "lossless.h"
-#include "compress.h"
+#include "jpeg.h"
+#include "compresshelper.h"
 #include "utils.h"
 
 /* PARAMETERS:
-	-q quality v
-	-e exif v
-	-o output folder v
-	-v version v
-	-l lossless v
-	-s scale v
-	-h help v
-	-R recursive
+-q quality v
+-e exif v
+-o output folder v
+-v version v
+-l lossless v
+-s scale v
+-h help v
+-R recursive
 */
 
 
@@ -64,43 +64,43 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 
 		//Get input stats
 		status = stat(input_files[i], &st_buf);
-	    if (status != 0) {
-	        fprintf(stderr, "Failed to get input file stats. Aborting.\n");
+		if (status != 0) {
+			fprintf(stderr, "Failed to get input file stats. Aborting.\n");
 			exit(-11);
-	    }
+		}
 
 	    //Check if we ran into a folder
 	    //TODO Check symlinks too
-	    if (S_ISDIR (st_buf.st_mode) && recursive == 0) {
+		if (S_ISDIR (st_buf.st_mode) && recursive == 0) {
 	    	//Folder found, but we don't need it here
-	    	i++;
-        	continue;
-    	} else if (S_ISDIR (st_buf.st_mode) && recursive != 0) {
-    		//Folder found, we need to get into it
-    		
+			i++;
+			continue;
+		} else if (S_ISDIR (st_buf.st_mode) && recursive != 0) {
+			//Folder found, we need to get into it
 
-    		/*
+
+			/*
 				1. Scan the entire folder input_files[i]
 				2. Get a new array containing all the files and folders
 				3. Set the output folder to be one step deeper
 				3. Call cclt_start(new_list, new folder, same, same, same)
-    		*/
+			*/
 
 			//TODO malloc?
 			//char** new_files = (char**) malloc(256 * sizeof(char*));
 			//new_files = scan_folder(input_files[i], 0);
-    		//cclt_start(new_files, output_folder, pars, i_t_size, o_t_size);
-    		//i++;
-    		//TODO Remove this after this funcion is fully completed
-    		//free(new_files);
-    		continue;
-    	}
+			//cclt_start(new_files, output_folder, pars, i_t_size, o_t_size);
+			//i++;
+			//TODO Remove this after this funcion is fully completed
+			//free(new_files);
+			continue;
+		}
 
-    	
 
-    	//Get input file size
-    	i_size = st_buf.st_size;
-    	*(i_t_size) += i_size;
+
+		//Get input file size
+		i_size = st_buf.st_size;
+		*(i_t_size) += i_size;
 
 		//TODO Do we want a more verbose output?
 		fprintf(stdout, "Compressing: %s -> %s\n", input_files[i], output_filename);
@@ -113,15 +113,15 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 
 		//Get output stats
 		status = stat(output_filename, &st_buf);
-	    if (status != 0) {
-	    	//TODO This is not critical, but still something to be tracked
-	        fprintf(stderr, "Failed to get output file stats. Aborting.\n");
+		if (status != 0) {
+    		//TODO This is not critical, but still something to be tracked
+			fprintf(stderr, "Failed to get output file stats. Aborting.\n");
 			exit(-12);
-	    }
-	    o_size = st_buf.st_size;
-	    *(o_t_size) += o_size;
+		}
+		o_size = st_buf.st_size;
+		*(o_t_size) += o_size;
 
-	    fprintf(stdout, "%ld bytes -> %ld bytes [%.2f%%]\n",
+		fprintf(stdout, "%ld bytes -> %ld bytes [%.2f%%]\n",
 			(long) i_size, (long) o_size, ((float) o_size - i_size) * 100 / i_size);
 
 		//TODO Perform the required instructions
@@ -143,7 +143,7 @@ int main (int argc, char *argv[]) {
 
 	//Parse arguments
 	cclt_compress_parameters pars = parse_arguments(argc, argv);
-	
+
 	//Either -l or -q must be set but not together
 	if (!((pars.lossless == 1) ^ (pars.quality > 0))) {
 		//Both or none are set
@@ -152,6 +152,7 @@ int main (int argc, char *argv[]) {
 			exit(-1);
 		} else if (pars.lossless == 0 && pars.quality <= 0) {
 			fprintf(stderr, "Either -l or -q must be set. Aborting.\n");
+			print_help();
 			exit(-2);
 		}
 	} else {
@@ -162,19 +163,19 @@ int main (int argc, char *argv[]) {
 			exit(-3);
 		}
 	}
-	
+
 	//Check if you set the input files
 	if (pars.input_files_count == 0) {
 		fprintf(stderr, "No input files. Aborting.\n");
 		exit(-9);
 	}
-	
+
 	//Check if there's a valid scaling factor
 	if (pars.scaling_factor <= 0) {
 		fprintf(stderr, "Scaling factor must be > 0. Aborting.\n");
 		exit(-6);
 	}
-		
+	
 	//Check if the output folder exists, otherwise create it
 	if (pars.output_folder == NULL) {
 		fprintf(stderr, "No -o option pointing to the destination folder. Aborting.\n");
@@ -196,6 +197,6 @@ int main (int argc, char *argv[]) {
 
 	fprintf(stdout, "-------------------------------\nCompression completed.\n%ld bytes -> %ld bytes [%.2f%%]\n",
 		(long) i_t_size, (long) o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size);
-		
+	
 	exit(0);
 }

@@ -6,8 +6,6 @@
 #include <errno.h>
 #include <setjmp.h>
 #include <stdio.h>
-#include <jpeglib.h>
-#include <turbojpeg.h>
 #include <string.h>
 #include <getopt.h>
 #include <ctype.h>
@@ -19,26 +17,7 @@
 
 
 #include "utils.h"
-#include "compress.h"
-#include "lossless.h"
 
-cclt_compress_parameters initialize_compression_parameters() {
-	cclt_compress_parameters par;
-	
-	par.quality = 0;
-	par.width = 0;
-	par.height = 0;
-	par.scaling_factor = 100;
-	par.color_space = TJPF_RGB;
-	par.dct_method = TJFLAG_FASTDCT;
-	par.output_folder = NULL;
-	par.exif_copy = 0;
-	par.lossless = 0;
-	par.input_files_count = 0;
-	par.recursive = 0;
-
-	return par;
-}
 
 int string_to_int(char* in_string) {
 	long value = 0;
@@ -64,7 +43,7 @@ int string_to_int(char* in_string) {
 void print_help() {
 	fprintf(stdout,
 		"CCLT - Caesium Command Line Tools\n\n"
-		"Usage: cclt [OPTION] INPUT...\n"
+		"Usage: caesiumclt [OPTIONs] INPUT...\n"
 		"Compress your pictures up to 90%% without visible quality loss.\n\n"
 
 		"Options:\n"
@@ -73,7 +52,8 @@ void print_help() {
 			"\t-o\tcompress to custom folder\n"
 			"\t-l\tuse lossless optimization\n"
 			"\t-s\tscale to value, expressed as percentage (e.g. 20%%)\n"
-			"\t-R\tif input is a folder, scan subfolders too\n"
+			//TODO Remove this warning
+			"\t-R\tif input is a folder, scan subfolders too [NOT IMPLEMENTED YET]\n"
 			"\t-h\tdisplay this help and exit\n"
 			"\t-v\toutput version information and exit\n\n");
 	exit(0);
@@ -110,87 +90,6 @@ int mkpath(const char *pathname, mode_t mode) {
 		return 0;
 	}
 	return -1;
-}
-
-cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
-	
-	//Initialize default params
-	cclt_compress_parameters parameters = initialize_compression_parameters();
-	int c;
-
-	while (optind < argc) {
-		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
-			switch (c) {
-				case 'v':
-					printf("CCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", APP_VERSION, BUILD);
-					exit(0);
-					break;
-				case '?':
-					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
-						fprintf (stderr, "Option -%c requires an argument.\n", optopt);
-						//Arguments without values
-						exit(-1);
-					}
-					else if (isprint(optopt))  {
-						fprintf (stderr, "Unknown option `-%c'.\n", optopt);
-					}
-					else {
-						fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
-					}
-					break;
-				case ':':
-					fprintf(stderr, "Parameter expected.\n");
-					break;
-				case 'q':
-					parameters.quality = string_to_int(optarg);
-					break;
-				case 'e':
-					parameters.exif_copy = 1;
-					break;
-				case 'l':
-					parameters.lossless = 1;
-					break;
-				case 'o':
-					parameters.output_folder = optarg;
-					break;
-				case 's':
-					parameters.scaling_factor = string_to_int(optarg);
-					break;
-				case 'h':
-					print_help();
-					break;
-				case 'R':
-					parameters.recursive = 1;
-					break;
-				default:
-					abort();
-			}
-		} else {
-			int i = 0;
-			parameters.input_files = (char**) malloc ((argc - optind) * sizeof (char*));
-			while (optind < argc) {
-				parameters.input_files[i] = (char*) malloc (strlen(argv[optind]) * sizeof(char)); //TODO Necessary??
-				parameters.input_files[i] = argv[optind];
-				parameters.input_files_count = i + 1;
-				optind++;
-				i++;
-			}
-		}
-	}
-
-	return parameters;
-}
-
-void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
-	enum image_type type = detect_image_type(input);
-	if (type == JPEG) {
-		cclt_compress(output, cclt_decompress(input, pars), pars);
-		cclt_optimize(output, output, pars->exif_copy, input);
-	} else if (type == PNG) {
-		printf("PNG detected. Still to implement.\n");
-	} else {
-		return;
-	}
 }
 
 char** scan_folder(char* dir, int depth) {
