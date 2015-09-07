@@ -109,8 +109,8 @@ void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* 
 	} else if (type == JPEG && pars->lossless != 0) {
 		cclt_optimize(input, output, pars->exif_copy, input);
 	} else if (type == PNG) {
-		read_png_file(input);
-		write_png_file(output);
+		//read_png_file(input);
+		//write_png_file(output);
 	} else if (type == GIF) {
 		printf("GIF detected. Not implemented yet.\n");
 	} else {

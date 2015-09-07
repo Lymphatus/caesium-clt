@@ -1,4 +1,4 @@
 bin_PROGRAMS = caesiumclt
-caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c png.c
+caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c
 caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -std=c99
-caesiumclt_LDADD = -ljpeg -lturbojpeg -lm -lz -lpng
+caesiumclt_LDADD = -ljpeg -lturbojpeg -lm

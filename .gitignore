@@ -3,3 +3,5 @@ samples/*
 tmp/*
 build/*
 autom4te.cache
+src/png.c
+src/png.h
