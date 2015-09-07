@@ -14,12 +14,12 @@
 
 #include "png.h"
 
-int width, height;
-png_byte color_type;
-png_byte bit_depth;
-png_bytep *row_pointers;
+ int width, height;
+ png_byte color_type;
+ png_byte bit_depth;
+ png_bytep *row_pointers;
 
-void read_png_file (char *filename) {
+ void read_png_file (char *filename) {
   FILE *fp = fopen(filename, "rb");
 
   png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -57,12 +57,12 @@ void read_png_file (char *filename) {
 
   // These color_type don't have an alpha channel then fill it with 0xff.
   if(color_type == PNG_COLOR_TYPE_RGB ||
-     color_type == PNG_COLOR_TYPE_GRAY ||
-     color_type == PNG_COLOR_TYPE_PALETTE)
+   color_type == PNG_COLOR_TYPE_GRAY ||
+   color_type == PNG_COLOR_TYPE_PALETTE)
     png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
 
   if(color_type == PNG_COLOR_TYPE_GRAY ||
-     color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+   color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
     png_set_gray_to_rgb(png);
 
   png_read_update_info(png, info);
@@ -92,6 +92,9 @@ void write_png_file (char *filename) {
 
   png_init_io(png, fp);
 
+  //zlib compression here
+  png_set_compression_level(png, 9);
+
   // Output is 8bit depth, RGBA format.
   png_set_IHDR(
     png,
@@ -102,7 +105,7 @@ void write_png_file (char *filename) {
     PNG_INTERLACE_NONE,
     PNG_COMPRESSION_TYPE_DEFAULT,
     PNG_FILTER_TYPE_DEFAULT
-  );
+    );
   png_write_info(png, info);
 
   // To remove the alpha channel for PNG_COLOR_TYPE_RGB format,

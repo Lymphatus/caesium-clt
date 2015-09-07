@@ -165,6 +165,7 @@ void cclt_compress(char* output_file, unsigned char* image_buffer, cclt_compress
    output_buffer = NULL;
    tjCompressHandle = tjInitCompress();
 
+   //TODO Scale must be a power of 2. Can we resolve it?
    status = tjCompress2(tjCompressHandle,
        image_buffer,
        pars->width,
@@ -210,6 +211,7 @@ unsigned char* cclt_decompress(char* fileName, cclt_compress_parameters* pars) {
 
     pars->width = ceil(fileWidth * ((double) pars->scaling_factor / 100));
     pars->height = ceil(fileHeight * ((double) pars->scaling_factor / 100));
+
     pars->subsample = jpegSubsamp;
 
     if (pars->subsample == TJSAMP_GRAY) {

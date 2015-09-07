@@ -10,6 +10,7 @@
 
 #include "utils.h"
 #include "jpeg.h"
+#include "png.h"
 
 
 cclt_compress_parameters initialize_compression_parameters() {
@@ -44,6 +45,7 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 					exit(0);
 					break;
 				case '?':
+					//TODO if -o not specified or empty, use current. Useful?
 					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
 						fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 						//Arguments without values
@@ -101,11 +103,14 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 
 void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
 	enum image_type type = detect_image_type(input);
-	if (type == JPEG) {
+	if (type == JPEG && pars->lossless == 0) {
 		cclt_compress(output, cclt_decompress(input, pars), pars);
 		cclt_optimize(output, output, pars->exif_copy, input);
+	} else if (type == JPEG && pars->lossless != 0) {
+		cclt_optimize(input, output, pars->exif_copy, input);
 	} else if (type == PNG) {
-		printf("PNG detected. Not implemented yet.\n");
+		read_png_file(input);
+		write_png_file(output);
 	} else if (type == GIF) {
 		printf("GIF detected. Not implemented yet.\n");
 	} else {

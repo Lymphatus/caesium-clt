@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 #define APP_VERSION "1.9.9 BETA"
-#define BUILD 20150723
+#define BUILD 20150728
 
 typedef struct cclt_compress_parameters {
 	int quality;

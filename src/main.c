@@ -31,7 +31,7 @@
 void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 
 	struct stat st_buf;
-	int i = 0, lossless = pars->lossless, exif = pars->exif_copy, recursive = pars->recursive;
+	int i = 0, recursive = pars->recursive;
 
 	if (mkpath(output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
 		if (errno != EEXIST) {
@@ -105,11 +105,11 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		//TODO Do we want a more verbose output?
 		fprintf(stdout, "Compressing: %s -> %s\n", input_files[i], output_filename);
 
-		if (lossless != 0) {
-			cclt_optimize(input_files[i], output_filename, exif, input_files[i]);
-		} else {
+		//if (lossless != 0) {
+		//	cclt_optimize(input_files[i], output_filename, exif, input_files[i]);
+		//} else {
 			cclt_compress_routine(input_files[i], output_filename, pars);
-		}
+		//}
 
 		//Get output stats
 		status = stat(output_filename, &st_buf);
@@ -195,8 +195,8 @@ int main (int argc, char *argv[]) {
 
 	cclt_start(pars.input_files, pars.input_files_count, pars.output_folder, &pars, &i_t_size, &o_t_size);
 
-	fprintf(stdout, "-------------------------------\nCompression completed.\n%ld bytes -> %ld bytes [%.2f%%]\n",
-		(long) i_t_size, (long) o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size);
+	fprintf(stdout, "-------------------------------\nCompression completed.\n%ld bytes -> %ld bytes [%.2f%% | %ld bytes]\n",
+		(long) i_t_size, (long) o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size, (long) (o_t_size - i_t_size));
 	
 	exit(0);
 }
