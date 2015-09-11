@@ -100,7 +100,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_caesiumclt_OBJECTS = caesiumclt-main.$(OBJEXT) \
 	caesiumclt-jpeg.$(OBJEXT) caesiumclt-compresshelper.$(OBJEXT) \
-	caesiumclt-utils.$(OBJEXT)
+	caesiumclt-utils.$(OBJEXT) caesiumclt-png.$(OBJEXT) \
+	caesiumclt-lodepng.$(OBJEXT)
 caesiumclt_OBJECTS = $(am_caesiumclt_OBJECTS)
 caesiumclt_DEPENDENCIES =
 caesiumclt_LINK = $(CCLD) $(caesiumclt_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -252,9 +253,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c
+caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c png.c lodepng.c
 caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -std=c99
-caesiumclt_LDADD = -ljpeg -lturbojpeg -lm
+caesiumclt_LDADD = -ljpeg -lturbojpeg -lm -lzopflipng
 all: all-am
 
 .SUFFIXES:
@@ -343,7 +344,9 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-compresshelper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-jpeg.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-lodepng.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-png.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-utils.Po@am__quote@
 
 .c.o:
@@ -415,6 +418,34 @@ caesiumclt-utils.obj: utils.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='utils.c' object='caesiumclt-utils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-utils.obj `if test -f 'utils.c'; then $(CYGPATH_W) 'utils.c'; else $(CYGPATH_W) '$(srcdir)/utils.c'; fi`
+
+caesiumclt-png.o: png.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -MT caesiumclt-png.o -MD -MP -MF $(DEPDIR)/caesiumclt-png.Tpo -c -o caesiumclt-png.o `test -f 'png.c' || echo '$(srcdir)/'`png.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/caesiumclt-png.Tpo $(DEPDIR)/caesiumclt-png.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='png.c' object='caesiumclt-png.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-png.o `test -f 'png.c' || echo '$(srcdir)/'`png.c
+
+caesiumclt-png.obj: png.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -MT caesiumclt-png.obj -MD -MP -MF $(DEPDIR)/caesiumclt-png.Tpo -c -o caesiumclt-png.obj `if test -f 'png.c'; then $(CYGPATH_W) 'png.c'; else $(CYGPATH_W) '$(srcdir)/png.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/caesiumclt-png.Tpo $(DEPDIR)/caesiumclt-png.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='png.c' object='caesiumclt-png.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-png.obj `if test -f 'png.c'; then $(CYGPATH_W) 'png.c'; else $(CYGPATH_W) '$(srcdir)/png.c'; fi`
+
+caesiumclt-lodepng.o: lodepng.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -MT caesiumclt-lodepng.o -MD -MP -MF $(DEPDIR)/caesiumclt-lodepng.Tpo -c -o caesiumclt-lodepng.o `test -f 'lodepng.c' || echo '$(srcdir)/'`lodepng.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/caesiumclt-lodepng.Tpo $(DEPDIR)/caesiumclt-lodepng.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lodepng.c' object='caesiumclt-lodepng.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-lodepng.o `test -f 'lodepng.c' || echo '$(srcdir)/'`lodepng.c
+
+caesiumclt-lodepng.obj: lodepng.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -MT caesiumclt-lodepng.obj -MD -MP -MF $(DEPDIR)/caesiumclt-lodepng.Tpo -c -o caesiumclt-lodepng.obj `if test -f 'lodepng.c'; then $(CYGPATH_W) 'lodepng.c'; else $(CYGPATH_W) '$(srcdir)/lodepng.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/caesiumclt-lodepng.Tpo $(DEPDIR)/caesiumclt-lodepng.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lodepng.c' object='caesiumclt-lodepng.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-lodepng.obj `if test -f 'lodepng.c'; then $(CYGPATH_W) 'lodepng.c'; else $(CYGPATH_W) '$(srcdir)/lodepng.c'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique

@@ -8,6 +8,13 @@ are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.  This file is offered as-is,
 without warranty of any kind.
 
+Requirements
+==================
+You will need both mozjpeg and zopflipng compiled as libraries to be able to
+compile CaesiumCLT. Refer to their own documentation for the detailed
+instructions.
+
+
 Basic Installation
 ==================
 
@@ -26,6 +33,14 @@ Cloning from git
 ==================
 	$ git clone https://github.com/Lymphatus/CaesiumCLT
 	$ cd CaesiumCLT
+	$ (optional) autoreconf -fiv
 	$ ./configure
+	$ make
+	$ sudo make install
+
+You can build out of the source tree in a separate folder. For example:
+	$ mkdir build
+	$ cd build
+	$ ../configure
 	$ make
 	$ sudo make install

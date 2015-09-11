@@ -106,7 +106,7 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		fprintf(stdout, "Compressing: %s -> %s\n", input_files[i], output_filename);
 
 		//if (lossless != 0) {
-		//	cclt_optimize(input_files[i], output_filename, exif, input_files[i]);
+		//	cclt_jpeg_optimize(input_files[i], output_filename, exif, input_files[i]);
 		//} else {
 			cclt_compress_routine(input_files[i], output_filename, pars);
 		//}

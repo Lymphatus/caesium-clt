@@ -1,17 +1,17 @@
 ## Caesium Command Line Tools
-##### CCLT - v 1.9.9 BETA (build 20150728) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
+##### CCLT - v 1.9.9 BETA (build 20150911) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
 
 ----------
 
 ###### REQUIREMENTS
-* [libjpeg-turbo](http://libjpeg-turbo.org/)
-* [libpng](http://libpng.org/)
-* [zlib](http://www.zlib.net/)
+* [mozjpeg](https://github.com/mozilla/mozjpeg)
+* [zopfli](https://github.com/google/zopfli)
+* [lodepng](https://github.com/lvandeve/lodepng)
 
 ----------
 
 ###### TESTED PLATFORMS
-* MacOSX Yosemite (v. 10.10.4)
+* MacOSX Yosemite (v. 10.10.5)
 * Arch Linux
 * Ubuntu 14.04.2
 
@@ -24,6 +24,8 @@ See INSTALL for more details.
 
 ###### TODO
 * Recursive folder support
+* GIF support?
+* Code cleaning
 
 ----------
 

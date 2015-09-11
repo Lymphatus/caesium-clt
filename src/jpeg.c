@@ -45,7 +45,7 @@ struct jpeg_decompress_struct cclt_get_markers(char* input) {
 	return einfo;
 }
 
-int cclt_optimize(char* input_file, char* output_file, int exif_flag, char* exif_src) {
+int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char* exif_src) {
 	//File pointer for both input and output
 	FILE* fp;
 	
@@ -146,7 +146,7 @@ int cclt_optimize(char* input_file, char* output_file, int exif_flag, char* exif
 	return 0;
 }
 
-void cclt_compress(char* output_file, unsigned char* image_buffer, cclt_compress_parameters* pars) {
+void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_compress_parameters* pars) {
 	FILE* fp;
 	tjhandle tjCompressHandle;
 	unsigned char* output_buffer;
@@ -187,7 +187,7 @@ void cclt_compress(char* output_file, unsigned char* image_buffer, cclt_compress
 
 }
 
-unsigned char* cclt_decompress(char* fileName, cclt_compress_parameters* pars) {
+unsigned char* cclt_jpeg_decompress(char* fileName, cclt_compress_parameters* pars) {
 
 	//TODO I/O Error handling
 
