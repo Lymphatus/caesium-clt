@@ -3854,7 +3854,6 @@ fi
 ac_config_files="$ac_config_files Makefile src/Makefile"
 
 
-#TODO Check for turbojpeg instead
 
 
 # Check whether --with-libjpeg was given.
@@ -3874,9 +3873,9 @@ fi
 
 # Checks for libraries.
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for  in -ljpeg" >&5
-$as_echo_n "checking for  in -ljpeg... " >&6; }
-if ${ac_cv_lib_jpeg_+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for jpeg_stdio_src in -ljpeg" >&5
+$as_echo_n "checking for jpeg_stdio_src in -ljpeg... " >&6; }
+if ${ac_cv_lib_jpeg_jpeg_stdio_src+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -3890,30 +3889,137 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char  ();
+char jpeg_stdio_src ();
 int
 main ()
 {
-return  ();
+return jpeg_stdio_src ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_jpeg_=yes
+  ac_cv_lib_jpeg_jpeg_stdio_src=yes
 else
-  ac_cv_lib_jpeg_=no
+  ac_cv_lib_jpeg_jpeg_stdio_src=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jpeg_" >&5
-$as_echo "$ac_cv_lib_jpeg_" >&6; }
-if test "x$ac_cv_lib_jpeg_" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_jpeg_jpeg_stdio_src" >&5
+$as_echo "$ac_cv_lib_jpeg_jpeg_stdio_src" >&6; }
+if test "x$ac_cv_lib_jpeg_jpeg_stdio_src" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBJPEG 1
+_ACEOF
 
-echo "Cannot find libjpeg."
-exit 1
+  LIBS="-ljpeg $LIBS"
+
+else
+
+	echo "Cannot find libjpeg."
+	exit 1
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for tjInitCompress in -lturbojpeg" >&5
+$as_echo_n "checking for tjInitCompress in -lturbojpeg... " >&6; }
+if ${ac_cv_lib_turbojpeg_tjInitCompress+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lturbojpeg  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char tjInitCompress ();
+int
+main ()
+{
+return tjInitCompress ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_turbojpeg_tjInitCompress=yes
+else
+  ac_cv_lib_turbojpeg_tjInitCompress=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_turbojpeg_tjInitCompress" >&5
+$as_echo "$ac_cv_lib_turbojpeg_tjInitCompress" >&6; }
+if test "x$ac_cv_lib_turbojpeg_tjInitCompress" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBTURBOJPEG 1
+_ACEOF
+
+  LIBS="-lturbojpeg $LIBS"
+
+else
+
+	echo "Cannot find libturbojpeg."
+	exit 1
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for CZopfliPNGOptimize in -lzopflipng" >&5
+$as_echo_n "checking for CZopfliPNGOptimize in -lzopflipng... " >&6; }
+if ${ac_cv_lib_zopflipng_CZopfliPNGOptimize+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lzopflipng  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char CZopfliPNGOptimize ();
+int
+main ()
+{
+return CZopfliPNGOptimize ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_zopflipng_CZopfliPNGOptimize=yes
+else
+  ac_cv_lib_zopflipng_CZopfliPNGOptimize=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_zopflipng_CZopfliPNGOptimize" >&5
+$as_echo "$ac_cv_lib_zopflipng_CZopfliPNGOptimize" >&6; }
+if test "x$ac_cv_lib_zopflipng_CZopfliPNGOptimize" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBZOPFLIPNG 1
+_ACEOF
+
+  LIBS="-lzopflipng $LIBS"
+
+else
+
+	echo "Cannot find libzopflipng."
+	exit 1
 
 fi
 
@@ -4340,6 +4446,23 @@ _ACEOF
 else
 
 echo "Cannot find jpeglib.h."
+exit 1
+
+fi
+
+done
+
+for ac_header in zopflipng/zopflipng_lib.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "zopflipng/zopflipng_lib.h" "ac_cv_header_zopflipng_zopflipng_lib_h" "$ac_includes_default"
+if test "x$ac_cv_header_zopflipng_zopflipng_lib_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_ZOPFLIPNG_ZOPFLIPNG_LIB_H 1
+_ACEOF
+
+else
+
+echo "Cannot find zopflipng/zopflipng_lib.h."
 exit 1
 
 fi

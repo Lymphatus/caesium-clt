@@ -15,7 +15,6 @@ AC_CONFIG_FILES([
  src/Makefile
 ])
 
-#TODO Check for turbojpeg instead
 
 AC_ARG_WITH(libjpeg, [  --libjpeg=DIR	  libjpeg is installed in ],
 	[if test $withval != yes; then
@@ -30,15 +29,27 @@ AC_ARG_WITH(libjpeg, [  --libjpeg=DIR	  libjpeg is installed in ],
 	fi])
 
 # Checks for libraries.
-AC_CHECK_LIB(jpeg, ,[
-echo "Cannot find libjpeg."
-exit 1
+AC_CHECK_LIB(jpeg, jpeg_stdio_src, ,[
+	echo "Cannot find libjpeg."
+	exit 1
+])
+AC_CHECK_LIB(turbojpeg, tjInitCompress, ,[
+	echo "Cannot find libturbojpeg."
+	exit 1
+])
+AC_CHECK_LIB(zopflipng, CZopfliPNGOptimize, ,[
+	echo "Cannot find libzopflipng."
+	exit 1
 ])
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h getopt.h stdio.h sys/stats.h dirent.h])
 AC_CHECK_HEADERS(jpeglib.h,,[
 echo "Cannot find jpeglib.h."
+exit 1
+])
+AC_CHECK_HEADERS(zopflipng/zopflipng_lib.h,,[
+echo "Cannot find zopflipng/zopflipng_lib.h."
 exit 1
 ])
 
