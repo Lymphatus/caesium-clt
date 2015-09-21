@@ -33,14 +33,16 @@ Cloning from git
 ==================
 	$ git clone https://github.com/Lymphatus/CaesiumCLT
 	$ cd CaesiumCLT
-	$ (optional) autoreconf -fiv
+	$ autoreconf -fiv
 	$ ./configure
 	$ make
 	$ sudo make install
 
-You can build out of the source tree in a separate folder. For example:
+You can build out of the source tree in a separate folder. Add this steps before
+invoking configure:
 	$ mkdir build
 	$ cd build
+Then call:
 	$ ../configure
 	$ make
 	$ sudo make install

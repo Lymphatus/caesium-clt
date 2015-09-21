@@ -27,6 +27,8 @@ cclt_compress_parameters initialize_compression_parameters() {
 	par.lossless = 0;
 	par.input_files_count = 0;
 	par.recursive = 0;
+	par.input_files = NULL;
+	par.structure = 0;
 
 	return par;
 }
@@ -82,11 +84,19 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 				case 'R':
 					parameters.recursive = 1;
 					break;
+				case 'S':
+					parameters.structure = 1;
+					break;
 				default:
 					abort();
 			}
 		} else {
 			int i = 0;
+			if (isDirectory(argv[optind])) {
+				//TODO Works but I'd like to pass the list and return the number of files instead
+				parameters.input_files = scan_folder(argv[optind], &parameters.input_files_count, parameters.recursive);
+				return parameters;
+			}
 			parameters.input_files = (char**) malloc ((argc - optind) * sizeof (char*));
 			while (optind < argc) {
 				parameters.input_files[i] = (char*) malloc (strlen(argv[optind]) * sizeof(char)); //TODO Necessary??
@@ -101,7 +111,7 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 	return parameters;
 }
 
-void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
+int cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
 	enum image_type type = detect_image_type(input);
 	if (type == JPEG && pars->lossless == 0) {
 		cclt_jpeg_compress(output, cclt_jpeg_decompress(input, pars), pars);
@@ -113,6 +123,8 @@ void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* 
 	} else if (type == GIF) {
 		printf("GIF detected. Not implemented yet.\n");
 	} else {
-		return;
+		printf("Unknown file type.\n");
+		return -1;
 	}
+	return 0;
 }

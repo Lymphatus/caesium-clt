@@ -15,9 +15,7 @@
 	#include <linux/limits.h>
 #endif
 
-
 #include "utils.h"
-
 
 int string_to_int(char* in_string) {
 	long value = 0;
@@ -51,9 +49,10 @@ void print_help() {
 			"\t-e\tkeeps EXIF info during compression\n"
 			"\t-o\tcompress to custom folder\n"
 			"\t-l\tuse lossless optimization\n"
-			"\t-s\tscale to value, expressed as percentage (e.g. 20%%)\n"
+			"\t-s\tscale to value, expressed as percentage (e.g. 20%%) [Only 1/2^n allowed]\n"
 			//TODO Remove this warning
-			"\t-R\tif input is a folder, scan subfolders too [NOT IMPLEMENTED YET]\n"
+			"\t-R\tif input is a folder, scan subfolders too\n"
+			"\t-S\tkeep the folder structure [Not active yet]\n"
 			"\t-h\tdisplay this help and exit\n"
 			"\t-v\toutput version information and exit\n\n");
 	exit(0);
@@ -92,68 +91,65 @@ int mkpath(const char *pathname, mode_t mode) {
 	return -1;
 }
 
-char** scan_folder(char* dir, int depth) {
+char** scan_folder(char* basedir, int* n, int recur) {
+	DIR *dir;
+	struct dirent *ent;
+	char* entpath = NULL;
+	struct stat s;
+	int indexes = 0;
 	int i = 0;
-	DIR *dp;
-    struct dirent *entry;
-    struct stat statbuf;
-    char** files = (char**) malloc(sizeof(char*));
-    if ((dp = opendir(dir)) == NULL) {
-        fprintf(stderr, "Cannot open %s. Aborting.\n", dir);
-        exit(-14);
-    }
-    chdir(dir);
-    while ((entry = readdir(dp)) != NULL) {
-        lstat(entry->d_name, &statbuf);
-        if (S_ISDIR(statbuf.st_mode)) {
-            if (strcmp(".", entry->d_name) == 0 || strcmp("..", entry->d_name) == 0) {
-                continue;
-            }
-            files = (char**) realloc(files, sizeof(files) + sizeof(char*));
-            printf("QUI\n");
-            files[i] = entry->d_name;
-            i++;
-            scan_folder(entry->d_name, depth+4);
-        }
-        else {
-        	files = (char**) realloc(files, sizeof(files) + sizeof(char*));
-        	printf("QUI\n");
-            files[i] = entry->d_name;
-            i++;
-        }
-    }
+	char** fileList = NULL;
 
-    chdir("..");
-    closedir(dp);
-	printf("SEG\n");
-    return files;
-}
+	char absolute_path[PATH_MAX];
+	realpath(basedir, absolute_path);
 
-void printdir(char *dir, int depth)
-{
-    DIR *dp;
-    struct dirent *entry;
-    struct stat statbuf;
-    if((dp = opendir(dir)) == NULL) {
-        fprintf(stderr,"cannot open directory: %s\n", dir);
-        return;
-    }
-    chdir(dir);
-    while((entry = readdir(dp)) != NULL) {
-        lstat(entry->d_name,&statbuf);
-        if(S_ISDIR(statbuf.st_mode)) {
-            /* Found a directory, but ignore . and .. */
-            if(strcmp(".",entry->d_name) == 0 ||
-                strcmp("..",entry->d_name) == 0)
-                continue;
-            printf("%*s%s/\n",depth,"",entry->d_name);
-            /* Recurse at a new indent level */
-            printdir(entry->d_name,depth+4);
-        }
-        else printf("%*s%s\n",depth,"",entry->d_name);
-    }
-    chdir("..");
-    closedir(dp);
+	dir = opendir(absolute_path);
+	
+	if (dir != NULL) {		
+		while ((ent = readdir(dir)) != NULL) {
+			// Do not allow "." or ".."
+			if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
+				continue;
+			}
+			
+			//TODO allocate for this entry
+			//Basedir + filename + separator
+			entpath = realloc(entpath, (strlen(absolute_path) + strlen(ent->d_name) + 1) * sizeof(char));
+			strcpy(entpath, absolute_path);
+			//Append separator
+			strcat(entpath, "/");
+			//Append the name
+			strcat(entpath, ent->d_name);
+
+			//Gets stats
+			stat(entpath, &s);
+			
+			if (S_ISDIR(s.st_mode)) {			
+				// Directory, walk it if recursive is set
+				if (recur != 0) {
+					fileList = scan_folder(entpath, n, recur);
+				}
+			} else {
+				//File, add to the list
+				//New entry in the array
+
+				indexes++;
+				//Alloc new room for the array
+				fileList = realloc(fileList, indexes * sizeof(char*));
+				fileList[i] = (char*) malloc(strlen(entpath) * sizeof(char));
+				//Copy the file path in the array
+				fileList[i] = strcpy(fileList[i], entpath);
+				i++;
+			}
+		}
+		closedir(dir);
+	} else {
+		fprintf(stderr, "Failed to open folder. Aborting.\n");
+		exit(-19);
+	}
+	free(entpath);
+	*n = i;
+	return fileList;
 }
 
 enum image_type detect_image_type(char* path) {
@@ -181,8 +177,12 @@ enum image_type detect_image_type(char* path) {
 		free(type_buffer);
 		return PNG;
 	} else {
-		fprintf(stderr, "Unsupported file type. Skipping.\n");
 		return UNKN;
 	}
 }
 
+int isDirectory(const char *file_path) {
+	struct stat s;
+	stat(file_path, &s);
+	return S_ISDIR(s.st_mode);
+}

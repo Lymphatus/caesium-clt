@@ -5,6 +5,6 @@
 
 cclt_compress_parameters initialize_compression_parameters();
 cclt_compress_parameters parse_arguments(int argc, char* argv[]);
-void cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars);
+int cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars); //Returns -1 if the file type is unknown
 
 #endif

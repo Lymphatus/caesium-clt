@@ -1,5 +1,5 @@
 ## Caesium Command Line Tools
-##### CCLT - v 1.9.9 BETA (build 20150911) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
+##### CCLT - v0.9.1-beta (build 20150921) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
 
 ----------
 
@@ -23,15 +23,13 @@ See INSTALL for more details.
 ----------
 
 ###### TODO
-* Recursive folder support
 * GIF support?
 * Code cleaning
 
 ----------
 
 ###### CHANGELOG
-Note that CCLT started along with Caesium 2.0.0 so it uses its versioning system. 2.0.0 has to be considered the initial release.
-* 1.9.9 - Initial development stage
+* 0.9.1-beta - Initial development stage
 
 ----------
 

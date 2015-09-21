@@ -21,17 +21,20 @@
 -l lossless v
 -s scale v
 -h help v
--R recursive
+-R recursive v
+-S keep folder structure
 */
 
 
 
 //TODO Use a general fuction to support folder separators
+//TODO If inputs a folder AND files, send an error
+//TODO If the output is INSIDE the folder we are passing as input, ignore it or we're gonna go in a infinite loop
 
 void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 
 	struct stat st_buf;
-	int i = 0, recursive = pars->recursive;
+	int i = 0;
 
 	if (mkpath(output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
 		if (errno != EEXIST) {
@@ -43,9 +46,9 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 
 		off_t i_size, o_size;
 		int status; //Pointer for stat() call
-		char* output_filename = (char*) malloc ((strlen(output_folder) + 2) * sizeof(char));
+		char* output_filename = (char*) malloc ((strlen(output_folder) + 1) * sizeof(char));
 		char* i_tmp = (char*) malloc (strlen(input_files[i]) * sizeof(char));
-		
+
 		strcpy(i_tmp, input_files[i]);
 		strcpy(output_filename, output_folder);
 
@@ -56,7 +59,7 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 
 		//fprintf(stderr, "%s - %lu\n", output_filename, strlen(output_filename) + strlen(get_filename_with_extension(i_tmp)) + 1);
 
-		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(i_tmp)) + 1) * sizeof(char));
+		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(i_tmp))) * sizeof(char));
 		output_filename = strcat(output_filename, basename(i_tmp));
 
 		//TODO OVERALL progress update?
@@ -71,32 +74,11 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 
 	    //Check if we ran into a folder
 	    //TODO Check symlinks too
-		if (S_ISDIR (st_buf.st_mode) && recursive == 0) {
+		if (isDirectory(input_files[i])) {
 	    	//Folder found, but we don't need it here
 			i++;
 			continue;
-		} else if (S_ISDIR (st_buf.st_mode) && recursive != 0) {
-			//Folder found, we need to get into it
-
-
-			/*
-				1. Scan the entire folder input_files[i]
-				2. Get a new array containing all the files and folders
-				3. Set the output folder to be one step deeper
-				3. Call cclt_start(new_list, new folder, same, same, same)
-			*/
-
-			//TODO malloc?
-			//char** new_files = (char**) malloc(256 * sizeof(char*));
-			//new_files = scan_folder(input_files[i], 0);
-			//cclt_start(new_files, output_folder, pars, i_t_size, o_t_size);
-			//i++;
-			//TODO Remove this after this funcion is fully completed
-			//free(new_files);
-			continue;
 		}
-
-
 
 		//Get input file size
 		i_size = st_buf.st_size;
@@ -105,11 +87,11 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		//TODO Do we want a more verbose output?
 		fprintf(stdout, "Compressing: %s -> %s\n", input_files[i], output_filename);
 
-		//if (lossless != 0) {
-		//	cclt_jpeg_optimize(input_files[i], output_filename, exif, input_files[i]);
-		//} else {
-			cclt_compress_routine(input_files[i], output_filename, pars);
-		//}
+		int routine = cclt_compress_routine(input_files[i], output_filename, pars);
+		if (routine == -1) {
+			i++;
+			continue;
+		}
 
 		//Get output stats
 		status = stat(output_filename, &st_buf);
@@ -124,14 +106,7 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		fprintf(stdout, "%ld bytes -> %ld bytes [%.2f%%]\n",
 			(long) i_size, (long) o_size, ((float) o_size - i_size) * 100 / i_size);
 
-		//TODO Perform the required instructions
 		//TODO Provide complete progress support
-		//INPUT: pars.input_files[i] | OUTPUT: output_filename
-
-		//Free allocated memory
-		//TODO Causing segfaults
-		//free(output_filename);
-		//free(i_tmp);
 		i++;
 	}
 
@@ -193,6 +168,7 @@ int main (int argc, char *argv[]) {
 		exit(-13);
 	}
 
+	//We need the file list right here
 	cclt_start(pars.input_files, pars.input_files_count, pars.output_folder, &pars, &i_t_size, &o_t_size);
 
 	fprintf(stdout, "-------------------------------\nCompression completed.\n%ld bytes -> %ld bytes [%.2f%% | %ld bytes]\n",
