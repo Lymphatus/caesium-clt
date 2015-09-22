@@ -76,6 +76,7 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 	    //TODO Check symlinks too
 		if (isDirectory(input_files[i])) {
 	    	//Folder found, but we don't need it here
+	    	printf("Folder found\n");
 			i++;
 			continue;
 		}
@@ -103,8 +104,8 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		o_size = st_buf.st_size;
 		*(o_t_size) += o_size;
 
-		fprintf(stdout, "%ld bytes -> %ld bytes [%.2f%%]\n",
-			(long) i_size, (long) o_size, ((float) o_size - i_size) * 100 / i_size);
+		fprintf(stdout, "%s -> %s [%.2f%%]\n",
+			get_human_size(i_size), get_human_size(o_size), ((float) o_size - i_size) * 100 / i_size);
 
 		//TODO Provide complete progress support
 		i++;
@@ -171,8 +172,11 @@ int main (int argc, char *argv[]) {
 	//We need the file list right here
 	cclt_start(pars.input_files, pars.input_files_count, pars.output_folder, &pars, &i_t_size, &o_t_size);
 
-	fprintf(stdout, "-------------------------------\nCompression completed.\n%ld bytes -> %ld bytes [%.2f%% | %ld bytes]\n",
-		(long) i_t_size, (long) o_t_size, ((float) o_t_size - i_t_size) * 100 / i_t_size, (long) (o_t_size - i_t_size));
+	fprintf(stdout, "-------------------------------\nCompression completed.\n%s -> %s [%.2f%% | %s]\n",
+		get_human_size((long) i_t_size),
+		get_human_size((long) o_t_size),
+		((float) o_t_size - i_t_size) * 100 / i_t_size,
+		get_human_size(((long) o_t_size - i_t_size)));
 	
 	exit(0);
 }

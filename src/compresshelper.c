@@ -120,8 +120,6 @@ int cclt_compress_routine(char* input, char* output, cclt_compress_parameters* p
 		cclt_jpeg_optimize(input, output, pars->exif_copy, input);
 	} else if (type == PNG) {
 		cclt_png_optimize(input, output);
-	} else if (type == GIF) {
-		printf("GIF detected. Not implemented yet.\n");
 	} else {
 		printf("Unknown file type.\n");
 		return -1;

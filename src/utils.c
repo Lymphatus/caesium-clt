@@ -10,6 +10,7 @@
 #include <getopt.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <math.h>
 
 #ifdef __linux
 	#include <linux/limits.h>
@@ -50,8 +51,8 @@ void print_help() {
 			"\t-o\tcompress to custom folder\n"
 			"\t-l\tuse lossless optimization\n"
 			"\t-s\tscale to value, expressed as percentage (e.g. 20%%) [Only 1/2^n allowed]\n"
-			//TODO Remove this warning
 			"\t-R\tif input is a folder, scan subfolders too\n"
+			//TODO Remove this warning
 			"\t-S\tkeep the folder structure [Not active yet]\n"
 			"\t-h\tdisplay this help and exit\n"
 			"\t-v\toutput version information and exit\n\n");
@@ -153,6 +154,7 @@ char** scan_folder(char* basedir, int* n, int recur) {
 }
 
 enum image_type detect_image_type(char* path) {
+	//Open the file
 	FILE* fp;
 	unsigned char* type_buffer = valloc(2);
 
@@ -162,14 +164,15 @@ enum image_type detect_image_type(char* path) {
 		fprintf(stderr, "Cannot open input file for type detection. Aborting.\n");
 		exit(-14);
 	}
-
+	//Read enough bytes
 	if (fread(type_buffer, 1, 2, fp) < 2) {
 		fprintf(stderr, "Cannot read file type. Aborting.\n");
 		exit(-15);
 	}
-
+	//We don't need it anymore
 	fclose(fp);
 
+	//Check the bytes against the JPEG and PNG specs
 	if (((int) type_buffer[0] == 0xFF) && ((int) type_buffer[1] == 0xD8)) {
 		free(type_buffer);
 		return JPEG;
@@ -185,4 +188,24 @@ int isDirectory(const char *file_path) {
 	struct stat s;
 	stat(file_path, &s);
 	return S_ISDIR(s.st_mode);
+}
+
+char* get_human_size(long size) {
+	//We should not get more than TB images
+	char* unit[5] = {"B", "KB", "MB", "GB", "TB"};
+	//Index of the array containing the correct unit
+	double order = floor(log2(labs(size)) / 10);
+	//Alloc enough size for the final string
+	char* final = (char*) malloc(((int) (floor(log10(labs(size))) + 4)) * sizeof(char));
+
+	//If the order exceeds 4, something is fishy
+	if (order > 4) {
+		fprintf(stderr, "Do you really have such a huge file?\n");
+		order = 4;
+	}
+
+	//Copy the formatted string into the buffer
+	sprintf(final, "%.2f %s", size / (pow(1024, order)), unit[(int)order]);
+	//And return it
+	return final;
 }

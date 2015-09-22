@@ -28,7 +28,6 @@ typedef struct cclt_compress_parameters {
 enum image_type {
 	JPEG,
 	PNG,
-	GIF,
 	UNKN,
 };
 
@@ -39,5 +38,6 @@ int mkpath(const char *pathname, mode_t mode);
 enum image_type detect_image_type(char* path);
 int isDirectory(const char *file_path);
 char** scan_folder(char* basedir, int* n, int recur);
+char* get_human_size(long size);
 
 #endif
