@@ -150,7 +150,6 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
 	FILE* fp;
 	tjhandle tjCompressHandle;
 	unsigned char* output_buffer;
-	int status;
 	unsigned long output_size = 0;
 
 	fp = fopen(output_file, "wb");
@@ -166,7 +165,8 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
    tjCompressHandle = tjInitCompress();
 
    //TODO Scale must be a power of 2. Can we resolve it?
-   status = tjCompress2(tjCompressHandle,
+   //TODO Error checks
+   tjCompress2(tjCompressHandle,
        image_buffer,
        pars->width,
        0,
@@ -177,7 +177,6 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
        pars->subsample,
        pars->quality,
        pars->dct_method);
-
 
    fwrite(output_buffer, 1, output_size, fp);
 

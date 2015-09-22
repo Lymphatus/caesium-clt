@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdlib.h>
@@ -102,9 +103,10 @@ char** scan_folder(char* basedir, int* n, int recur) {
 	char** fileList = NULL;
 
 	char absolute_path[PATH_MAX];
-	realpath(basedir, absolute_path);
+	char* ptr = realpath(basedir, absolute_path);
 
-	dir = opendir(absolute_path);
+
+	dir = opendir(ptr);
 	
 	if (dir != NULL) {		
 		while ((ent = readdir(dir)) != NULL) {
@@ -115,8 +117,8 @@ char** scan_folder(char* basedir, int* n, int recur) {
 			
 			//TODO allocate for this entry
 			//Basedir + filename + separator
-			entpath = realloc(entpath, (strlen(absolute_path) + strlen(ent->d_name) + 1) * sizeof(char));
-			strcpy(entpath, absolute_path);
+			entpath = realloc(entpath, (strlen(ptr) + strlen(ent->d_name) + 1) * sizeof(char));
+			strcpy(entpath, ptr);
 			//Append separator
 			strcat(entpath, "/");
 			//Append the name
@@ -156,7 +158,7 @@ char** scan_folder(char* basedir, int* n, int recur) {
 enum image_type detect_image_type(char* path) {
 	//Open the file
 	FILE* fp;
-	unsigned char* type_buffer = valloc(2);
+	unsigned char* type_buffer = (unsigned char*) malloc(2);
 
 	fp = fopen(path, "r");
 
