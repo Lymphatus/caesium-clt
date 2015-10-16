@@ -1,5 +1,5 @@
 ## Caesium Command Line Tools
-##### CCLT - v0.9.1-beta (build 20150921) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
+##### CCLT - v0.9.1-beta (build 20151012) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
 
 ----------
 
@@ -11,7 +11,7 @@
 ----------
 
 ###### TESTED PLATFORMS
-* MacOSX Yosemite (v. 10.10.5)
+* MacOSX El Capitan (v. 10.11)
 * Arch Linux
 * Ubuntu 14.04.2
 
@@ -53,6 +53,12 @@ Compress with quality 80 and resize at 50% ```image1.jpg```, located in the ```h
 ###### TODO
 * Code cleaning
 * Folder structure support
+
+----------
+
+###### KNOWN ISSUES
+* Strange behaviour with network files: the output base_name is the name of the output subfolder (e.g. -o /path/to/images/compressed /path/to/images -> results in all the output images named as "compressed")
+* Resizing works only for powers of two (e.g. 50%, 25%, 16%...) and for JPEGs only
 
 ----------
 

@@ -46,6 +46,8 @@ struct jpeg_decompress_struct cclt_get_markers(char* input) {
 }
 
 int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char* exif_src) {
+	//TODO Bug on normal compress: the input file is a bogus long string
+	// Happened with a (bugged) server connection
 	//File pointer for both input and output
 	FILE* fp;
 	
@@ -66,6 +68,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	dstinfo.err = jpeg_std_error(&jdsterr);
 	jpeg_create_compress(&dstinfo);
 	
+
   	//Open the input file
 	fp = fopen(input_file, "r");
 	
@@ -75,6 +78,8 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 		printf("INPUT: Failed to open file \"%s\"\n", input_file);
 		return -1;
 	}
+
+	printf("INPUT: %s\n", input_file);
 	
 	//Create the IO istance for the input file
 	jpeg_stdio_src(&srcinfo, fp);
@@ -110,6 +115,8 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 		printf("OUTPUT: Failed to open file \"%s\"\n", output_file);
 		return -2;
 	}
+
+	printf("OUTPUT: %s\n", output_file);
 
 	//CRITICAL - This is the optimization step
 	dstinfo.optimize_coding = TRUE;
@@ -157,7 +164,7 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-       printf("INPUT: Failed to open output \"%s\"\n", output_file);
+       printf("OUTPUT: Failed to open output \"%s\"\n", output_file);
        return;
    }
 

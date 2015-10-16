@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "lodepng.h"
-#include "zopflipng/zopflipng_lib.h"
+#include <zopflipng_lib.h>
 #include "png.h"
 
 void cclt_png_optimize(char* input, char* output) {
@@ -18,7 +18,7 @@ void cclt_png_optimize(char* input, char* output) {
 	unsigned char* resultpng; 
 	size_t resultpng_size;
 
-	png_options.num_iterations = 15;
+	png_options.num_iterations = 10;
 	png_options.num_iterations_large = 15;
     png_options.block_split_strategy = 3;
 
@@ -33,11 +33,11 @@ void cclt_png_optimize(char* input, char* output) {
     }
 
     if (CZopfliPNGOptimize(orig_buffer,
-    									orig_buffer_size, 
-    									&png_options,
-    									0,
-    									&resultpng,
-    									&resultpng_size) != 0) {
+    						orig_buffer_size, 
+    						&png_options,
+    						0,
+    						&resultpng,
+    						&resultpng_size) != 0) {
     	fprintf(stderr, "Error while optimizing PNG. Aborting.\n");
         exit(-17);
     }

@@ -10,7 +10,7 @@ without warranty of any kind.
 
 Requirements
 ==================
-You will need both mozjpeg and zopflipng compiled as libraries to be able to
+You will need both mozjpeg (libjpeg-turbo will work too) and zopflipng compiled as libraries to be able to
 compile CaesiumCLT. Refer to their own documentation for the detailed
 instructions.
 
