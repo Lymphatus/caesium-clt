@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "lodepng.h"
-#include <zopflipng_lib.h>
+#include <zopflipng/zopflipng_lib.h>
 #include "png.h"
 
 void cclt_png_optimize(char* input, char* output) {

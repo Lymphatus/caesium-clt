@@ -103,7 +103,7 @@ am_caesiumclt_OBJECTS = caesiumclt-main.$(OBJEXT) \
 	caesiumclt-utils.$(OBJEXT) caesiumclt-png.$(OBJEXT) \
 	caesiumclt-lodepng.$(OBJEXT)
 caesiumclt_OBJECTS = $(am_caesiumclt_OBJECTS)
-caesiumclt_LDADD = $(LDADD)
+caesiumclt_DEPENDENCIES =
 caesiumclt_LINK = $(CCLD) $(caesiumclt_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
@@ -255,6 +255,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c png.c lodepng.c
 caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -std=c99
+caesiumclt_LDADD = -lm
 all: all-am
 
 .SUFFIXES:
