@@ -59,6 +59,7 @@ Compress with quality 80 and resize at 50% ```image1.jpg```, located in the ```h
 ###### KNOWN ISSUES
 * Strange behaviour with network files: the output base_name is the name of the output subfolder (e.g. -o /path/to/images/compressed /path/to/images -> results in all the output images named as "compressed")
 * Resizing works only for powers of two (e.g. 50%, 25%, 16%...) and for JPEGs only
+* It does not work on Windows unless you port getopt to it
 
 ----------
 
