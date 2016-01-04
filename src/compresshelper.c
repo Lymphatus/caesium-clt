@@ -20,7 +20,7 @@ cclt_compress_parameters initialize_compression_parameters() {
 	par.width = 0;
 	par.height = 0;
 	par.scaling_factor = 100;
-	par.color_space = TJPF_RGB;
+	par.color_space = TJCS_RGB;
 	par.dct_method = TJFLAG_FASTDCT;
 	par.output_folder = NULL;
 	par.exif_copy = 0;

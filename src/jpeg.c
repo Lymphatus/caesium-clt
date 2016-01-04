@@ -78,8 +78,6 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 		printf("INPUT: Failed to open file \"%s\"\n", input_file);
 		return -1;
 	}
-
-	printf("INPUT: %s\n", input_file);
 	
 	//Create the IO istance for the input file
 	jpeg_stdio_src(&srcinfo, fp);
@@ -115,8 +113,6 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 		printf("OUTPUT: Failed to open file \"%s\"\n", output_file);
 		return -2;
 	}
-
-	printf("OUTPUT: %s\n", output_file);
 
 	//CRITICAL - This is the optimization step
 	dstinfo.optimize_coding = TRUE;
@@ -185,7 +181,7 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
        pars->quality,
        pars->dct_method);
 
-   fwrite(output_buffer, 1, output_size, fp);
+   fwrite(output_buffer, output_size, 1, fp);
 
    fclose(fp);
    tjDestroy(tjCompressHandle);
@@ -202,7 +198,7 @@ unsigned char* cclt_jpeg_decompress(char* fileName, cclt_compress_parameters* pa
     long int sourceJpegBufferSize = 0;
     unsigned char* sourceJpegBuffer = NULL;
     tjhandle tjDecompressHandle;
-    int fileWidth = 0, fileHeight = 0, jpegSubsamp = 0;
+    int fileWidth = 0, fileHeight = 0, jpegSubsamp = 0, colorSpace = 0;
 
     //TODO No error checks here
     file = fopen(fileName, "rb");
@@ -213,16 +209,13 @@ unsigned char* cclt_jpeg_decompress(char* fileName, cclt_compress_parameters* pa
     res = fseek(file, 0, SEEK_SET);
     res = fread(sourceJpegBuffer, (long)sourceJpegBufferSize, 1, file);
     tjDecompressHandle = tjInitDecompress();
-    res = tjDecompressHeader2(tjDecompressHandle, sourceJpegBuffer, sourceJpegBufferSize, &fileWidth, &fileHeight, &jpegSubsamp);
+    res = tjDecompressHeader3(tjDecompressHandle, sourceJpegBuffer, sourceJpegBufferSize, &fileWidth, &fileHeight, &jpegSubsamp, &colorSpace);
 
     pars->width = ceil(fileWidth * ((double) pars->scaling_factor / 100));
     pars->height = ceil(fileHeight * ((double) pars->scaling_factor / 100));
 
     pars->subsample = jpegSubsamp;
-
-    if (pars->subsample == TJSAMP_GRAY) {
-    	pars->color_space = TJPF_GRAY;
-    }
+    pars->color_space = colorSpace;
 
     unsigned char* temp = tjAlloc(pars->width * pars->height * tjPixelSize[pars->color_space]);
 
@@ -234,7 +227,9 @@ unsigned char* cclt_jpeg_decompress(char* fileName, cclt_compress_parameters* pa
        0,
        pars->height,
        pars->color_space,
-       TJFLAG_ACCURATEDCT);
+       pars->dct_method);
+
+    //fwrite(temp, pars->width * pars->height * tjPixelSize[pars->color_space], 1, fopen("/Users/lymphatus/Desktop/tmp/compresse/ccc", "w"));
 
     tjDestroy(tjDecompressHandle);
 
