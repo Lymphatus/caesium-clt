@@ -5,8 +5,13 @@
 #include <string.h>
 #include <sys/types.h>
 #include <turbojpeg.h>
-#include <getopt.h>
 #include <ctype.h>
+
+#ifdef _WIN32
+#include "wingetopt.h"
+#else
+#include <getopt.h>
+#endif
 
 #include "utils.h"
 #include "jpeg.h"
