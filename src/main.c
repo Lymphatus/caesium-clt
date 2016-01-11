@@ -1,13 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <getopt.h>
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#include <dirent.h> 
+#include <dirent.h>
 #include <libgen.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <time.h>
 
 #include "jpeg.h"
 #include "compresshelper.h"
@@ -19,7 +19,6 @@
 -o output folder v
 -v version v
 -l lossless v
--s scale v
 -h help v
 -R recursive v
 -S keep folder structure
@@ -133,7 +132,7 @@ int main (int argc, char *argv[]) {
 		}
 	} else {
 		//One of them is set
-		//If -q is set check it is within the 1-100 range	
+		//If -q is set check it is within the 1-100 range
 		if (!(pars.quality >= 1 && pars.quality <= 100) && pars.lossless == 0) {
 			fprintf(stderr, "Quality must be within a [1-100] range. Aborting.\n");
 			exit(-3);
@@ -146,12 +145,6 @@ int main (int argc, char *argv[]) {
 		exit(-9);
 	}
 
-	//Check if there's a valid scaling factor
-	if (pars.scaling_factor <= 0) {
-		fprintf(stderr, "Scaling factor must be > 0. Aborting.\n");
-		exit(-6);
-	}
-	
 	//Check if the output folder exists, otherwise create it
 	if (pars.output_folder == NULL) {
 		fprintf(stderr, "No -o option pointing to the destination folder. Aborting.\n");
@@ -164,19 +157,19 @@ int main (int argc, char *argv[]) {
 		}
 	}
 
-	if ((pars.lossless == 1) && (pars.scaling_factor != 100)) {
-		fprintf(stderr, "Lossless scaling is not supported. Use -q instead. Aborting.\n");
-		exit(-13);
-	}
-
+	//Start a timer
+	clock_t start = clock(), diff;
 	//We need the file list right here
 	cclt_start(pars.input_files, pars.input_files_count, pars.output_folder, &pars, &i_t_size, &o_t_size);
+	diff = clock() - start;
 
-	fprintf(stdout, "-------------------------------\nCompression completed.\n%s -> %s [%.2f%% | %s]\n",
+	fprintf(stdout, "-------------------------------\nCompression completed in %lum%lus\n%s -> %s [%.2f%% | %s]\n",
+		diff / CLOCKS_PER_SEC / 60,
+		diff / CLOCKS_PER_SEC % 60,
 		get_human_size((long) i_t_size),
 		get_human_size((long) o_t_size),
 		((float) o_t_size - i_t_size) * 100 / i_t_size,
 		get_human_size(((long) o_t_size - i_t_size)));
-	
+
 	exit(0);
 }

@@ -15,14 +15,14 @@ void cclt_png_optimize(char* input, char* output) {
 	unsigned char* orig_buffer;
 	size_t orig_buffer_size;
 
-	unsigned char* resultpng; 
+	unsigned char* resultpng;
 	size_t resultpng_size;
 
-	png_options.num_iterations = 10;
-	png_options.num_iterations_large = 15;
-    png_options.block_split_strategy = 3;
+	png_options.num_iterations = 15;
+	png_options.num_iterations_large = 5;
+    png_options.block_split_strategy = 4;
 
-    png_options.lossy_8bit = 1;
+    png_options.lossy_8bit = 0;
     png_options.lossy_transparent = 1;
 
 	png_options.auto_filter_strategy = 1;
@@ -33,7 +33,7 @@ void cclt_png_optimize(char* input, char* output) {
     }
 
     if (CZopfliPNGOptimize(orig_buffer,
-    						orig_buffer_size, 
+    						orig_buffer_size,
     						&png_options,
     						0,
     						&resultpng,

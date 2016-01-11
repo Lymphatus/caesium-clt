@@ -25,7 +25,7 @@ int string_to_int(char* in_string) {
 	errno = 0; //Error checking
 
 	value = strtol(in_string, &endptr, 0); //Convert the string
-	
+
 	//Check errors
 	if ((errno == ERANGE) || (errno != 0 && value == 0)) {
         perror("strtol");
@@ -36,7 +36,7 @@ int string_to_int(char* in_string) {
         fprintf(stderr, "Parse error: No digits were found for -q option. Aborting.\n");
         exit(-7);
     }
-	
+
 	return value;
 }
 
@@ -107,14 +107,14 @@ char** scan_folder(char* basedir, int* n, int recur) {
 
 
 	dir = opendir(ptr);
-	
-	if (dir != NULL) {		
+
+	if (dir != NULL) {
 		while ((ent = readdir(dir)) != NULL) {
 			// Do not allow "." or ".."
 			if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0) {
 				continue;
 			}
-			
+
 			//TODO allocate for this entry
 			//Basedir + filename + separator
 			entpath = realloc(entpath, (strlen(ptr) + strlen(ent->d_name) + 1) * sizeof(char));
@@ -126,8 +126,8 @@ char** scan_folder(char* basedir, int* n, int recur) {
 
 			//Gets stats
 			stat(entpath, &s);
-			
-			if (S_ISDIR(s.st_mode)) {			
+
+			if (S_ISDIR(s.st_mode)) {
 				// Directory, walk it if recursive is set
 				if (recur != 0) {
 					fileList = scan_folder(entpath, n, recur);
@@ -182,6 +182,7 @@ enum image_type detect_image_type(char* path) {
 		free(type_buffer);
 		return PNG;
 	} else {
+		free(type_buffer);
 		return UNKN;
 	}
 }

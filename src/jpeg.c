@@ -22,7 +22,7 @@ struct jpeg_decompress_struct cclt_get_markers(char* input) {
 
   	//Open the input file
 	fp = fopen(input, "r");
-	
+
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
@@ -50,7 +50,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	// Happened with a (bugged) server connection
 	//File pointer for both input and output
 	FILE* fp;
-	
+
 	//Those will hold the input/output structs
 	struct jpeg_decompress_struct srcinfo;
 	struct jpeg_compress_struct dstinfo;
@@ -67,18 +67,18 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	jpeg_create_decompress(&srcinfo);
 	dstinfo.err = jpeg_std_error(&jdsterr);
 	jpeg_create_compress(&dstinfo);
-	
+
 
   	//Open the input file
 	fp = fopen(input_file, "r");
-	
+
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
 		printf("INPUT: Failed to open file \"%s\"\n", input_file);
 		return -1;
 	}
-	
+
 	//Create the IO istance for the input file
 	jpeg_stdio_src(&srcinfo, fp);
 
@@ -211,8 +211,8 @@ unsigned char* cclt_jpeg_decompress(char* fileName, cclt_compress_parameters* pa
     tjDecompressHandle = tjInitDecompress();
     res = tjDecompressHeader3(tjDecompressHandle, sourceJpegBuffer, sourceJpegBufferSize, &fileWidth, &fileHeight, &jpegSubsamp, &colorSpace);
 
-    pars->width = ceil(fileWidth * ((double) pars->scaling_factor / 100));
-    pars->height = ceil(fileHeight * ((double) pars->scaling_factor / 100));
+    pars->width = fileWidth;
+    pars->height = fileHeight;
 
     pars->subsample = jpegSubsamp;
     pars->color_space = colorSpace;

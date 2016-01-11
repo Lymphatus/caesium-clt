@@ -12,7 +12,6 @@ typedef struct cclt_compress_parameters {
 	int quality;
 	int width;
 	int height;
-	int scaling_factor;
 	char* output_folder;
 	int color_space;
 	int dct_method;

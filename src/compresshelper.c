@@ -15,11 +15,10 @@
 
 cclt_compress_parameters initialize_compression_parameters() {
 	cclt_compress_parameters par;
-	
+
 	par.quality = 0;
 	par.width = 0;
 	par.height = 0;
-	par.scaling_factor = 100;
 	par.color_space = TJCS_RGB;
 	par.dct_method = TJFLAG_FASTDCT;
 	par.output_folder = NULL;
@@ -34,7 +33,7 @@ cclt_compress_parameters initialize_compression_parameters() {
 }
 
 cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
-	
+
 	//Initialize default params
 	cclt_compress_parameters parameters = initialize_compression_parameters();
 	int c;
@@ -74,9 +73,6 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 					break;
 				case 'o':
 					parameters.output_folder = optarg;
-					break;
-				case 's':
-					parameters.scaling_factor = string_to_int(optarg);
 					break;
 				case 'h':
 					print_help();
@@ -119,6 +115,10 @@ int cclt_compress_routine(char* input, char* output, cclt_compress_parameters* p
 	} else if (type == JPEG && pars->lossless != 0) {
 		cclt_jpeg_optimize(input, output, pars->exif_copy, input);
 	} else if (type == PNG) {
+		//Give a message to the user if he set a quality for PNGs
+		if (pars->quality != 0) {
+			printf("PNG file, ignoring quality parameter.\n");
+		}
 		cclt_png_optimize(input, output);
 	} else {
 		printf("Unknown file type.\n");
