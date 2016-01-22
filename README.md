@@ -1,5 +1,5 @@
 ## Caesium Command Line Tools
-##### CCLT - v0.9.1-beta (build 20151012) - Copyright &copy; Matteo Paonessa, 2015. All Rights Reserved.
+##### CCLT - v0.9.1-beta (build 20160121) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
 
 ----------
 
@@ -11,7 +11,7 @@
 ----------
 
 ###### TESTED PLATFORMS
-* MacOSX El Capitan (v. 10.11)
+* Mac OS X El Capitan (v10.11.1)
 * Arch Linux
 * Ubuntu 14.04.2
 
@@ -23,30 +23,26 @@ See INSTALL for more details.
 ----------
 
 ###### USAGE EXAMPLES
+
+Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output```
 ```
 $ caesiumclt -l -o ~/output/ ~/image.jpg
 ```
-Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output```
 
+Compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` with lossy compression and quality set to 80
 ```
 $ caesiumclt -q 80 -o ~/output/ ~/image.jpg
 ```
-Compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` with lossy compression and quality set to 80
 
+Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` and keeps EXIF metadata
 ```
 $ caesiumclt -l -e -o ~/output/ ~/image.jpg
 ```
-Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` and keeps EXIF metadata
 
+Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output```
 ```
 $ caesiumclt -l -R -o ~/output/ ~/Pictures
 ```
-Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output```
-
-```
-$ caesiumclt -q 80 -s 50% -o ~/output/ ~/image1.jpg
-```
-Compress with quality 80 and resize at 50% ```image1.jpg```, located in the ```home``` directory, into a folder called ```output```
 
 ----------
 

@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 #define APP_VERSION "0.9.1-beta"
-#define BUILD 20150921
+#define BUILD 20160116
 
 typedef struct cclt_compress_parameters {
 	int quality;
@@ -32,11 +32,10 @@ enum image_type {
 
 int string_to_int(char* in_string);
 void print_help();
-void print_progress(int current, int max, char* message);
 int mkpath(const char *pathname, mode_t mode);
 enum image_type detect_image_type(char* path);
-int isDirectory(const char *file_path);
-char** scan_folder(char* basedir, int* n, int recur);
+int is_directory(const char *file_path);
+int scan_folder(char** fileList, char* basedir, int recur);
 char* get_human_size(long size);
 
 #endif

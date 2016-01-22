@@ -51,21 +51,12 @@ void print_help() {
 			"\t-e\tkeeps EXIF info during compression\n"
 			"\t-o\tcompress to custom folder\n"
 			"\t-l\tuse lossless optimization\n"
-			"\t-s\tscale to value, expressed as percentage (e.g. 20%%) [Only 1/2^n allowed]\n"
 			"\t-R\tif input is a folder, scan subfolders too\n"
 			//TODO Remove this warning
 			"\t-S\tkeep the folder structure [Not active yet]\n"
 			"\t-h\tdisplay this help and exit\n"
 			"\t-v\toutput version information and exit\n\n");
 	exit(0);
-}
-
-void print_progress(int current, int max, char* message) {
-	fprintf(stdout, "\e[?25l");
-	fprintf(stdout, "\r%s[%d%%]", message, current * 100 / max);
-	if (current == max) {
-		fprintf(stdout, "\e[?25h\n");
-	}
 }
 
 //TODO Recheck
@@ -76,7 +67,7 @@ int mkpath(const char *pathname, mode_t mode) {
 	/* make a parent directory path */
 	strncpy(parent, pathname, sizeof(parent));
 	parent[sizeof(parent) - 1] = '\0';
-	for(p = parent + strlen(parent); *p != '/' && p != parent; p--);
+	for (p = parent + strlen(parent); *p != '/' && p != parent; p--);
 	*p = '\0';
 	/* try make parent directory */
 	if(p != parent && mkpath(parent, mode) != 0) {
@@ -93,18 +84,17 @@ int mkpath(const char *pathname, mode_t mode) {
 	return -1;
 }
 
-char** scan_folder(char* basedir, int* n, int recur) {
+int scan_folder(char** fileList, char* basedir, int recur) {
+	//TODO CRITIAL Pass list as 1st parameter
 	DIR *dir;
 	struct dirent *ent;
 	char* entpath = NULL;
 	struct stat s;
 	int indexes = 0;
 	int i = 0;
-	char** fileList = NULL;
 
 	char absolute_path[PATH_MAX];
 	char* ptr = realpath(basedir, absolute_path);
-
 
 	dir = opendir(ptr);
 
@@ -130,7 +120,7 @@ char** scan_folder(char* basedir, int* n, int recur) {
 			if (S_ISDIR(s.st_mode)) {
 				// Directory, walk it if recursive is set
 				if (recur != 0) {
-					fileList = scan_folder(entpath, n, recur);
+					scan_folder(fileList, entpath, recur);
 				}
 			} else {
 				//File, add to the list
@@ -142,6 +132,7 @@ char** scan_folder(char* basedir, int* n, int recur) {
 				fileList[i] = (char*) malloc(strlen(entpath) * sizeof(char));
 				//Copy the file path in the array
 				fileList[i] = strcpy(fileList[i], entpath);
+				printf("%s\n", fileList[i]);
 				i++;
 			}
 		}
@@ -151,8 +142,8 @@ char** scan_folder(char* basedir, int* n, int recur) {
 		exit(-19);
 	}
 	free(entpath);
-	*n = i;
-	return fileList;
+
+	return i;
 }
 
 enum image_type detect_image_type(char* path) {
@@ -187,7 +178,7 @@ enum image_type detect_image_type(char* path) {
 	}
 }
 
-int isDirectory(const char *file_path) {
+int is_directory(const char *file_path) {
 	struct stat s;
 	stat(file_path, &s);
 	return S_ISDIR(s.st_mode);
