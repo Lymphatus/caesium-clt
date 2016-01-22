@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([caesiumclt], [1.9.9], [caesium@saerasoft.com])
+AC_INIT([caesiumclt], [0.9.1-beta], [caesium@saerasoft.com])
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_AUX_DIR(tools)
 AM_INIT_AUTOMAKE(-Wall -Werror foreign)
@@ -22,10 +22,10 @@ AC_ARG_WITH(libjpeg, [  --libjpeg=DIR	  libjpeg is installed in ],
 	fi
 	if test -d "${jpeginfo_cv_libjpeg}/lib"; then
 		LDFLAGS="-L${jpeginfo_cv_libjpeg}/lib $LDFLAGS"
-		CPPFLAGS="$CPPFLAGS -I${jpeginfo_cv_libjpeg}/include"	
+		CPPFLAGS="$CPPFLAGS -I${jpeginfo_cv_libjpeg}/include"
 	else
 		LDFLAGS="-L${jpeginfo_cv_libjpeg} $LDFLAGS"
-		CPPFLAGS="$CPPFLAGS -I${jpeginfo_cv_libjpeg}"	
+		CPPFLAGS="$CPPFLAGS -I${jpeginfo_cv_libjpeg}"
 	fi])
 
 # Checks for libraries.

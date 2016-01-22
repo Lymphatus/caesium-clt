@@ -167,7 +167,6 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
    output_buffer = NULL;
    tjCompressHandle = tjInitCompress();
 
-   //TODO Scale must be a power of 2. Can we resolve it?
    //TODO Error checks
    tjCompress2(tjCompressHandle,
        image_buffer,

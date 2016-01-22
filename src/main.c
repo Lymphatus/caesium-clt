@@ -45,8 +45,12 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 
 		off_t i_size, o_size;
 		int status; //Pointer for stat() call
+
 		char* output_filename = (char*) malloc ((strlen(output_folder) + 1) * sizeof(char));
+		//CRITICAL SEGFUCKINGFAULT
+		//TODO input_files[i] è NULL when we pass a folder with -R
 		char* i_tmp = (char*) malloc (strlen(input_files[i]) * sizeof(char));
+
 
 		strcpy(i_tmp, input_files[i]);
 		strcpy(output_filename, output_folder);
@@ -61,9 +65,6 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(i_tmp))) * sizeof(char));
 		output_filename = strcat(output_filename, basename(i_tmp));
 
-		//TODO OVERALL progress update?
-		//print_progress(i + 1, pars.input_files_count, "Progress: ");
-
 		//Get input stats
 		status = stat(input_files[i], &st_buf);
 		if (status != 0) {
@@ -73,7 +74,7 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 
 	    //Check if we ran into a folder
 	    //TODO Check symlinks too
-		if (isDirectory(input_files[i])) {
+		if (is_directory(input_files[i])) {
 	    	//Folder found, but we don't need it here
 	    	printf("Folder found\n");
 			i++;
@@ -161,6 +162,9 @@ int main (int argc, char *argv[]) {
 	clock_t start = clock(), diff;
 	//We need the file list right here
 	cclt_start(pars.input_files, pars.input_files_count, pars.output_folder, &pars, &i_t_size, &o_t_size);
+	/*for (int i = 0; i < pars.input_files_count; i++) {
+		printf("FILE %d: %s\n", i, pars.input_files[i]);
+	}*/
 	diff = clock() - start;
 
 	fprintf(stdout, "-------------------------------\nCompression completed in %lum%lus\n%s -> %s [%.2f%% | %s]\n",
@@ -171,5 +175,5 @@ int main (int argc, char *argv[]) {
 		((float) o_t_size - i_t_size) * 100 / i_t_size,
 		get_human_size(((long) o_t_size - i_t_size)));
 
-	exit(0);
+	return 0;
 }

@@ -5,8 +5,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <turbojpeg.h>
-#include <getopt.h>
 #include <ctype.h>
+#include <getopt.h>
 
 #include "utils.h"
 #include "jpeg.h"
@@ -88,9 +88,10 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 			}
 		} else {
 			int i = 0;
-			if (isDirectory(argv[optind])) {
+			if (is_directory(argv[optind])) {
 				//TODO Works but I'd like to pass the list and return the number of files instead
-				parameters.input_files = scan_folder(argv[optind], &parameters.input_files_count, parameters.recursive);
+				parameters.input_files_count = scan_folder(parameters.input_files, argv[optind], parameters.recursive);
+				//parameters.input_files = scan_folder(argv[optind], &parameters.input_files_count, parameters.recursive);
 				return parameters;
 			}
 			parameters.input_files = (char**) malloc ((argc - optind) * sizeof (char*));
