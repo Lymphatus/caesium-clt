@@ -35,7 +35,7 @@ void print_help();
 int mkpath(const char *pathname, mode_t mode);
 enum image_type detect_image_type(char* path);
 int is_directory(const char *file_path);
-int scan_folder(char** fileList, char* basedir, int recur);
+void scan_folder(cclt_compress_parameters* parameters, char* basedir, int recur);
 char* get_human_size(long size);
 
 #endif

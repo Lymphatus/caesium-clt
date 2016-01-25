@@ -30,10 +30,14 @@
 //TODO If inputs a folder AND files, send an error
 //TODO If the output is INSIDE the folder we are passing as input, ignore it or we're gonna go in a infinite loop
 
-void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
+void cclt_start(cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 
 	struct stat st_buf;
 	int i = 0;
+
+	char** input_files = pars->input_files;
+	int n = pars->input_files_count;
+	char* output_folder = pars->output_folder;
 
 	if (mkpath(output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
 		if (errno != EEXIST) {
@@ -47,8 +51,7 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		int status; //Pointer for stat() call
 
 		char* output_filename = (char*) malloc ((strlen(output_folder) + 1) * sizeof(char));
-		//CRITICAL SEGFUCKINGFAULT
-		//TODO input_files[i] è NULL when we pass a folder with -R
+
 		char* i_tmp = (char*) malloc (strlen(input_files[i]) * sizeof(char));
 
 
@@ -59,8 +62,6 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		if (output_filename[strlen(output_folder) - 1] != '/') {
 			strcat(output_filename, "/");
 		}
-
-		//fprintf(stderr, "%s - %lu\n", output_filename, strlen(output_filename) + strlen(get_filename_with_extension(i_tmp)) + 1);
 
 		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(i_tmp))) * sizeof(char));
 		output_filename = strcat(output_filename, basename(i_tmp));
@@ -76,7 +77,6 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 	    //TODO Check symlinks too
 		if (is_directory(input_files[i])) {
 	    	//Folder found, but we don't need it here
-	    	printf("Folder found\n");
 			i++;
 			continue;
 		}
@@ -107,7 +107,6 @@ void cclt_start(char** input_files, int n, char* output_folder, cclt_compress_pa
 		fprintf(stdout, "%s -> %s [%.2f%%]\n",
 			get_human_size(i_size), get_human_size(o_size), ((float) o_size - i_size) * 100 / i_size);
 
-		//TODO Provide complete progress support
 		i++;
 	}
 
@@ -161,7 +160,7 @@ int main (int argc, char *argv[]) {
 	//Start a timer
 	clock_t start = clock(), diff;
 	//We need the file list right here
-	cclt_start(pars.input_files, pars.input_files_count, pars.output_folder, &pars, &i_t_size, &o_t_size);
+	cclt_start(&pars, &i_t_size, &o_t_size);
 	/*for (int i = 0; i < pars.input_files_count; i++) {
 		printf("FILE %d: %s\n", i, pars.input_files[i]);
 	}*/

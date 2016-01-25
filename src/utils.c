@@ -84,14 +84,12 @@ int mkpath(const char *pathname, mode_t mode) {
 	return -1;
 }
 
-int scan_folder(char** fileList, char* basedir, int recur) {
+void scan_folder(cclt_compress_parameters* parameters, char* basedir, int recur) {
 	//TODO CRITIAL Pass list as 1st parameter
 	DIR *dir;
 	struct dirent *ent;
 	char* entpath = NULL;
 	struct stat s;
-	int indexes = 0;
-	int i = 0;
 
 	char absolute_path[PATH_MAX];
 	char* ptr = realpath(basedir, absolute_path);
@@ -117,23 +115,19 @@ int scan_folder(char** fileList, char* basedir, int recur) {
 			//Gets stats
 			stat(entpath, &s);
 
-			if (S_ISDIR(s.st_mode)) {
+			if (S_ISDIR(s.st_mode) && recur != 0) {
 				// Directory, walk it if recursive is set
-				if (recur != 0) {
-					scan_folder(fileList, entpath, recur);
-				}
+				scan_folder(parameters, entpath, recur);
 			} else {
 				//File, add to the list
 				//New entry in the array
-
-				indexes++;
+				int n = parameters->input_files_count;
+				parameters->input_files_count++;
 				//Alloc new room for the array
-				fileList = realloc(fileList, indexes * sizeof(char*));
-				fileList[i] = (char*) malloc(strlen(entpath) * sizeof(char));
+				parameters->input_files = realloc(parameters->input_files, (n + 1) * sizeof(char*));
+				parameters->input_files[n] = (char*) malloc(strlen(entpath) * sizeof(char));
 				//Copy the file path in the array
-				fileList[i] = strcpy(fileList[i], entpath);
-				printf("%s\n", fileList[i]);
-				i++;
+				parameters->input_files[n] = strcpy(parameters->input_files[n], entpath);
 			}
 		}
 		closedir(dir);
@@ -142,8 +136,6 @@ int scan_folder(char** fileList, char* basedir, int recur) {
 		exit(-19);
 	}
 	free(entpath);
-
-	return i;
 }
 
 enum image_type detect_image_type(char* path) {

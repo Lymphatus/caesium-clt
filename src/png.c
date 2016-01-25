@@ -22,7 +22,7 @@ void cclt_png_optimize(char* input, char* output) {
 	png_options.num_iterations_large = 5;
     png_options.block_split_strategy = 4;
 
-    png_options.lossy_8bit = 0;
+    png_options.lossy_8bit = 1;
     png_options.lossy_transparent = 1;
 
 	png_options.auto_filter_strategy = 1;

@@ -12,6 +12,8 @@
 #include "jpeg.h"
 #include "png.h"
 
+//TODO CRITICAL It does not recognize single files as input. Why.
+
 
 cclt_compress_parameters initialize_compression_parameters() {
 	cclt_compress_parameters par;
@@ -88,19 +90,25 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 			}
 		} else {
 			int i = 0;
-			if (is_directory(argv[optind])) {
-				//TODO Works but I'd like to pass the list and return the number of files instead
-				parameters.input_files_count = scan_folder(parameters.input_files, argv[optind], parameters.recursive);
-				//parameters.input_files = scan_folder(argv[optind], &parameters.input_files_count, parameters.recursive);
-				return parameters;
-			}
 			parameters.input_files = (char**) malloc ((argc - optind) * sizeof (char*));
 			while (optind < argc) {
-				parameters.input_files[i] = (char*) malloc (strlen(argv[optind]) * sizeof(char)); //TODO Necessary??
-				parameters.input_files[i] = argv[optind];
-				parameters.input_files_count = i + 1;
-				optind++;
-				i++;
+				if (is_directory(argv[optind])) {
+					if (i != 0) {
+						printf("[ERROR] Found folder along with input files. Aborting.\n");
+						exit(-20);
+					} else if (i == 0 && argc - optind > 1) {
+						printf("[WARNING] Folder found, skipping all other inputs.\n");
+					}
+					scan_folder(&parameters, argv[optind], parameters.recursive);
+					//parameters.input_files = scan_folder(argv[optind], &parameters.input_files_count, parameters.recursive);
+					return parameters;
+				} else {
+					parameters.input_files[i] = (char*) malloc (strlen(argv[optind]) * sizeof(char)); //TODO Necessary??
+					parameters.input_files[i] = argv[optind];
+					i++;
+					parameters.input_files_count = i;
+					optind++;
+				}
 			}
 		}
 	}
