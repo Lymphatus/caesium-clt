@@ -1,5 +1,5 @@
 ## Caesium Command Line Tools
-##### CCLT - v0.9.1-beta (build 20160121) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
+##### CCLT - v0.9.1-beta (build 20160223) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
 
 ----------
 
@@ -48,13 +48,10 @@ $ caesiumclt -l -R -o ~/output/ ~/Pictures
 
 ###### TODO
 * Code cleaning
-* Folder structure support
 
 ----------
 
 ###### KNOWN ISSUES
-* Strange behaviour with network files: the output base_name is the name of the output subfolder (e.g. -o /path/to/images/compressed /path/to/images -> results in all the output images named as "compressed")
-* Resizing works only for powers of two (e.g. 50%, 25%, 16%...) and for JPEGs only
 * It does not work on Windows unless you port getopt to it
 
 ----------

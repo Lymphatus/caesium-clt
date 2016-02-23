@@ -26,8 +26,6 @@
 
 
 
-//TODO Use a general fuction to support folder separators
-//TODO If inputs a folder AND files, send an error
 //TODO If the output is INSIDE the folder we are passing as input, ignore it or we're gonna go in a infinite loop
 
 void cclt_start(cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
@@ -52,10 +50,6 @@ void cclt_start(cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size
 
 		char* output_filename = (char*) malloc ((strlen(output_folder) + 1) * sizeof(char));
 
-		char* i_tmp = (char*) malloc (strlen(input_files[i]) * sizeof(char));
-
-
-		strcpy(i_tmp, input_files[i]);
 		strcpy(output_filename, output_folder);
 
 		//Append / if was not entered by user
@@ -63,8 +57,10 @@ void cclt_start(cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size
 			strcat(output_filename, "/");
 		}
 
-		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(i_tmp))) * sizeof(char));
-		output_filename = strcat(output_filename, basename(i_tmp));
+		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(input_files[i]))) * sizeof(char));
+		output_filename = strcat(output_filename, basename(input_files[i]));
+
+		printf("%s\n", input_files[i]);
 
 		//Get input stats
 		status = stat(input_files[i], &st_buf);
