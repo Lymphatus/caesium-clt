@@ -30,7 +30,7 @@ struct jpeg_decompress_struct cclt_get_markers(char* input) {
 		exit(-13);
 	}
 
-    //Create the IO istance for the input file
+    //Create the IO instance for the input file
 	jpeg_stdio_src(&einfo, fp);
 
     //Save EXIF info

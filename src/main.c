@@ -60,8 +60,6 @@ void cclt_start(cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size
 		output_filename = realloc(output_filename, (strlen(output_filename) + strlen(basename(input_files[i]))) * sizeof(char));
 		output_filename = strcat(output_filename, basename(input_files[i]));
 
-		printf("%s\n", input_files[i]);
-
 		//Get input stats
 		status = stat(input_files[i], &st_buf);
 		if (status != 0) {

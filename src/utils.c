@@ -15,6 +15,8 @@
 
 #ifdef __linux
 	#include <linux/limits.h>
+#elif __APPLE__
+	#include <sys/syslimits.h>
 #endif
 
 #include "utils.h"
