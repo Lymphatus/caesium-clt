@@ -114,12 +114,12 @@ int main (int argc, char *argv[]) {
 	cclt_parameters pars = parse_arguments(argc, argv);
 
 	//Either -l or -q must be set but not together
-	if (!((pars.jpeg->lossless == 1) ^ (pars.jpeg->quality > 0))) {
+	if (!((pars.jpeg.lossless == 1) ^ (pars.jpeg.quality > 0))) {
 		//Both or none are set
-		if (pars.jpeg->lossless == 1 && pars.jpeg->quality > 0) {
+		if (pars.jpeg.lossless == 1 && pars.jpeg.quality > 0) {
 			fprintf(stderr, "-l option can't be used with -q. Either use one or the other. Aborting.\n");
 			exit(-1);
-		} else if (pars.jpeg->lossless == 0 && pars.jpeg->quality <= 0) {
+		} else if (pars.jpeg.lossless == 0 && pars.jpeg.quality <= 0) {
 			fprintf(stderr, "Either -l or -q must be set. Aborting.\n");
 			print_help();
 			exit(-2);
@@ -127,7 +127,7 @@ int main (int argc, char *argv[]) {
 	} else {
 		//One of them is set
 		//If -q is set check it is within the 1-100 range
-		if (!(pars.jpeg->quality >= 1 && pars.jpeg->quality <= 100) && pars.jpeg->lossless == 0) {
+		if (!(pars.jpeg.quality >= 1 && pars.jpeg.quality <= 100) && pars.jpeg.lossless == 0) {
 			fprintf(stderr, "Quality must be within a [1-100] range. Aborting.\n");
 			exit(-3);
 		}

@@ -29,8 +29,8 @@ typedef struct cclt_png_parameters {
 } cclt_png_parameters;
 
 typedef struct cclt_parameters {
-	cclt_jpeg_parameters* jpeg;
-	cclt_png_parameters* png;
+	cclt_jpeg_parameters jpeg;
+	cclt_png_parameters png;
 
 	char* output_folder;
 	char** input_files;
