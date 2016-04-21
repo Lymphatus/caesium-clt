@@ -12,20 +12,33 @@
 #include "jpeg.h"
 #include "png.h"
 
-//TODO CRITICAL It does not recognize single files as input. Why.
+void initialize_jpeg_parameters(cclt_parameters* par) {
 
+	par->jpeg.quality = 0;
+	par->jpeg.width = 0;
+	par->jpeg.height = 0;
+	par->jpeg.color_space = TJCS_RGB;
+	par->jpeg.dct_method = TJFLAG_FASTDCT;
+	par->jpeg.exif_copy = 0;
+	par->jpeg.lossless = 0;
+}
 
-cclt_compress_parameters initialize_compression_parameters() {
-	cclt_compress_parameters par;
+void initialize_png_parameters(cclt_parameters* par) {
+	par->png.iterations = 15;
+	par->png.iterations_large = 5;
+	par->png.block_split_strategy = 4;
+	par->png.lossy_8 = 1;
+	par->png.transparent = 1;
+	par->png.auto_filter_strategy = 1;
+}
 
-	par.quality = 0;
-	par.width = 0;
-	par.height = 0;
-	par.color_space = TJCS_RGB;
-	par.dct_method = TJFLAG_FASTDCT;
+cclt_parameters initialize_compression_parameters() {
+	cclt_parameters par;
+
+	initialize_jpeg_parameters(&par);
+	initialize_png_parameters(&par);
+
 	par.output_folder = NULL;
-	par.exif_copy = 0;
-	par.lossless = 0;
 	par.input_files_count = 0;
 	par.recursive = 0;
 	par.input_files = NULL;
@@ -34,21 +47,20 @@ cclt_compress_parameters initialize_compression_parameters() {
 	return par;
 }
 
-cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
+cclt_parameters parse_arguments(int argc, char* argv[]) {
 
 	//Initialize default params
-	cclt_compress_parameters parameters = initialize_compression_parameters();
+	cclt_parameters parameters = initialize_compression_parameters();
 	int c;
 
 	while (optind < argc) {
 		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
 			switch (c) {
 				case 'v':
-					printf("CCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", APP_VERSION, BUILD);
+					printf("CaesiumCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", APP_VERSION, BUILD);
 					exit(0);
 					break;
 				case '?':
-					//TODO if -o not specified or empty, use current. Useful?
 					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
 						fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 						//Arguments without values
@@ -65,13 +77,13 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 					fprintf(stderr, "Parameter expected.\n");
 					break;
 				case 'q':
-					parameters.quality = string_to_int(optarg);
+					parameters.jpeg.quality = string_to_int(optarg);
 					break;
 				case 'e':
-					parameters.exif_copy = 1;
+					parameters.jpeg.exif_copy = 1;
 					break;
 				case 'l':
-					parameters.lossless = 1;
+					parameters.jpeg.lossless = 1;
 					break;
 				case 'o':
 					parameters.output_folder = optarg;
@@ -116,19 +128,19 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 	return parameters;
 }
 
-int cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
+int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 	enum image_type type = detect_image_type(input);
-	if (type == JPEG && pars->lossless == 0) {
-		cclt_jpeg_compress(output, cclt_jpeg_decompress(input, pars), pars);
-		cclt_jpeg_optimize(output, output, pars->exif_copy, input);
-	} else if (type == JPEG && pars->lossless != 0) {
-		cclt_jpeg_optimize(input, output, pars->exif_copy, input);
+	if (type == JPEG && pars->jpeg.lossless == 0) {
+		cclt_jpeg_compress(output, cclt_jpeg_decompress(input, &pars->jpeg), &pars->jpeg);
+		cclt_jpeg_optimize(output, output, pars->jpeg.exif_copy, input);
+	} else if (type == JPEG && pars->jpeg.lossless != 0) {
+		cclt_jpeg_optimize(input, output, pars->jpeg.exif_copy, input);
 	} else if (type == PNG) {
 		//Give a message to the user if he set a quality for PNGs
-		if (pars->quality != 0) {
+		if (pars->jpeg.quality != 0) {
 			printf("PNG file, ignoring quality parameter.\n");
 		}
-		cclt_png_optimize(input, output);
+		cclt_png_optimize(input, output, &pars->png);
 	} else {
 		printf("Unknown file type.\n");
 		return -1;

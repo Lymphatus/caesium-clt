@@ -30,14 +30,14 @@ int string_to_int(char* in_string) {
 
 	//Check errors
 	if ((errno == ERANGE) || (errno != 0 && value == 0)) {
-        perror("strtol");
-        exit(-8);
-    }
+		perror("strtol");
+		exit(-8);
+	}
 
    if (endptr == in_string) {
-        fprintf(stderr, "Parse error: No digits were found for -q option. Aborting.\n");
-        exit(-7);
-    }
+		fprintf(stderr, "Parse error: No digits were found for -q option. Aborting.\n");
+		exit(-7);
+	}
 
 	return value;
 }
@@ -86,7 +86,7 @@ int mkpath(const char *pathname, mode_t mode) {
 	return -1;
 }
 
-void scan_folder(cclt_compress_parameters* parameters, char* basedir, int recur) {
+void scan_folder(cclt_parameters* parameters, char* basedir, int recur) {
 	//TODO CRITIAL Pass list as 1st parameter
 	DIR *dir;
 	struct dirent *ent;

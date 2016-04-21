@@ -30,10 +30,10 @@ struct jpeg_decompress_struct cclt_get_markers(char* input) {
 		exit(-13);
 	}
 
-    //Create the IO instance for the input file
+	//Create the IO instance for the input file
 	jpeg_stdio_src(&einfo, fp);
 
-    //Save EXIF info
+	//Save EXIF info
 	for (int m = 0; m < 16; m++) {
 		jpeg_save_markers(&einfo, JPEG_APP0 + m, 0xFFFF);
 	}
@@ -55,7 +55,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	struct jpeg_decompress_struct srcinfo;
 	struct jpeg_compress_struct dstinfo;
 
-  	//Error handling
+	//Error handling
 	struct jpeg_error_mgr jsrcerr, jdsterr;
 
 	//Input/Output array coefficents
@@ -69,7 +69,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	jpeg_create_compress(&dstinfo);
 
 
-  	//Open the input file
+	//Open the input file
 	fp = fopen(input_file, "r");
 
 	//Check for errors
@@ -82,19 +82,20 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	//Create the IO istance for the input file
 	jpeg_stdio_src(&srcinfo, fp);
 
-    //Save EXIF info
+	//Save EXIF info
 	if (exif_flag == 1) {
 		for (int m = 0; m < 16; m++) {
 			jpeg_save_markers(&srcinfo, JPEG_APP0 + m, 0xFFFF);
 		}
 	}
 
-    //Read the input headers
+	//Read the input headers
 	(void) jpeg_read_header(&srcinfo, TRUE);
+
 
 	//Read input coefficents
 	src_coef_arrays = jpeg_read_coefficients(&srcinfo);
-  	//jcopy_markers_setup(&srcinfo, copyoption);
+	//jcopy_markers_setup(&srcinfo, copyoption);
 
 	//Copy parameters
 	jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
@@ -116,7 +117,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 
 	//CRITICAL - This is the optimization step
 	dstinfo.optimize_coding = TRUE;
-    //Progressive
+	//Progressive
 	jpeg_simple_progression(&dstinfo);
 
 	//Set the output file parameters
@@ -125,19 +126,19 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	//Actually write the coefficents
 	jpeg_write_coefficients(&dstinfo, dst_coef_arrays);
 
-    //Write EXIF
+	//Write EXIF
 	if (exif_flag == 1) {
 		if (strcmp(input_file, exif_src) == 0) {
 			jcopy_markers_execute(&srcinfo, &dstinfo);
 		} else {
-    		//For standard compression EXIF data
+			//For standard compression EXIF data
 			struct jpeg_decompress_struct einfo = cclt_get_markers(exif_src);
 			jcopy_markers_execute(&einfo, &dstinfo);
 			jpeg_destroy_decompress(&einfo);
 		}
 	}
 
-    //Finish and free
+	//Finish and free
 	jpeg_finish_compress(&dstinfo);
 	jpeg_destroy_compress(&dstinfo);
 	(void) jpeg_finish_decompress(&srcinfo);
@@ -149,7 +150,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	return 0;
 }
 
-void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_compress_parameters* pars) {
+void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_jpeg_parameters* pars) {
 	FILE* fp;
 	tjhandle tjCompressHandle;
 	unsigned char* output_buffer;
@@ -160,8 +161,8 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-       printf("OUTPUT: Failed to open output \"%s\"\n", output_file);
-       return;
+	   printf("OUTPUT: Failed to open output \"%s\"\n", output_file);
+	   return;
    }
 
    output_buffer = NULL;
@@ -169,16 +170,16 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
 
    //TODO Error checks
    tjCompress2(tjCompressHandle,
-       image_buffer,
-       pars->width,
-       0,
-       pars->height,
-       pars->color_space,
-       &output_buffer,
-       &output_size,
-       pars->subsample,
-       pars->quality,
-       pars->dct_method);
+	   image_buffer,
+	   pars->width,
+	   0,
+	   pars->height,
+	   pars->color_space,
+	   &output_buffer,
+	   &output_size,
+	   pars->subsample,
+	   pars->quality,
+	   pars->dct_method);
 
    fwrite(output_buffer, output_size, 1, fp);
 
@@ -188,49 +189,49 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_com
 
 }
 
-unsigned char* cclt_jpeg_decompress(char* fileName, cclt_compress_parameters* pars) {
+unsigned char* cclt_jpeg_decompress(char* fileName, cclt_jpeg_parameters* pars) {
 
 	//TODO I/O Error handling
 
-    FILE *file = NULL;
-    int res = 0;
-    long int sourceJpegBufferSize = 0;
-    unsigned char* sourceJpegBuffer = NULL;
-    tjhandle tjDecompressHandle;
-    int fileWidth = 0, fileHeight = 0, jpegSubsamp = 0, colorSpace = 0;
+	FILE *file = NULL;
+	int res = 0;
+	long int sourceJpegBufferSize = 0;
+	unsigned char* sourceJpegBuffer = NULL;
+	tjhandle tjDecompressHandle;
+	int fileWidth = 0, fileHeight = 0, jpegSubsamp = 0, colorSpace = 0;
 
-    //TODO No error checks here
-    file = fopen(fileName, "rb");
-    res = fseek(file, 0, SEEK_END);
-    sourceJpegBufferSize = ftell(file);
-    sourceJpegBuffer = tjAlloc(sourceJpegBufferSize);
+	//TODO No error checks here
+	file = fopen(fileName, "rb");
+	res = fseek(file, 0, SEEK_END);
+	sourceJpegBufferSize = ftell(file);
+	sourceJpegBuffer = tjAlloc(sourceJpegBufferSize);
 
-    res = fseek(file, 0, SEEK_SET);
-    res = fread(sourceJpegBuffer, (long)sourceJpegBufferSize, 1, file);
-    tjDecompressHandle = tjInitDecompress();
-    res = tjDecompressHeader3(tjDecompressHandle, sourceJpegBuffer, sourceJpegBufferSize, &fileWidth, &fileHeight, &jpegSubsamp, &colorSpace);
+	res = fseek(file, 0, SEEK_SET);
+	res = fread(sourceJpegBuffer, (long)sourceJpegBufferSize, 1, file);
+	tjDecompressHandle = tjInitDecompress();
+	res = tjDecompressHeader3(tjDecompressHandle, sourceJpegBuffer, sourceJpegBufferSize, &fileWidth, &fileHeight, &jpegSubsamp, &colorSpace);
 
-    pars->width = fileWidth;
-    pars->height = fileHeight;
+	pars->width = fileWidth;
+	pars->height = fileHeight;
 
-    pars->subsample = jpegSubsamp;
-    pars->color_space = colorSpace;
+	pars->subsample = jpegSubsamp;
+	pars->color_space = colorSpace;
 
-    unsigned char* temp = tjAlloc(pars->width * pars->height * tjPixelSize[pars->color_space]);
+	unsigned char* temp = tjAlloc(pars->width * pars->height * tjPixelSize[pars->color_space]);
 
-    res = tjDecompress2(tjDecompressHandle,
-       sourceJpegBuffer,
-       sourceJpegBufferSize,
-       temp,
-       pars->width,
-       0,
-       pars->height,
-       pars->color_space,
-       pars->dct_method);
+	res = tjDecompress2(tjDecompressHandle,
+		sourceJpegBuffer,
+		sourceJpegBufferSize,
+		temp,
+		pars->width,
+		0,
+		pars->height,
+		pars->color_space,
+		pars->dct_method);
 
-    //fwrite(temp, pars->width * pars->height * tjPixelSize[pars->color_space], 1, fopen("/Users/lymphatus/Desktop/tmp/compresse/ccc", "w"));
+	//fwrite(temp, pars->width * pars->height * tjPixelSize[pars->color_space], 1, fopen("/Users/lymphatus/Desktop/tmp/compresse/ccc", "w"));
 
-    tjDestroy(tjDecompressHandle);
+	tjDestroy(tjDecompressHandle);
 
-    return temp;
+	return temp;
 }
