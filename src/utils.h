@@ -6,7 +6,7 @@
 #include <sys/types.h>
 
 #define APP_VERSION "0.9.1-beta"
-#define BUILD 20160116
+#define BUILD 20160421
 
 typedef struct cclt_jpeg_parameters {
 	int quality;

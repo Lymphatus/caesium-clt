@@ -57,11 +57,10 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
 			switch (c) {
 				case 'v':
-					printf("CCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", APP_VERSION, BUILD);
+					printf("CaesiumCLT - Caesium Command Line Tools - Version %s (Build: %d)\n", APP_VERSION, BUILD);
 					exit(0);
 					break;
 				case '?':
-					//TODO if -o not specified or empty, use current. Useful?
 					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
 						fprintf (stderr, "Option -%c requires an argument.\n", optopt);
 						//Arguments without values

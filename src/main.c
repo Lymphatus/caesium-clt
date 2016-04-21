@@ -155,18 +155,15 @@ int main (int argc, char *argv[]) {
 	clock_t start = clock(), diff;
 	//We need the file list right here
 	cclt_start(&pars, &i_t_size, &o_t_size);
-	/*for (int i = 0; i < pars.input_files_count; i++) {
-		printf("FILE %d: %s\n", i, pars.input_files[i]);
-	}*/
 	diff = clock() - start;
 
 	fprintf(stdout, "-------------------------------\nCompression completed in %lum%lus\n%s -> %s [%.2f%% | %s]\n",
-		diff / CLOCKS_PER_SEC / 60,
-		diff / CLOCKS_PER_SEC % 60,
-		get_human_size((long) i_t_size),
-		get_human_size((long) o_t_size),
-		((float) o_t_size - i_t_size) * 100 / i_t_size,
-		get_human_size(((long) o_t_size - i_t_size)));
+					diff / CLOCKS_PER_SEC / 60,
+					diff / CLOCKS_PER_SEC % 60,
+					get_human_size((long) i_t_size),
+					get_human_size((long) o_t_size),
+					((float) o_t_size - i_t_size) * 100 / i_t_size,
+					get_human_size(((long) o_t_size - i_t_size)));
 
 	return 0;
 }
