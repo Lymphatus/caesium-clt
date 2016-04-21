@@ -28,7 +28,7 @@
 
 //TODO If the output is INSIDE the folder we are passing as input, ignore it or we're gonna go in a infinite loop
 
-void cclt_start(cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
+void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 
 	struct stat st_buf;
 	int i = 0;
@@ -111,15 +111,15 @@ int main (int argc, char *argv[]) {
 	off_t i_t_size = 0, o_t_size = 0;
 
 	//Parse arguments
-	cclt_compress_parameters pars = parse_arguments(argc, argv);
+	cclt_parameters pars = parse_arguments(argc, argv);
 
 	//Either -l or -q must be set but not together
-	if (!((pars.lossless == 1) ^ (pars.quality > 0))) {
+	if (!((pars.jpeg->lossless == 1) ^ (pars.jpeg->quality > 0))) {
 		//Both or none are set
-		if (pars.lossless == 1 && pars.quality > 0) {
+		if (pars.jpeg->lossless == 1 && pars.jpeg->quality > 0) {
 			fprintf(stderr, "-l option can't be used with -q. Either use one or the other. Aborting.\n");
 			exit(-1);
-		} else if (pars.lossless == 0 && pars.quality <= 0) {
+		} else if (pars.jpeg->lossless == 0 && pars.jpeg->quality <= 0) {
 			fprintf(stderr, "Either -l or -q must be set. Aborting.\n");
 			print_help();
 			exit(-2);
@@ -127,7 +127,7 @@ int main (int argc, char *argv[]) {
 	} else {
 		//One of them is set
 		//If -q is set check it is within the 1-100 range
-		if (!(pars.quality >= 1 && pars.quality <= 100) && pars.lossless == 0) {
+		if (!(pars.jpeg->quality >= 1 && pars.jpeg->quality <= 100) && pars.jpeg->lossless == 0) {
 			fprintf(stderr, "Quality must be within a [1-100] range. Aborting.\n");
 			exit(-3);
 		}
