@@ -7,6 +7,10 @@
 #include <turbojpeg.h>
 #include <ctype.h>
 #include <getopt.h>
+#include <dirent.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <libgen.h>
 
 #include "utils.h"
 #include "jpeg.h"
@@ -47,14 +51,14 @@ cclt_parameters initialize_compression_parameters() {
 	return par;
 }
 
-void validate_parameters(cclt_compress_parameters* pars) {
+void validate_parameters(cclt_parameters* pars) {
 	//Either -l or -q must be set but not together
-	if (!((pars->lossless == 1) ^ (pars->quality > 0))) {
+	if (!((pars->jpeg.lossless == 1) ^ (pars->jpeg.quality > 0))) {
 		//Both or none are set
-		if (pars->lossless == 1 && pars->quality > 0) {
+		if (pars->jpeg.lossless == 1 && pars->jpeg.quality > 0) {
 			fprintf(stderr, "-l option can't be used with -q. Either use one or the other. Aborting.\n");
 			exit(-1);
-		} else if (pars->lossless == 0 && pars->quality <= 0) {
+		} else if (pars->jpeg.lossless == 0 && pars->jpeg.quality <= 0) {
 			fprintf(stderr, "Either -l or -q must be set. Aborting.\n");
 			print_help();
 			exit(-2);
@@ -62,7 +66,7 @@ void validate_parameters(cclt_compress_parameters* pars) {
 	} else {
 		//One of them is set
 		//If -q is set check it is within the 1-100 range
-		if (!(pars->quality >= 1 && pars->quality <= 100) && pars->lossless == 0) {
+		if (!(pars->jpeg.quality >= 1 && pars->jpeg.quality <= 100) && pars->jpeg.lossless == 0) {
 			fprintf(stderr, "Quality must be within a [1-100] range. Aborting.\n");
 			exit(-3);
 		}
@@ -81,10 +85,10 @@ void validate_parameters(cclt_compress_parameters* pars) {
 	}
 }
 
-cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
+cclt_parameters parse_arguments(int argc, char* argv[]) {
 
 	//Initialize default params
-	cclt_compress_parameters parameters = initialize_compression_parameters();
+	cclt_parameters parameters = initialize_compression_parameters();
 	int c;
 
 	while (optind < argc) {
@@ -111,13 +115,13 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 					fprintf(stderr, "Parameter expected.\n");
 					break;
 				case 'q':
-					parameters.quality = string_to_int(optarg);
+					parameters.jpeg.quality = string_to_int(optarg);
 					break;
 				case 'e':
-					parameters.exif_copy = 1;
+					parameters.jpeg.exif_copy = 1;
 					break;
 				case 'l':
-					parameters.lossless = 1;
+					parameters.jpeg.lossless = 1;
 					break;
 				case 'o':
 					parameters.output_folder = optarg;
@@ -164,19 +168,19 @@ cclt_compress_parameters parse_arguments(int argc, char* argv[]) {
 	return parameters;
 }
 
-int cclt_compress_routine(char* input, char* output, cclt_compress_parameters* pars) {
+int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 	//Detect which image type are we compressing
 	enum image_type type = detect_image_type(input);
 
 	if (type == JPEG) {
 		//Lossy processing just uses the compression method before optimizing
-		if (!pars->lossless) {
-			cclt_jpeg_compress(output, cclt_jpeg_decompress(input, pars), pars);
+		if (!pars->jpeg.lossless) {
+			cclt_jpeg_compress(output, cclt_jpeg_decompress(input, &pars->jpeg), &pars->jpeg);
 		}
 		//Optimize
-		cclt_jpeg_optimize(output, output, pars->exif_copy, input);
+		cclt_jpeg_optimize(output, output, pars->jpeg.exif_copy, input);
 	} else if (type == PNG) {
-		cclt_png_optimize(input, output);
+		cclt_png_optimize(input, output, &pars->png);
 	} else {
 		printf("Unknown file type.\n");
 		return -1;
@@ -184,7 +188,7 @@ int cclt_compress_routine(char* input, char* output, cclt_compress_parameters* p
 	return 0;
 }
 
-void cclt_start(cclt_compress_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
+void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 
 	struct stat st_buf;
 	int i = 0;

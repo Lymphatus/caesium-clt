@@ -30,28 +30,28 @@ int string_to_int(char* in_string) {
 
 	//Check errors
 	if ((errno == ERANGE) || (errno != 0 && value == 0)) {
-		perror("strtol");
-		exit(-8);
-	}
+        perror("strtol");
+        exit(-8);
+    }
 
    if (endptr == in_string) {
-		fprintf(stderr, "Parse error: No digits were found for -q option. Aborting.\n");
-		exit(-7);
-	}
+        fprintf(stderr, "Parse error: No digits were found for -q option. Aborting.\n");
+        exit(-7);
+    }
 
 	return value;
 }
 
 void print_help() {
 	fprintf(stdout,
-		"CCLT - Caesium Command Line Tools\n\n"
-		"Usage: caesiumclt [OPTIONs] INPUT...\n"
+		"CaesiumCLT - Caesium Command Line Tools\n\n"
+		"Usage: caesiumclt [OPTIONS] INPUT...\n"
 		"Compress your pictures up to 90%% without visible quality loss.\n\n"
 
 		"Options:\n"
-			"\t-q\tset output file quality between [1-100], ignored for non-JPEGs\n"
+			"\t-q\tset output file quality between [1-100], JPEG only\n"
 			"\t-e\tkeeps EXIF info during compression\n"
-			"\t-o\tcompress to custom folder\n"
+			"\t-o\toutput folder\n"
 			"\t-l\tuse lossless optimization\n"
 			"\t-R\tif input is a folder, scan subfolders too\n"
 			//TODO Remove this warning
@@ -64,7 +64,6 @@ void print_help() {
 //TODO Recheck
 int mkpath(const char *pathname, mode_t mode) {
 
-	//Need include in Linux, not on OSX
 	char parent[PATH_MAX], *p;
 	/* make a parent directory path */
 	strncpy(parent, pathname, sizeof(parent));
