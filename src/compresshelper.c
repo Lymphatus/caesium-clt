@@ -144,6 +144,7 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 			while (optind < argc) {
 				if (is_directory(argv[optind])) {
 					if (i != 0) {
+						//TODO This error appears also if there a value to the -l parameter
 						printf("[ERROR] Found folder along with input files. Aborting.\n");
 						exit(-20);
 					} else if (i == 0 && argc - optind > 1) {
