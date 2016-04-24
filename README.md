@@ -1,5 +1,5 @@
 ## Caesium Command Line Tools
-##### CCLT - v0.9.1-beta (build 20160223) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
+##### CCLT - v0.9.1-beta (build 20160423) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
 
 ----------
 
@@ -11,7 +11,7 @@
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X El Capitan (v10.11.1)
+* Mac OS X El Capitan (v10.11.4)
 * Arch Linux
 * Ubuntu 14.04.2
 
@@ -48,6 +48,7 @@ $ caesiumclt -l -R -o ~/output/ ~/Pictures
 
 ###### TODO
 * Code cleaning
+* Keep folder structure
 
 ----------
 
@@ -64,7 +65,8 @@ Check the [Commits](https://github.com/Lymphatus/CaesiumCLT/commits/master) for 
 ----------
 
 ###### RESOURCES
+* CaesiumCLT website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium/clt)
 * Caesium website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium)
-* CCLT Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/CaesiumCLT)
+* CaesiumCLT Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/CaesiumCLT)
 * Author website - SaeraSoft - [http://saerasoft.com](http://saerasoft.com)
 * Twitter - [Matteo Paonessa](https://twitter.com/MatteoPaonessa)
