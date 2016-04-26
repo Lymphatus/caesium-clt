@@ -28,7 +28,7 @@ void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars) {
 	png_options.auto_filter_strategy = pars->auto_filter_strategy;
 
 	if (lodepng_load_file(&orig_buffer, &orig_buffer_size, input) != 0) {
-		fprintf(stderr, "Error while loading PNG. Aborting.\n");
+		fprintf(stderr, "[ERROR] Error while loading PNG.\n");
 		exit(-16);
 	}
 
@@ -38,12 +38,12 @@ void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars) {
 							0,
 							&resultpng,
 							&resultpng_size) != 0) {
-		fprintf(stderr, "Error while optimizing PNG. Aborting.\n");
+		fprintf(stderr, "[ERROR] Error while optimizing PNG.\n");
 		exit(-17);
 	}
 
 	if (lodepng_save_file(resultpng, resultpng_size, output) != 0) {
-		fprintf(stderr, "Error while writing PNG. Aborting.\n");
+		fprintf(stderr, "[ERROR] Error while writing PNG.\n");
 		exit(-18);
 	}
 

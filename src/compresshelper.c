@@ -17,7 +17,6 @@
 #include "png.h"
 
 void initialize_jpeg_parameters(cclt_parameters* par) {
-
 	par->jpeg.quality = 0;
 	par->jpeg.width = 0;
 	par->jpeg.height = 0;
@@ -56,31 +55,30 @@ void validate_parameters(cclt_parameters* pars) {
 	if (!((pars->jpeg.lossless == 1) ^ (pars->jpeg.quality > 0))) {
 		//Both or none are set
 		if (pars->jpeg.lossless == 1 && pars->jpeg.quality > 0) {
-			fprintf(stderr, "-l option can't be used with -q. Either use one or the other. Aborting.\n");
+			fprintf(stderr, "[ERROR] -l option can't be used with -q. Either use one or the other.\n");
 			exit(-1);
 		} else if (pars->jpeg.lossless == 0 && pars->jpeg.quality <= 0) {
-			fprintf(stderr, "Either -l or -q must be set. Aborting.\n");
-			print_help();
+			fprintf(stderr, "[ERROR] Either -l or -q must be set.\n");
 			exit(-2);
 		}
 	} else {
 		//One of them is set
 		//If -q is set check it is within the 1-100 range
 		if (!(pars->jpeg.quality >= 1 && pars->jpeg.quality <= 100) && pars->jpeg.lossless == 0) {
-			fprintf(stderr, "Quality must be within a [1-100] range. Aborting.\n");
+			fprintf(stderr, "[ERROR] Quality must be within a [1-100] range.\n");
 			exit(-3);
 		}
 	}
 
 	//Check if you set the input files
 	if (pars->input_files_count == 0) {
-		fprintf(stderr, "No input files. Aborting.\n");
+		fprintf(stderr, "[ERROR] No input files.\n");
 		exit(-9);
 	}
 
-	//Check if the output folder exists, otherwise create it
+	//Check if the output folder is set
 	if (pars->output_folder == NULL) {
-		fprintf(stderr, "No -o option pointing to the destination folder. Aborting.\n");
+		fprintf(stderr, "[ERROR] No -o option pointing to the destination folder. Aborting.\n");
 		exit(-4);
 	}
 }
@@ -100,19 +98,19 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 					break;
 				case '?':
 					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
-						fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+						fprintf (stderr, "[ERROR] Option -%c requires an argument.\n", optopt);
 						//Arguments without values
 						exit(-1);
 					}
 					else if (isprint(optopt))  {
-						fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+						fprintf (stderr, "[ERROR] Unknown option `-%c'.\n", optopt);
 					}
 					else {
-						fprintf (stderr, "Unknown option character `\\x%x'.\n", optopt);
+						fprintf (stderr, "[ERROR] Unknown option character `\\x%x'.\n", optopt);
 					}
 					break;
 				case ':':
-					fprintf(stderr, "Parameter expected.\n");
+					fprintf(stderr, "[ERROR] Parameter expected.\n");
 					break;
 				case 'q':
 					parameters.jpeg.quality = string_to_int(optarg);
@@ -176,14 +174,15 @@ int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 	if (type == JPEG) {
 		//Lossy processing just uses the compression method before optimizing
 		if (!pars->jpeg.lossless) {
+			printf("Lossy\n");
 			cclt_jpeg_compress(output, cclt_jpeg_decompress(input, &pars->jpeg), &pars->jpeg);
 		}
 		//Optimize
-		cclt_jpeg_optimize(output, output, pars->jpeg.exif_copy, input);
+		cclt_jpeg_optimize(input, output, pars->jpeg.exif_copy, input);
 	} else if (type == PNG) {
 		cclt_png_optimize(input, output, &pars->png);
 	} else {
-		printf("Unknown file type.\n");
+		printf("[WARNING] Unknown file type.\n");
 		return -1;
 	}
 	return 0;
@@ -197,7 +196,7 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 	//Creates the output folder (which will always be needed)
 	if (mkpath(pars->output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
 		if (errno != EEXIST) {
-			fprintf(stderr, "Failed to create output directory. Aborting.\n");
+			fprintf(stderr, "[ERROR] Failed to create output directory.\n");
 			exit(-5);
 		}
 	}
@@ -222,7 +221,7 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		//Get input stats
 		status = stat(pars->input_files[i], &st_buf);
 		if (status != 0) {
-			fprintf(stderr, "Failed to get input file stats. Aborting.\n");
+			fprintf(stderr, "[ERROR] Failed to get input file stats.\n");
 			exit(-11);
 		}
 
@@ -251,7 +250,7 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		status = stat(output_filename, &st_buf);
 		if (status != 0) {
     		//TODO This is not critical, but still something to be tracked
-			fprintf(stderr, "Failed to get output file stats. Aborting.\n");
+			fprintf(stderr, "[ERROR] Failed to get output file stats.\n");
 			exit(-12);
 		}
 		o_size = st_buf.st_size;

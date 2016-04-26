@@ -27,6 +27,7 @@
 
 
 //TODO If the output is INSIDE the folder we are passing as input, ignore it or we're gonna go in a infinite loop
+//TODO Trigger a warning if you are overwriting files
 
 int main (int argc, char *argv[]) {
 	errno = 0;

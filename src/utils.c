@@ -30,12 +30,12 @@ int string_to_int(char* in_string) {
 
 	//Check errors
 	if ((errno == ERANGE) || (errno != 0 && value == 0)) {
-        perror("strtol");
+        fprintf(stderr, "[ERROR] Cannot parse quality value.\n");
         exit(-8);
     }
 
    if (endptr == in_string) {
-        fprintf(stderr, "Parse error: No digits were found for -q option. Aborting.\n");
+        fprintf(stderr, "[ERROR] Parse error. No digits were found for -q option.\n");
         exit(-7);
     }
 
@@ -133,7 +133,7 @@ void scan_folder(cclt_parameters* parameters, char* basedir, int recur) {
 		}
 		closedir(dir);
 	} else {
-		fprintf(stderr, "Failed to open folder. Aborting.\n");
+		fprintf(stderr, "[ERROR] Failed to open folder.\n");
 		exit(-19);
 	}
 	free(entpath);
@@ -147,12 +147,12 @@ enum image_type detect_image_type(char* path) {
 	fp = fopen(path, "r");
 
 	if (fp == NULL) {
-		fprintf(stderr, "Cannot open input file for type detection. Aborting.\n");
+		fprintf(stderr, "[ERROR] Cannot open input file for type detection.\n");
 		exit(-14);
 	}
 	//Read enough bytes
 	if (fread(type_buffer, 1, 2, fp) < 2) {
-		fprintf(stderr, "Cannot read file type. Aborting.\n");
+		fprintf(stderr, "[ERROR] Cannot read file type.\n");
 		exit(-15);
 	}
 	//We don't need it anymore
@@ -187,7 +187,7 @@ char* get_human_size(long size) {
 
 	//If the order exceeds 4, something is fishy
 	if (order > 4) {
-		fprintf(stderr, "Do you really have such a huge file?\n");
+		fprintf(stdout, "[WARNING] Do you really have such a huge file?\n");
 		order = 4;
 	}
 
