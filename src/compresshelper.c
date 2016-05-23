@@ -170,15 +170,21 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 	//Detect which image type are we compressing
 	enum image_type type = detect_image_type(input);
+	char* exif_orig = (char*) malloc(strlen(input) * sizeof(char));
 
 	if (type == JPEG) {
 		//Lossy processing just uses the compression method before optimizing
 		if (!pars->jpeg.lossless) {
-			printf("Lossy\n");
 			cclt_jpeg_compress(output, cclt_jpeg_decompress(input, &pars->jpeg), &pars->jpeg);
+			//TODO Check memory leaks
+			//If we are using lossy compression, the input file is the output of
+			//the previous function
+			//Exif must be copied from the original thou
+			strcpy(exif_orig, input);
+			input = output;
 		}
 		//Optimize
-		cclt_jpeg_optimize(input, output, pars->jpeg.exif_copy, input);
+		cclt_jpeg_optimize(input, output, pars->jpeg.exif_copy, exif_orig);
 	} else if (type == PNG) {
 		cclt_png_optimize(input, output, &pars->png);
 	} else {
@@ -238,7 +244,11 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		*(i_t_size) += i_size;
 
 		//TODO Do we want a more verbose output?
-		fprintf(stdout, "Compressing: %s -> %s\n", pars->input_files[i], output_filename);
+		fprintf(stdout, "(%d/%d) %s -> %s\n",
+						i + 1,
+						pars->input_files_count,
+						pars->input_files[i],
+						output_filename);
 
 		int routine = cclt_compress_routine(pars->input_files[i], output_filename, pars);
 		if (routine == -1) {
@@ -249,7 +259,7 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		//Get output stats
 		status = stat(output_filename, &st_buf);
 		if (status != 0) {
-    		//TODO This is not critical, but still something to be tracked
+		//TODO This is not critical, but still something to be tracked
 			fprintf(stderr, "[ERROR] Failed to get output file stats.\n");
 			exit(-12);
 		}
