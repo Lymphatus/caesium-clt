@@ -1,5 +1,5 @@
 ## Caesium Command Line Tools
-##### CCLT - v0.9.1-beta (build 20160423) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
+##### CCLT - v0.9.1-beta (build 20160808) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
 
 ----------
 
@@ -65,7 +65,7 @@ Check the [Commits](https://github.com/Lymphatus/CaesiumCLT/commits/master) for 
 ----------
 
 ###### RESOURCES
-* CaesiumCLT website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium/clt)
+* CaesiumCLT website - [http://saerasoft.com/caesium/clt](http://saerasoft.com/caesium/clt)
 * Caesium website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium)
 * CaesiumCLT Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/CaesiumCLT)
 * Author website - SaeraSoft - [http://saerasoft.com](http://saerasoft.com)

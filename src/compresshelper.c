@@ -11,6 +11,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <libgen.h>
+#include <stdbool.h>
 
 #include "utils.h"
 #include "jpeg.h"
@@ -22,16 +23,16 @@ void initialize_jpeg_parameters(cclt_parameters* par) {
 	par->jpeg.height = 0;
 	par->jpeg.color_space = TJCS_RGB;
 	par->jpeg.dct_method = TJFLAG_FASTDCT;
-	par->jpeg.exif_copy = 0;
-	par->jpeg.lossless = 0;
+	par->jpeg.exif_copy = false;
+	par->jpeg.lossless = false;
 }
 
 void initialize_png_parameters(cclt_parameters* par) {
-	par->png.iterations = 15;
+	par->png.iterations = 10;
 	par->png.iterations_large = 5;
 	par->png.block_split_strategy = 4;
-	par->png.lossy_8 = 1;
-	par->png.transparent = 1;
+	par->png.lossy_8 = true;
+	par->png.transparent = true;
 	par->png.auto_filter_strategy = 1;
 }
 
@@ -45,19 +46,19 @@ cclt_parameters initialize_compression_parameters() {
 	par.input_files_count = 0;
 	par.recursive = 0;
 	par.input_files = NULL;
-	par.structure = 0;
+	par.structure = false;
 
 	return par;
 }
 
 void validate_parameters(cclt_parameters* pars) {
 	//Either -l or -q must be set but not together
-	if (!((pars->jpeg.lossless == 1) ^ (pars->jpeg.quality > 0))) {
+	if (!((pars->jpeg.lossless) ^ (pars->jpeg.quality > 0))) {
 		//Both or none are set
-		if (pars->jpeg.lossless == 1 && pars->jpeg.quality > 0) {
+		if (pars->jpeg.lossless && pars->jpeg.quality > 0) {
 			fprintf(stderr, "[ERROR] -l option can't be used with -q. Either use one or the other.\n");
 			exit(-1);
-		} else if (pars->jpeg.lossless == 0 && pars->jpeg.quality <= 0) {
+		} else if (!pars->jpeg.lossless && pars->jpeg.quality <= 0) {
 			fprintf(stderr, "[ERROR] Either -l or -q must be set.\n");
 			exit(-2);
 		}
@@ -93,7 +94,7 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
 			switch (c) {
 				case 'v':
-					printf("%s (Build: %d)\n", APP_VERSION, BUILD);
+					printf("%s-%d\n", APP_VERSION, BUILD);
 					exit(0);
 					break;
 				case '?':
@@ -116,10 +117,10 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 					parameters.jpeg.quality = string_to_int(optarg);
 					break;
 				case 'e':
-					parameters.jpeg.exif_copy = 1;
+					parameters.jpeg.exif_copy = true;
 					break;
 				case 'l':
-					parameters.jpeg.lossless = 1;
+					parameters.jpeg.lossless = true;
 					break;
 				case 'o':
 					parameters.output_folder = optarg;
@@ -128,10 +129,10 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 					print_help();
 					break;
 				case 'R':
-					parameters.recursive = 1;
+					parameters.recursive = true;
 					break;
 				case 'S':
-					parameters.structure = 1;
+					parameters.structure = true;
 					break;
 				default:
 					abort();
@@ -171,6 +172,7 @@ int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 	//Detect which image type are we compressing
 	enum image_type type = detect_image_type(input);
 	char* exif_orig = (char*) malloc(strlen(input) * sizeof(char));
+	strcpy(exif_orig, input);
 
 	if (type == JPEG) {
 		//Lossy processing just uses the compression method before optimizing
@@ -180,7 +182,6 @@ int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 			//If we are using lossy compression, the input file is the output of
 			//the previous function
 			//Exif must be copied from the original thou
-			strcpy(exif_orig, input);
 			input = output;
 		}
 		//Optimize
