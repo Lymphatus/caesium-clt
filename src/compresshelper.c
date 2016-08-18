@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "jpeg.h"
 #include "png.h"
+#include "error.h"
 
 void initialize_jpeg_parameters(cclt_parameters* par) {
 	par->jpeg.quality = 0;
@@ -56,31 +57,26 @@ void validate_parameters(cclt_parameters* pars) {
 	if (!((pars->jpeg.lossless) ^ (pars->jpeg.quality > 0))) {
 		//Both or none are set
 		if (pars->jpeg.lossless && pars->jpeg.quality > 0) {
-			fprintf(stderr, "[ERROR] -l option can't be used with -q. Either use one or the other.\n");
-			exit(-1);
+			trigger_error(1, true);
 		} else if (!pars->jpeg.lossless && pars->jpeg.quality <= 0) {
-			fprintf(stderr, "[ERROR] Either -l or -q must be set.\n");
-			exit(-2);
+			trigger_error(2, true);
 		}
 	} else {
 		//One of them is set
 		//If -q is set check it is within the 1-100 range
 		if (!(pars->jpeg.quality >= 1 && pars->jpeg.quality <= 100) && pars->jpeg.lossless == 0) {
-			fprintf(stderr, "[ERROR] Quality must be within a [1-100] range.\n");
-			exit(-3);
+			trigger_error(3, true);
 		}
 	}
 
 	//Check if you set the input files
 	if (pars->input_files_count == 0) {
-		fprintf(stderr, "[ERROR] No input files.\n");
-		exit(-9);
+		trigger_error(9, true);
 	}
 
 	//Check if the output folder is set
 	if (pars->output_folder == NULL) {
-		fprintf(stderr, "[ERROR] No -o option pointing to the destination folder. Aborting.\n");
-		exit(-4);
+		trigger_error(4, true);
 	}
 }
 
@@ -96,22 +92,19 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 				case 'v':
 					printf("%s-%d\n", APP_VERSION, BUILD);
 					exit(0);
-					break;
 				case '?':
 					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
-						fprintf (stderr, "[ERROR] Option -%c requires an argument.\n", optopt);
-						//Arguments without values
-						exit(-1);
+						trigger_error(6, true, optopt);
 					}
 					else if (isprint(optopt))  {
-						fprintf (stderr, "[ERROR] Unknown option `-%c'.\n", optopt);
+						trigger_error(100, false, optopt);
 					}
 					else {
-						fprintf (stderr, "[ERROR] Unknown option character `\\x%x'.\n", optopt);
+						trigger_error(101, false, optopt);
 					}
 					break;
 				case ':':
-					fprintf(stderr, "[ERROR] Parameter expected.\n");
+					trigger_error(102, false);
 					break;
 				case 'q':
 					parameters.jpeg.quality = string_to_int(optarg);
@@ -144,10 +137,9 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 				if (is_directory(argv[optind])) {
 					if (i != 0) {
 						//TODO This error appears also if there a value to the -l parameter
-						printf("[ERROR] Found folder along with input files. Aborting.\n");
-						exit(-20);
+						trigger_error(20, true);
 					} else if (i == 0 && argc - optind > 1) {
-						printf("[WARNING] Folder found, skipping all other inputs.\n");
+						trigger_error(103, false);
 					}
 					scan_folder(&parameters, argv[optind], parameters.recursive);
 					return parameters;
@@ -189,7 +181,7 @@ int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 	} else if (type == PNG) {
 		cclt_png_optimize(input, output, &pars->png);
 	} else {
-		printf("[WARNING] Unknown file type.\n");
+		trigger_error(104, false, input);
 		return -1;
 	}
 	return 0;
@@ -203,8 +195,7 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 	//Creates the output folder (which will always be needed)
 	if (mkpath(pars->output_folder, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == -1) {
 		if (errno != EEXIST) {
-			fprintf(stderr, "[ERROR] Failed to create output directory.\n");
-			exit(-5);
+			trigger_error(5, true);
 		}
 	}
 
@@ -228,8 +219,7 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		//Get input stats
 		status = stat(pars->input_files[i], &st_buf);
 		if (status != 0) {
-			fprintf(stderr, "[ERROR] Failed to get input file stats.\n");
-			exit(-11);
+			trigger_error(11, true, pars->input_files[i]);
 		}
 
 	    //Check if we ran into a folder

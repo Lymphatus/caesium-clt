@@ -101,7 +101,7 @@ PROGRAMS = $(bin_PROGRAMS)
 am_caesiumclt_OBJECTS = caesiumclt-main.$(OBJEXT) \
 	caesiumclt-jpeg.$(OBJEXT) caesiumclt-compresshelper.$(OBJEXT) \
 	caesiumclt-utils.$(OBJEXT) caesiumclt-png.$(OBJEXT) \
-	caesiumclt-lodepng.$(OBJEXT)
+	caesiumclt-lodepng.$(OBJEXT) caesiumclt-error.$(OBJEXT)
 caesiumclt_OBJECTS = $(am_caesiumclt_OBJECTS)
 caesiumclt_DEPENDENCIES =
 caesiumclt_LINK = $(CCLD) $(caesiumclt_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
@@ -253,7 +253,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c png.c lodepng.c
+caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c png.c lodepng.c error.c
 caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -std=c99
 caesiumclt_LDADD = -lm
 all: all-am
@@ -343,6 +343,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-compresshelper.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-error.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-jpeg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-lodepng.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/caesiumclt-main.Po@am__quote@
@@ -446,6 +447,20 @@ caesiumclt-lodepng.obj: lodepng.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='lodepng.c' object='caesiumclt-lodepng.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-lodepng.obj `if test -f 'lodepng.c'; then $(CYGPATH_W) 'lodepng.c'; else $(CYGPATH_W) '$(srcdir)/lodepng.c'; fi`
+
+caesiumclt-error.o: error.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -MT caesiumclt-error.o -MD -MP -MF $(DEPDIR)/caesiumclt-error.Tpo -c -o caesiumclt-error.o `test -f 'error.c' || echo '$(srcdir)/'`error.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/caesiumclt-error.Tpo $(DEPDIR)/caesiumclt-error.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='error.c' object='caesiumclt-error.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-error.o `test -f 'error.c' || echo '$(srcdir)/'`error.c
+
+caesiumclt-error.obj: error.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -MT caesiumclt-error.obj -MD -MP -MF $(DEPDIR)/caesiumclt-error.Tpo -c -o caesiumclt-error.obj `if test -f 'error.c'; then $(CYGPATH_W) 'error.c'; else $(CYGPATH_W) '$(srcdir)/error.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/caesiumclt-error.Tpo $(DEPDIR)/caesiumclt-error.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='error.c' object='caesiumclt-error.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(caesiumclt_CFLAGS) $(CFLAGS) -c -o caesiumclt-error.obj `if test -f 'error.c'; then $(CYGPATH_W) 'error.c'; else $(CYGPATH_W) '$(srcdir)/error.c'; fi`
 
 ID: $(am__tagged_files)
 	$(am__define_uniq_tagged_files); mkid -fID $$unique
