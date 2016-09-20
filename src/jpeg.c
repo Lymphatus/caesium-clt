@@ -26,8 +26,7 @@ struct jpeg_decompress_struct cclt_get_markers(char* input) {
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-		printf("[ERROR] Failed to open file (markers) \"%s\".\n", input);
-		exit(-13);
+		trigger_error(13, true, input);
 	}
 
 	//Create the IO instance for the input file
@@ -75,8 +74,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-		printf("[ERROR] Failed to open file (input) \"%s\".\n", input_file);
-		return -1;
+		trigger_error(105, true, input_file);
 	}
 
 	//Create the IO istance for the input file
@@ -111,8 +109,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-		printf("[ERROR] Failed to open file (output) \"%s\".\n", output_file);
-		return -2;
+		trigger_error(106, true, output_file);
 	}
 
 	//CRITICAL - This is the optimization step
@@ -161,8 +158,7 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_jpe
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-	   printf("[ERROR] Failed to open output \"%s\".\n", output_file);
-	   return;
+	   trigger_error(106, true, output_file);
    }
 
    output_buffer = NULL;

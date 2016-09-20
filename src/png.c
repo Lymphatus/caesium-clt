@@ -5,6 +5,7 @@
 #include "lodepng.h"
 #include <zopflipng/zopflipng_lib.h>
 #include "png.h"
+#include "error.h"
 
 void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars) {
 	//TODO Error handling
@@ -28,8 +29,7 @@ void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars) {
 	png_options.auto_filter_strategy = pars->auto_filter_strategy;
 
 	if (lodepng_load_file(&orig_buffer, &orig_buffer_size, input) != 0) {
-		fprintf(stderr, "[ERROR] Error while loading PNG.\n");
-		exit(-16);
+		trigger_error(16, true, input);
 	}
 
 	if (CZopfliPNGOptimize(orig_buffer,
@@ -38,13 +38,11 @@ void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars) {
 							0,
 							&resultpng,
 							&resultpng_size) != 0) {
-		fprintf(stderr, "[ERROR] Error while optimizing PNG.\n");
-		exit(-17);
+		trigger_error(17, true);
 	}
 
 	if (lodepng_save_file(resultpng, resultpng_size, output) != 0) {
-		fprintf(stderr, "[ERROR] Error while writing PNG.\n");
-		exit(-18);
+		trigger_error(18, true, output);
 	}
 
 	free(orig_buffer);

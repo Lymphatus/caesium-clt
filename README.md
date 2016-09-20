@@ -5,7 +5,7 @@
 
 ###### REQUIREMENTS
 * [mozjpeg](https://github.com/mozilla/mozjpeg)
-* [zopfli](https://github.com/google/zopfli)
+* [zopflipng](https://github.com/google/zopfli)
 * [lodepng](https://github.com/lvandeve/lodepng)
 
 ----------
@@ -13,7 +13,6 @@
 ###### TESTED PLATFORMS
 * Mac OS X El Capitan (v10.11.4)
 * Arch Linux
-* Ubuntu 14.04.2
 
 ----------
 

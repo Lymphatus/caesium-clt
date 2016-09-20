@@ -5,3 +5,16 @@ build/*
 autom4te.cache
 aclocal.m4
 configure
+.vscode/*
+
+# Folder view configuration files
+.DS_Store
+Desktop.ini
+
+# Thumbnail cache files
+._*
+Thumbs.db
+
+# Files that might appear on external disks
+.Spotlight-V100
+.Trashes

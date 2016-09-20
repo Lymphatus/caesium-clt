@@ -250,9 +250,8 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		//Get output stats
 		status = stat(output_filename, &st_buf);
 		if (status != 0) {
-		//TODO This is not critical, but still something to be tracked
-			fprintf(stderr, "[ERROR] Failed to get output file stats.\n");
-			exit(-12);
+			//TODO This is not critical, but still something to be tracked
+			trigger_error(12, true, output_filename);
 		}
 		o_size = st_buf.st_size;
 		*(o_t_size) += o_size;
