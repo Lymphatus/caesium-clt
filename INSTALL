@@ -58,7 +58,7 @@ invoking configure:
 	$ mkdir build
 	$ cd build
 Then call:
-	$ ../configure
+	$ ../configure CFLAGS="-L/opt/mozjpeg/lib64 -I/opt/mozjpeg/include"
 	$ make
 	$ sudo make install
 
