@@ -254,7 +254,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 caesiumclt_SOURCES = main.c jpeg.c compresshelper.c utils.c png.c lodepng.c error.c
-caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -std=c99
+caesiumclt_CFLAGS = -Wall -D_FILE_OFFSET_BITS=64 -std=c99 -rpath /opt/mozjpeg/lib64
 caesiumclt_LDADD = -lm
 all: all-am
 
