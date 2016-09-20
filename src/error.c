@@ -15,7 +15,7 @@ void trigger_error(int code, bool is_critical, ...) {
     va_list args;
     va_start(args, is_critical);
 
-    fprintf(stderr, "%s %d: ",
+    fprintf(stderr, "%s - %d: ",
             parse_error_level(is_critical),
             code);
 
