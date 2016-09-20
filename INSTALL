@@ -1,19 +1,34 @@
 Installation Instructions
 *************************
 
-   Copyright (C) 2015 Matteo Paonessa
-
-   Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.  This file is offered as-is,
-without warranty of any kind.
-
 Requirements
 ==================
 You will need both mozjpeg (libjpeg-turbo will work too) and zopflipng compiled as libraries to be able to
 compile CaesiumCLT. Refer to their own documentation for the detailed
 instructions.
 
+This is the step-by-step sequence tested on Ubuntu 16.04 LTS:
+
+	mozjpeg
+
+	$ git clone https://github.com/mozilla/mozjpeg
+	$ cd mozjpeg/
+	$ autoreconf -fiv
+	$ mkdir build && cd build
+	$ ../configure
+	$ make && sudo make install
+
+
+	libzopflipng
+
+	$ git clone https://github.com/google/zopfli.git
+	$ cd zopfli
+	$ make libzopflipng
+	$ sudo cp libzopflipng.so.1.0.0 /usr/lib
+	$ sudo ln -s libzopflipng.so.1.0.0 /usr/lib/libzopflipng.so
+	$ sudo ln -s libzopflipng.so.1.0.0 /usr/lib/libzopflipng.so.1
+	$ sudo mkdir /usr/include/zopflipng
+	$ sudo cp src/zopflipng/zopflipng_lib.h /usr/include/zopflipng
 
 Basic Installation
 ==================
@@ -46,3 +61,5 @@ Then call:
 	$ ../configure
 	$ make
 	$ sudo make install
+
+	
