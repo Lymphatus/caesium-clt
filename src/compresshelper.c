@@ -18,7 +18,8 @@
 #include "png.h"
 #include "error.h"
 
-void initialize_jpeg_parameters(cclt_parameters* par) {
+void initialize_jpeg_parameters(cclt_parameters* par)
+{
 	par->jpeg.quality = 0;
 	par->jpeg.width = 0;
 	par->jpeg.height = 0;
@@ -28,7 +29,8 @@ void initialize_jpeg_parameters(cclt_parameters* par) {
 	par->jpeg.lossless = false;
 }
 
-void initialize_png_parameters(cclt_parameters* par) {
+void initialize_png_parameters(cclt_parameters* par)
+{
 	par->png.iterations = 10;
 	par->png.iterations_large = 5;
 	par->png.block_split_strategy = 4;
@@ -37,7 +39,8 @@ void initialize_png_parameters(cclt_parameters* par) {
 	par->png.auto_filter_strategy = 1;
 }
 
-cclt_parameters initialize_compression_parameters() {
+cclt_parameters initialize_compression_parameters()
+{
 	cclt_parameters par;
 
 	initialize_jpeg_parameters(&par);
@@ -52,7 +55,8 @@ cclt_parameters initialize_compression_parameters() {
 	return par;
 }
 
-void validate_parameters(cclt_parameters* pars) {
+void validate_parameters(cclt_parameters* pars)
+{
 	//Either -l or -q must be set but not together
 	if (!((pars->jpeg.lossless) ^ (pars->jpeg.quality > 0))) {
 		//Both or none are set
@@ -80,59 +84,58 @@ void validate_parameters(cclt_parameters* pars) {
 	}
 }
 
-cclt_parameters parse_arguments(int argc, char* argv[]) {
+cclt_parameters parse_arguments(int argc, char* argv[])
+{
 
 	//Initialize default params
 	cclt_parameters parameters = initialize_compression_parameters();
 	int c;
 
 	while (optind < argc) {
-		if ((c = getopt (argc, argv, "q:velo:s:hR")) != -1) {
+		if ((c = getopt(argc, argv, "q:velo:s:hR")) != -1) {
 			switch (c) {
-				case 'v':
-					printf("%s-%d\n", APP_VERSION, BUILD);
-					exit(0);
-				case '?':
-					if (optopt == 'q' || optopt == 'o' || optopt == 's') {
-						trigger_error(6, true, optopt);
-					}
-					else if (isprint(optopt))  {
-						trigger_error(100, false, optopt);
-					}
-					else {
-						trigger_error(101, false, optopt);
-					}
-					break;
-				case ':':
-					trigger_error(102, false);
-					break;
-				case 'q':
-					parameters.jpeg.quality = string_to_int(optarg);
-					break;
-				case 'e':
-					parameters.jpeg.exif_copy = true;
-					break;
-				case 'l':
-					parameters.jpeg.lossless = true;
-					break;
-				case 'o':
-					parameters.output_folder = optarg;
-					break;
-				case 'h':
-					print_help();
-					break;
-				case 'R':
-					parameters.recursive = true;
-					break;
-				case 'S':
-					parameters.structure = true;
-					break;
-				default:
-					abort();
+			case 'v':
+				printf("%s-%d\n", APP_VERSION, BUILD);
+				exit(0);
+			case '?':
+				if (optopt == 'q' || optopt == 'o' || optopt == 's') {
+					trigger_error(6, true, optopt);
+				} else if (isprint(optopt)) {
+					trigger_error(100, false, optopt);
+				} else {
+					trigger_error(101, false, optopt);
+				}
+				break;
+			case ':':
+				trigger_error(102, false);
+				break;
+			case 'q':
+				parameters.jpeg.quality = string_to_int(optarg);
+				break;
+			case 'e':
+				parameters.jpeg.exif_copy = true;
+				break;
+			case 'l':
+				parameters.jpeg.lossless = true;
+				break;
+			case 'o':
+				parameters.output_folder = optarg;
+				break;
+			case 'h':
+				print_help();
+				break;
+			case 'R':
+				parameters.recursive = true;
+				break;
+			case 'S':
+				parameters.structure = true;
+				break;
+			default:
+				abort();
 			}
 		} else {
 			int i = 0;
-			parameters.input_files = (char**) malloc ((argc - optind) * sizeof (char*));
+			parameters.input_files = (char**)malloc((argc - optind) * sizeof(char*));
 			while (optind < argc) {
 				if (is_directory(argv[optind])) {
 					if (i != 0) {
@@ -144,7 +147,7 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 					scan_folder(&parameters, argv[optind], parameters.recursive);
 					return parameters;
 				} else {
-					parameters.input_files[i] = (char*) malloc (strlen(argv[optind]) * sizeof(char)); //TODO Necessary??
+					parameters.input_files[i] = (char*)malloc(strlen(argv[optind]) * sizeof(char)); //TODO Necessary??
 					parameters.input_files[i] = argv[optind];
 					i++;
 					parameters.input_files_count = i;
@@ -160,10 +163,11 @@ cclt_parameters parse_arguments(int argc, char* argv[]) {
 	return parameters;
 }
 
-int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
+int cclt_compress_routine(char* input, char* output, cclt_parameters* pars)
+{
 	//Detect which image type are we compressing
 	enum image_type type = detect_image_type(input);
-	char* exif_orig = (char*) malloc(strlen(input) * sizeof(char));
+	char* exif_orig = (char*)malloc(strlen(input) * sizeof(char));
 	strcpy(exif_orig, input);
 
 	if (type == JPEG) {
@@ -187,8 +191,8 @@ int cclt_compress_routine(char* input, char* output, cclt_parameters* pars) {
 	return 0;
 }
 
-void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
-
+void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size)
+{
 	struct stat st_buf;
 	int i = 0;
 
@@ -204,7 +208,7 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		off_t i_size, o_size;
 		int status; //Pointer for stat() call
 
-		char* output_filename = (char*) malloc ((strlen(pars->output_folder) + 1) * sizeof(char));
+		char* output_filename = (char*)malloc((strlen(pars->output_folder) + 1) * sizeof(char));
 
 		strcpy(output_filename, pars->output_folder);
 
@@ -222,10 +226,10 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 			trigger_error(11, true, pars->input_files[i]);
 		}
 
-	    //Check if we ran into a folder
-	    //TODO Check symlinks too
+		//Check if we ran into a folder
+		//TODO Check symlinks too
 		if (is_directory(pars->input_files[i])) {
-	    	//Folder found, but we don't need it here
+			//Folder found, but we don't need it here
 			i++;
 			continue;
 		}
@@ -236,10 +240,10 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 
 		//TODO Do we want a more verbose output?
 		fprintf(stdout, "(%d/%d) %s -> %s\n",
-						i + 1,
-						pars->input_files_count,
-						pars->input_files[i],
-						output_filename);
+			i + 1,
+			pars->input_files_count,
+			pars->input_files[i],
+			output_filename);
 
 		int routine = cclt_compress_routine(pars->input_files[i], output_filename, pars);
 		if (routine == -1) {
@@ -257,11 +261,10 @@ void cclt_start(cclt_parameters* pars, off_t* i_t_size, off_t* o_t_size) {
 		*(o_t_size) += o_size;
 
 		fprintf(stdout, "%s -> %s [%.2f%%]\n",
-						get_human_size(i_size),
-						get_human_size(o_size),
-						((float) o_size - i_size) * 100 / i_size);
+			get_human_size(i_size),
+			get_human_size(o_size),
+			((float)o_size - i_size) * 100 / i_size);
 
 		i++;
 	}
-
 }
