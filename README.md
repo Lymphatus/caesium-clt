@@ -25,7 +25,7 @@ See INSTALL for more details.
 
 Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output```
 ```
-$ caesiumclt -l -o ~/output/ ~/image.jpg
+$ caesiumclt -q 0 -o ~/output/ ~/image.jpg
 ```
 
 Compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` with lossy compression and quality set to 80
@@ -35,12 +35,12 @@ $ caesiumclt -q 80 -o ~/output/ ~/image.jpg
 
 Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` and keeps EXIF metadata
 ```
-$ caesiumclt -l -e -o ~/output/ ~/image.jpg
+$ caesiumclt -q 0 -e -o ~/output/ ~/image.jpg
 ```
 
 Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output```
 ```
-$ caesiumclt -l -R -o ~/output/ ~/Pictures
+$ caesiumclt -q 0 -R -o ~/output/ ~/Pictures
 ```
 
 ----------
@@ -57,6 +57,7 @@ $ caesiumclt -l -R -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
+* 0.10.0-beta - Switched to cmake and libcaesium
 * 0.9.1-beta - Initial development stage
 
 Check the [Commits](https://github.com/Lymphatus/CaesiumCLT/commits/master) for a detailed list of changes.

@@ -11,4 +11,8 @@
 
 void print_help();
 
+int is_directory(const char* path);
+
+int scan_folder(const char* directory);
+
 #endif //CAESIUM_CLT_UTILS_H

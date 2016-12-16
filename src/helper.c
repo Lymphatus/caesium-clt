@@ -1,12 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "helper.h"
 #include "optparse.h"
 #include "utils.h"
 
 void initialize_jpeg_parameters(cs_image_pars *options)
 {
-	options->jpeg.quality = 65;
+	options->jpeg.quality = 0;
 	options->jpeg.exif_copy = false;
 	options->jpeg.dct_method = 2048;
 	options->jpeg.width = 0;
@@ -33,19 +34,18 @@ cs_image_pars initialize_parameters()
 	return options;
 }
 
-cs_image_pars parse_arguments(int argc, char **argv)
+cclt_options parse_arguments(char **argv, cs_image_pars *options)
 {
-	struct optparse options;
-	//Initialize the default parameters
-	cs_image_pars result = initialize_parameters();
+	struct optparse opts;
+	//Initialize application options
+	cclt_options result = {NULL, NULL, false, false, 0};
 
 	//Parse command line args
-	optparse_init(&options, argv);
+	optparse_init(&opts, argv);
 	struct optparse_long longopts[] = {
 			{"quality", 'q', OPTPARSE_REQUIRED},
 			{"exif", 'e', OPTPARSE_NONE},
 			{"output", 'o', OPTPARSE_REQUIRED},
-			{"lossless", 'l', OPTPARSE_NONE},
 			{"recursive", 'R', OPTPARSE_NONE},
 			{"keep-structure", 'S', OPTPARSE_NONE},
 			{"version", 'v', OPTPARSE_NONE},
@@ -54,44 +54,58 @@ cs_image_pars parse_arguments(int argc, char **argv)
 	};
 	int option;
 
-	while ((option = optparse_long(&options, longopts, NULL)) != -1) {
+	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
 		switch (option) {
 			case 'q':
-				result.jpeg.quality = atoi(options.optarg);
+				options->jpeg.quality = atoi(opts.optarg);
 				break;
 			case 'e':
-				result.jpeg.exif_copy = true;
+				options->jpeg.exif_copy = true;
 				break;
 			case 'o':
-				//TODO General args
-				break;
-			case 'l':
-				result.jpeg.quality = 0;
+				result.output_folder = malloc((strlen(opts.optarg) + 1) * sizeof(char));
+				strncpy(result.output_folder, opts.optarg, strlen(opts.optarg) + 1);
 				break;
 			case 'R':
-				//TODO General args
+				result.recursive =  true;
 				break;
 			case 'S':
-				//TODO General args
+				result.keep_structure = true;
 				break;
 			case 'v':
-				fprintf(stdout,
-						"%s-%d\n", APP_VERSION_STRING, BUILD);
+				fprintf(stdout, "%s-%d\n", APP_VERSION_STRING, BUILD);
 				exit(EXIT_SUCCESS);
 			case 'h':
 				print_help();
 				break;
 			case '?':
 			default:
-				fprintf(stderr, "%s: %s\n", argv[0], options.errmsg);
+				fprintf(stderr, "%s: %s\n", argv[0], opts.errmsg);
 				exit(EXIT_FAILURE);
 		}
 	}
 
-	/* Print remaining arguments. */
+	//Remaining arguments
 	char *arg;
-	while ((arg = optparse_arg(&options)))
-		printf("%s\n", arg);
+	bool files_flag = false, folders_flag = false;
+	while ((arg = optparse_arg(&opts))) {
+		//TODO Check if there's a folder and change behaviour accordingly
+		//Check if it's a directory and add its content
+		if (is_directory(arg)) {
+			//NOTE Scanning a folder with this function does not check if we are actually getting images
+			//The actual check is performed by the library
+
+		} else {
+			result.input_files = realloc(result.input_files, (result.files_count + 1) * sizeof(char*));
+			result.input_files[result.files_count] = malloc((strlen(arg) + 1) * sizeof(char));
+			strncpy(result.input_files[result.files_count], arg, strlen(opts.optarg) + 1);
+			result.files_count++;
+		}
+		//If there're files and folders, we cannot keep the structure
+		//TODO Trigger a warning
+		result.keep_structure = !(files_flag && folders_flag);
+	}
+
 	return result;
 }
 
