@@ -26,47 +26,25 @@ void print_help()
 	exit(EXIT_SUCCESS);
 }
 
-int is_directory(const char* path)
+int is_directory(const char *path)
 {
-	struct stat sb;
-
-	return ((stat(path, &sb) && S_ISDIR(sb.st_mode)));
-
-}
-
-int scan_folder(const char *directory)
-{
-	//TODO Not recursive at all
-	int n = 0;
 	tinydir_dir dir;
-	tinydir_open(&dir, directory);
+	tinydir_file file;
+	bool is_dir = false;
 
-	while (dir.has_next)
-	{
-		tinydir_file file;
-		tinydir_readfile(&dir, &file);
+	tinydir_open(&dir, path);
 
-		if (file.is_dir) {
-			if (strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0) {
-				printf("%s/", file.name);
-				char real[PATH_MAX];
-				realpath(file.name, real);
-				scan_folder(real);
-			}
-		} else {
-			printf("%s\n", file.name);
-		}
-
-		tinydir_next(&dir);
-		n++;
-	}
+	tinydir_readfile(&dir, &file);
+	is_dir = (bool) file.is_dir;
 
 	tinydir_close(&dir);
-	return 0;
+
+	return is_dir;
 }
 
-/*
- * int n = 0;
+int scan_folder(const char *directory, cclt_options *options, bool recursive)
+{
+	int n = 0;
 	tinydir_dir dir;
 	tinydir_open(&dir, directory);
 
@@ -74,18 +52,65 @@ int scan_folder(const char *directory)
 		tinydir_file file;
 		tinydir_readfile(&dir, &file);
 
-		printf("%s", file.name);
-		if (file.is_dir && (file.name != "." && file.name != "..")) {
-			scan_folder(file.name);
-			printf("/");
+		if (file.is_dir) {
+			if (strcmp(file.name, ".") != 0 && strcmp(file.name, "..") != 0 && recursive) {
+				scan_folder(file.path, options, true);
+			}
 		} else {
-			tinydir_next(&dir);
+			options->input_files = realloc(options->input_files, (options->files_count + 1) * sizeof(char *));
+			options->input_files[options->files_count] = malloc((strlen(file.path) + 1) * sizeof(char));
+			strncpy(options->input_files[options->files_count], file.path, strlen(file.path) + 1);
+			options->files_count++;
 			n++;
 		}
-		printf("\n");
+		tinydir_next(&dir);
 	}
 
 	tinydir_close(&dir);
-	return 0;
- */
+	return n;
+}
+
+//TODO Recheck
+int mkpath(const char *pathname, mode_t mode)
+{
+	char parent[PATH_MAX], *p;
+	/* make a parent directory path */
+	strncpy(parent, pathname, sizeof(parent));
+	parent[sizeof(parent) - 1] = '\0';
+	for (p = parent + strlen(parent); *p != '/' && p != parent; p--);
+	*p = '\0';
+	/* try make parent directory */
+	if (p != parent && mkpath(parent, mode) != 0) {
+		return -1;
+	}
+	/* make this one if parent has been made */
+	if (mkdir(pathname, mode) == 0) {
+		return 0;
+	}
+	/* if it already exists that is fine */
+	if (errno == EEXIST) {
+		return 0;
+	}
+	return -1;
+}
+
+char *get_filename(char *full_path)
+{
+	char *token, *tofree;
+
+	//Get just the filename
+	tofree = strdup(full_path);
+	//TODO change to strncpy
+	strcpy(tofree, full_path);
+	//TODO Change on Windows
+	while ((token = strsep(&tofree, "/")) != NULL) {
+		if (tofree == NULL) {
+			break;
+		}
+	}
+
+	free(tofree);
+
+	return token;
+}
 

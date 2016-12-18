@@ -94,19 +94,55 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		if (is_directory(arg)) {
 			//NOTE Scanning a folder with this function does not check if we are actually getting images
 			//The actual check is performed by the library
+			int count = 0;
+			count = scan_folder(arg, &result, result.recursive);
+			if (count == 0) {
+				//TODO Trigger a warning
+			}
 
 		} else {
 			result.input_files = realloc(result.input_files, (result.files_count + 1) * sizeof(char*));
 			result.input_files[result.files_count] = malloc((strlen(arg) + 1) * sizeof(char));
+			//TODO Replace with strdup for alloc
 			strncpy(result.input_files[result.files_count], arg, strlen(opts.optarg) + 1);
 			result.files_count++;
 		}
-		//If there're files and folders, we cannot keep the structure
-		//TODO Trigger a warning
-		result.keep_structure = !(files_flag && folders_flag);
 	}
 
+	//If there're files and folders, we cannot keep the structure
+	//TODO Trigger a warning
+	result.keep_structure = !(files_flag && folders_flag);
+
 	return result;
+}
+
+int start_compression(cclt_options *options, cs_image_pars *parameters)
+{
+	//TODO Support folder structure
+	int status = 0;
+
+	//Create the output folder if does not exists
+	if (mkpath(options->output_folder, 0777) == -1) {
+		//TODO Error
+		exit(EXIT_FAILURE);
+	}
+
+	for (int i = 0; i < options->files_count; i++) {
+		//TODO remove unnecessary "/"s
+		char *filename = get_filename(options->input_files[i]);
+		char *output_full_path = malloc((strlen(filename) + strlen(options->output_folder) + 2) * sizeof(char));
+		strncpy(output_full_path, options->output_folder, strlen(options->output_folder));
+		strcat(output_full_path, "/");
+		strcat(output_full_path, filename);
+
+
+		fprintf(stdout,
+			"Compressing %s in %s\n", filename, output_full_path);
+		cs_compress(options->input_files[i], output_full_path, parameters);
+
+	}
+
+	return status;
 }
 
 

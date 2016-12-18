@@ -20,4 +20,6 @@ cs_image_pars initialize_parameters();
 
 cclt_options parse_arguments(char *argv[], cs_image_pars *options);
 
+int start_compression(cclt_options *options, cs_image_pars *parameters);
+
 #endif //CAESIUM_CLT_HELPER_H
