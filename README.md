@@ -1,17 +1,19 @@
-## Caesium Command Line Tools
-##### CCLT - v0.9.1-beta (build 20160808) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
+## Caesium CommandLineTools
+##### caesium-clt - v0.10.0-beta (build 20161219) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
 
 ----------
 
 ###### REQUIREMENTS
-* [mozjpeg](https://github.com/mozilla/mozjpeg)
-* [zopflipng](https://github.com/google/zopfli)
-* [lodepng](https://github.com/lvandeve/lodepng)
+* [libcaesium](https://github.com/mozilla/mozjpeg)
+
+###### Included libraries
+* [optparse](https://github.com/skeeto/optparse)
+* [tinydir](https://github.com/cxong/tinydir)
 
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X El Capitan (v10.11.4)
+* Mac OS X Sierra (v10.12.1)
 * Arch Linux
 
 ----------
@@ -60,13 +62,13 @@ $ caesiumclt -q 0 -R -o ~/output/ ~/Pictures
 * 0.10.0-beta - Switched to cmake and libcaesium
 * 0.9.1-beta - Initial development stage
 
-Check the [Commits](https://github.com/Lymphatus/CaesiumCLT/commits/master) for a detailed list of changes.
+Check the [Commits](https://github.com/Lymphatus/caesium-clt/commits/master) for a detailed list of changes.
 
 ----------
 
 ###### RESOURCES
-* CaesiumCLT website - [http://saerasoft.com/caesium/clt](http://saerasoft.com/caesium/clt)
+* caesium-clt website - [http://saerasoft.com/caesium/clt](http://saerasoft.com/caesium/clt)
 * Caesium website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium)
-* CaesiumCLT Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/CaesiumCLT)
+* caesium-clt Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/caesium-clt)
 * Author website - SaeraSoft - [http://saerasoft.com](http://saerasoft.com)
 * Twitter - [Matteo Paonessa](https://twitter.com/MatteoPaonessa)

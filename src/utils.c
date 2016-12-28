@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <caesium.h>
 #include <limits.h>
+#include <math.h>
 #include "utils.h"
 #include "tinydir.h"
 
@@ -15,31 +16,27 @@ void print_help()
 					"Compress your pictures up to 90%% without visible quality loss.\n\n"
 
 					"Options:\n"
-					"\t-q, --quality\t\t\tset output file quality between [0-100], 0 for optimization\n"
-					"\t-e, --exif\t\t\t\tkeeps EXIF info during compression\n"
-					"\t-o, --output\t\t\toutput folder\n"
-					"\t-R, --recursive\t\t\tif input is a folder, scan subfolders too\n"
+					"\t-q, --quality\t\tset output file quality between [0-100], 0 for optimization\n"
+					"\t-e, --exif\t\tkeeps EXIF info during compression\n"
+					"\t-o, --output\t\toutput folder\n"
+					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					//TODO Remove this warning
 					"\t-S, --keep-structure\tkeep the folder structure [Not active yet], use with -R\n"
-					"\t-h, --help\t\t\t\tdisplay this help and exit\n"
-					"\t-v, --version\t\t\toutput version information and exit\n\n");
+					"\t-h, --help\t\tdisplay this help and exit\n"
+					"\t-v, --version\t\toutput version information and exit\n\n");
 	exit(EXIT_SUCCESS);
 }
 
-int is_directory(const char *path)
+bool is_directory(const char *path)
 {
-	tinydir_dir dir;
 	tinydir_file file;
-	bool is_dir = false;
 
-	tinydir_open(&dir, path);
+	if (tinydir_file_open(&file, path) == -1) {
+		//TODO Error
+		exit(EXIT_FAILURE);
+	}
 
-	tinydir_readfile(&dir, &file);
-	is_dir = (bool) file.is_dir;
-
-	tinydir_close(&dir);
-
-	return is_dir;
+	return (bool) file.is_dir;
 }
 
 int scan_folder(const char *directory, cclt_options *options, bool recursive)
@@ -112,5 +109,36 @@ char *get_filename(char *full_path)
 	free(tofree);
 
 	return token;
+}
+
+off_t get_file_size(const char *path)
+{
+	tinydir_file file;
+
+	if (tinydir_file_open(&file, path) == -1) {
+		//TODO Error
+		exit(EXIT_FAILURE);
+	}
+
+	return file._s.st_size;
+}
+
+char* get_human_size(off_t size) {
+	//We should not get more than TB images
+	char* unit[5] = {"B", "KB", "MB", "GB", "TB"};
+	//Index of the array containing the correct unit
+	double order = floor(log2(labs(size)) / 10);
+	//Alloc enough size for the final string
+	char* final = (char*) malloc(((int) (floor(log10(labs(size))) + 4)) * sizeof(char));
+
+	//If the order exceeds 4, something is fishy
+	if (order > 4) {
+		order = 4;
+	}
+
+	//Copy the formatted string into the buffer
+	sprintf(final, "%.2f %s", size / (pow(1024, order)), unit[(int)order]);
+	//And return it
+	return final;
 }
 

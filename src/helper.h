@@ -3,12 +3,15 @@
 
 #include <caesium.h>
 
-typedef struct cclt_options {
+typedef struct cclt_options
+{
 	char **input_files;
 	char *output_folder;
 	bool recursive;
 	bool keep_structure;
 	int files_count;
+	off_t input_total_size;
+	off_t output_total_size;
 } cclt_options;
 
 

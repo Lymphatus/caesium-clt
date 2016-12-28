@@ -10,7 +10,6 @@
 int main(int argc, char* argv[]) {
 	errno = 0;
 	long execution_ms = 0;
-	int compression_status = 0;
 	cs_image_pars compress_options;
 	cclt_options options;
 
@@ -20,8 +19,7 @@ int main(int argc, char* argv[]) {
 	//Start a timer before calling the compression
 	clock_t start = clock(), diff;
 
-	//TODO Compress here
-	compression_status = start_compression(&options, &compress_options);
+	start_compression(&options, &compress_options);
 
 	//Cleanup the two memory allocated objects
 	free(options.output_folder);
@@ -32,9 +30,14 @@ int main(int argc, char* argv[]) {
 	execution_ms = diff * 1000 / CLOCKS_PER_SEC;
 
 	//Output the compression results
-	fprintf(stdout,
-			"Performed in %lum%lus%lums\n",
-			execution_ms / 1000 / 60, execution_ms / 1000 % 60, execution_ms % 1000);
+
+	fprintf(stdout, "-------------------------------\nCompression completed in "
+					"%lum%lus%lums\n%s -> %s [%.2f%% | %s]\n",
+			execution_ms / 1000 / 60, execution_ms / 1000 % 60, execution_ms % 1000,
+			get_human_size(options.input_total_size), get_human_size(options.output_total_size),
+			((float)options.output_total_size - options.input_total_size) * 100 / options.input_total_size,
+			get_human_size((options.output_total_size - options.input_total_size)));
+
 
 	exit(EXIT_SUCCESS);
 }
