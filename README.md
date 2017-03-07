@@ -1,10 +1,10 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.10.0-beta (build 20161219) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
+##### caesium-clt - v0.10.0-beta (build 20170307) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
 
 ----------
 
 ###### REQUIREMENTS
-* [libcaesium](https://github.com/mozilla/mozjpeg)
+* [libcaesium](https://github.com/Lymphatus/libcaesium)
 
 ###### Included libraries
 * [optparse](https://github.com/skeeto/optparse)
@@ -15,6 +15,7 @@
 ###### TESTED PLATFORMS
 * Mac OS X Sierra (v10.12.1)
 * Arch Linux
+* Windows 10
 
 ----------
 
@@ -53,13 +54,8 @@ $ caesiumclt -q 0 -R -o ~/output/ ~/Pictures
 
 ----------
 
-###### KNOWN ISSUES
-* It does not work on Windows unless you port getopt to it
-
-----------
-
 ###### CHANGELOG
-* 0.10.0-beta - Switched to cmake and libcaesium
+* 0.10.0-beta - Switched to cmake build system and libcaesium
 * 0.9.1-beta - Initial development stage
 
 Check the [Commits](https://github.com/Lymphatus/caesium-clt/commits/master) for a detailed list of changes.

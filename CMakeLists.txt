@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.11)
-project(caesium_clt)
+project(caesiumclt)
 
 # The version number.
 set(VERSION_MAJOR 0)

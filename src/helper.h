@@ -14,13 +14,6 @@ typedef struct cclt_options
 	off_t output_total_size;
 } cclt_options;
 
-
-void initialize_jpeg_parameters(cs_image_pars *options);
-
-void initialize_png_parameters(cs_image_pars *options);
-
-cs_image_pars initialize_parameters();
-
 cclt_options parse_arguments(char *argv[], cs_image_pars *options);
 
 int start_compression(cclt_options *options, cs_image_pars *parameters);

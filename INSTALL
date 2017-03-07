@@ -18,8 +18,9 @@ This is the step-by-step sequence tested on Ubuntu 16.04 LTS:
 	$ ../configure
 	$ make && sudo make install
 
+Note that on some systems you have to run $ autoreconf -fiv twice.
 
-	libzopflipng
+	zopflipng
 
 	$ git clone https://github.com/google/zopfli.git
 	$ cd zopfli
@@ -40,7 +41,7 @@ The sequence should be something like:
 
 	$ tar xfv caesiumclt-*.tar.gz
 	$ cd caesiumclt-*
-	$ ./configure
+	$ cmake .
 	$ make
 	$ sudo make install
 
@@ -49,7 +50,7 @@ Cloning from git
 	$ git clone https://github.com/Lymphatus/CaesiumCLT
 	$ cd CaesiumCLT
 	$ autoreconf -fiv
-	$ ./configure
+	$ cmake .
 	$ make
 	$ sudo make install
 
@@ -58,7 +59,7 @@ invoking configure:
 	$ mkdir build
 	$ cd build
 Then call:
-	$ ../configure CFLAGS="-L/opt/mozjpeg/lib64 -I/opt/mozjpeg/include"
+	$ cmake ..
 	$ make
 	$ sudo make install
 
