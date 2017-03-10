@@ -1,22 +1,25 @@
-## Caesium Command Line Tools
-##### CCLT - v0.9.1-beta (build 20160808) - Copyright &copy; Matteo Paonessa, 2016. All Rights Reserved.
-
+## Caesium CommandLineTools
+##### caesium-clt - v0.10.1-beta (build 20170310) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
+[![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
 ###### REQUIREMENTS
-* [mozjpeg](https://github.com/mozilla/mozjpeg)
-* [zopflipng](https://github.com/google/zopfli)
-* [lodepng](https://github.com/lvandeve/lodepng)
+* [libcaesium](https://github.com/Lymphatus/libcaesium)
+
+###### Included libraries
+* [optparse](https://github.com/skeeto/optparse)
+* [tinydir](https://github.com/cxong/tinydir)
 
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X El Capitan (v10.11.4)
-* Arch Linux
+* Mac OS X Sierra (v10.12.3)
+* Ubuntu 16.04
+* Windows 10
 
 ----------
 
-###### INSTALLATION
+###### COMPILATION
 See INSTALL for more details.
 
 ----------
@@ -25,7 +28,7 @@ See INSTALL for more details.
 
 Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output```
 ```
-$ caesiumclt -l -o ~/output/ ~/image.jpg
+$ caesiumclt -q 0 -o ~/output/ ~/image.jpg
 ```
 
 Compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` with lossy compression and quality set to 80
@@ -35,37 +38,39 @@ $ caesiumclt -q 80 -o ~/output/ ~/image.jpg
 
 Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` and keeps EXIF metadata
 ```
-$ caesiumclt -l -e -o ~/output/ ~/image.jpg
+$ caesiumclt -q 0 -e -o ~/output/ ~/image.jpg
 ```
 
 Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output```
 ```
-$ caesiumclt -l -R -o ~/output/ ~/Pictures
+$ caesiumclt -q 0 -R -o ~/output/ ~/Pictures
+```
+
+Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output``` retaining the input folder structure
+```
+$ caesiumclt -q 0 -RS-o ~/output/ ~/Pictures
 ```
 
 ----------
 
 ###### TODO
 * Code cleaning
-* Keep folder structure
-
-----------
-
-###### KNOWN ISSUES
-* It does not work on Windows unless you port getopt to it
+* Deeper error handling
 
 ----------
 
 ###### CHANGELOG
+* 0.10.1-beta - All features are available
+* 0.10.0-beta - Switched to cmake build system and libcaesium
 * 0.9.1-beta - Initial development stage
 
-Check the [Commits](https://github.com/Lymphatus/CaesiumCLT/commits/master) for a detailed list of changes.
+Check the [Commits](https://github.com/Lymphatus/caesium-clt/commits/master) for a detailed list of changes.
 
 ----------
 
 ###### RESOURCES
-* CaesiumCLT website - [http://saerasoft.com/caesium/clt](http://saerasoft.com/caesium/clt)
+* caesium-clt website - [http://saerasoft.com/caesium/clt](http://saerasoft.com/caesium/clt)
 * Caesium website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium)
-* CaesiumCLT Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/CaesiumCLT)
+* caesium-clt Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/caesium-clt)
 * Author website - SaeraSoft - [http://saerasoft.com](http://saerasoft.com)
 * Twitter - [Matteo Paonessa](https://twitter.com/MatteoPaonessa)

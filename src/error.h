@@ -1,8 +1,8 @@
-#ifndef CCLT_ERROR
-#define CCLT_ERROR
+#ifndef CAESIUMCLT_ERROR_H
+#define CAESIUMCLT_ERROR_H
 
-#include <stdbool.h>
+void display_error(error_level level, int code);
 
-void trigger_error(int code, bool is_critical, ...);
+const char *get_error_message(int code);
 
-#endif
+#endif //CAESIUMCLT_ERROR_H

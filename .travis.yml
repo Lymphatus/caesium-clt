@@ -1,0 +1,20 @@
+language: c
+
+dist: trusty
+sudo: required
+
+compiler:
+  - gcc
+  - clang
+
+before_install:
+  - sudo apt-get install libtool autoconf git nasm
+  - chmod +x install.sh
+  - ./install.sh
+
+before_script:
+  - mkdir build
+  - cd build
+  - cmake ..
+
+script: make
