@@ -1,35 +1,10 @@
-Installation Instructions
+Compile instructions
 *************************
 
 Requirements
 ==================
-You will need both mozjpeg (libjpeg-turbo will work too) and zopflipng compiled as libraries to be able to
-compile CaesiumCLT. Refer to their own documentation for the detailed
-instructions.
-
-This is the step-by-step sequence tested on Ubuntu 16.04 LTS:
-
-	mozjpeg
-
-	$ git clone https://github.com/mozilla/mozjpeg
-	$ cd mozjpeg/
-	$ autoreconf -fiv
-	$ mkdir build && cd build
-	$ ../configure
-	$ make && sudo make install
-
-Note that on some systems you have to run $ autoreconf -fiv twice.
-
-	zopflipng
-
-	$ git clone https://github.com/google/zopfli.git
-	$ cd zopfli
-	$ make libzopflipng
-	$ sudo cp libzopflipng.so.1.0.0 /usr/lib
-	$ sudo ln -s libzopflipng.so.1.0.0 /usr/lib/libzopflipng.so
-	$ sudo ln -s libzopflipng.so.1.0.0 /usr/lib/libzopflipng.so.1
-	$ sudo mkdir /usr/include/zopflipng
-	$ sudo cp src/zopflipng/zopflipng_lib.h /usr/include/zopflipng
+CaesiumCLT is based on libcaesium (https://github.com/Lymphatus/libcaesium) and requires it to be compiled.
+Please refer to its own documentation.
 
 Basic Installation
 ==================
@@ -39,17 +14,16 @@ Unpack the archive (if not cloned from GIT), enter the directory
 and compile the program.
 The sequence should be something like:
 
-	$ tar xfv caesiumclt-*.tar.gz
-	$ cd caesiumclt-*
+	$ tar xfv caesium-clt-*.tar.gz
+	$ cd caesium-clt-*
 	$ cmake .
 	$ make
 	$ sudo make install
 
 Cloning from git
 ==================
-	$ git clone https://github.com/Lymphatus/CaesiumCLT
-	$ cd CaesiumCLT
-	$ autoreconf -fiv
+	$ git clone https://github.com/Lymphatus/caesium-clt
+	$ cd caesium-clt
 	$ cmake .
 	$ make
 	$ sudo make install

@@ -6,6 +6,7 @@
 typedef struct cclt_options
 {
 	char **input_files;
+	char *input_folder;
 	char *output_folder;
 	bool recursive;
 	bool keep_structure;

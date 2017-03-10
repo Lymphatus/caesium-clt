@@ -6,6 +6,7 @@
 #include <math.h>
 #include "utils.h"
 #include "tinydir.h"
+#include "error.h"
 
 
 void print_help()
@@ -32,7 +33,7 @@ bool is_directory(const char *path)
 	tinydir_file file;
 
 	if (tinydir_file_open(&file, path) == -1) {
-		//TODO Error
+		display_error(ERROR, 6);
 		exit(EXIT_FAILURE);
 	}
 
@@ -99,7 +100,7 @@ char *get_filename(char *full_path)
 	tofree = strdup(full_path);
 	//TODO change to strncpy
 	strcpy(tofree, full_path);
-	//TODO Change on Windows
+	//TODO Windows?
 	while ((token = strsep(&tofree, "/")) != NULL) {
 		if (tofree == NULL) {
 			break;
@@ -116,20 +117,21 @@ off_t get_file_size(const char *path)
 	tinydir_file file;
 
 	if (tinydir_file_open(&file, path) == -1) {
-		//TODO Error
+		display_error(ERROR, 7);
 		exit(EXIT_FAILURE);
 	}
 
 	return file._s.st_size;
 }
 
-char* get_human_size(off_t size) {
+char *get_human_size(off_t size)
+{
 	//We should not get more than TB images
-	char* unit[5] = {"B", "KB", "MB", "GB", "TB"};
+	char *unit[5] = {"B", "KB", "MB", "GB", "TB"};
 	//Index of the array containing the correct unit
 	double order = floor(log2(labs(size)) / 10);
 	//Alloc enough size for the final string
-	char* final = (char*) malloc(((int) (floor(log10(labs(size))) + 4)) * sizeof(char));
+	char *final = (char *) malloc(((int) (floor(log10(labs(size))) + 4)) * sizeof(char));
 
 	//If the order exceeds 4, something is fishy
 	if (order > 4) {
@@ -137,7 +139,7 @@ char* get_human_size(off_t size) {
 	}
 
 	//Copy the formatted string into the buffer
-	sprintf(final, "%.2f %s", size / (pow(1024, order)), unit[(int)order]);
+	sprintf(final, "%.2f %s", size / (pow(1024, order)), unit[(int) order]);
 	//And return it
 	return final;
 }

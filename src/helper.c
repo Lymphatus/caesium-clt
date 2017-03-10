@@ -5,12 +5,13 @@
 #include "optparse.h"
 #include "utils.h"
 #include "config.h"
+#include "error.h"
 
 cclt_options parse_arguments(char **argv, cs_image_pars *options)
 {
 	struct optparse opts;
 	//Initialize application options
-	cclt_options result = {NULL, NULL, false, false, 0, 0, 0};
+	cclt_options parameters = {NULL, NULL, false, false, 0, 0, 0};
 
 	//Parse command line args
 	optparse_init(&opts, argv);
@@ -31,7 +32,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			case 'q':
 				options->jpeg.quality = atoi(opts.optarg);
 				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
-					//TODO Trigger a error
+					display_error(ERROR, 1);
 					exit(EXIT_FAILURE);
 				}
 				break;
@@ -40,18 +41,18 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				break;
 			case 'o':
 				if (opts.optarg[strlen(opts.optarg) - 1] == '/') {
-					result.output_folder = malloc((strlen(opts.optarg) + 1) * sizeof(char));
-					snprintf(result.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
+					parameters.output_folder = malloc((strlen(opts.optarg) + 1) * sizeof(char));
+					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
 				} else {
-					result.output_folder = malloc((strlen(opts.optarg) + 2) * sizeof(char));
-					snprintf(result.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
+					parameters.output_folder = malloc((strlen(opts.optarg) + 2) * sizeof(char));
+					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
 				}
 				break;
 			case 'R':
-				result.recursive = true;
+				parameters.recursive = true;
 				break;
 			case 'S':
-				result.keep_structure = true;
+				parameters.keep_structure = true;
 				break;
 			case 'v':
 				fprintf(stdout, "%d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
@@ -62,6 +63,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			case '?':
 			default:
 				fprintf(stderr, "%s: %s\n", argv[0], opts.errmsg);
+				display_error(ERROR, 2);
 				exit(EXIT_FAILURE);
 		}
 	}
@@ -70,27 +72,48 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	char *arg;
 	bool files_flag = false, folders_flag = false;
 	while ((arg = optparse_arg(&opts))) {
+		if (folders_flag) {
+			display_error(WARNING, 8);
+			continue;
+		}
 		//Check if it's a directory and add its content
 		if (is_directory(arg)) {
-			int count = 0;
-			count = scan_folder(arg, &result, result.recursive);
-			if (count == 0) {
-				//TODO Trigger a warning
+			if (!files_flag) {
+				folders_flag = true;
+				parameters.input_folder = strdup(arg);
+				int count = 0;
+				count = scan_folder(arg, &parameters, parameters.recursive);
+				if (count == 0) {
+					display_error(WARNING, 3);
+				}
+			} else {
+				display_error(WARNING, 9);
 			}
-
 		} else {
-			result.input_files = realloc(result.input_files, (result.files_count + 1) * sizeof(char *));
-			result.input_files[result.files_count] = malloc((strlen(arg) + 1) * sizeof(char));
-			snprintf(result.input_files[result.files_count], strlen(arg) + 1, "%s", arg);
-			result.files_count++;
+			files_flag = true;
+			parameters.input_folder = NULL;
+			parameters.input_files = realloc(parameters.input_files, (parameters.files_count + 1) * sizeof(char *));
+			parameters.input_files[parameters.files_count] = malloc((strlen(arg) + 1) * sizeof(char));
+			snprintf(parameters.input_files[parameters.files_count], strlen(arg) + 1, "%s", arg);
+			parameters.files_count++;
 		}
 	}
 
 	//If there're files and folders, we cannot keep the structure
-	//TODO Trigger a warning
-	result.keep_structure = !(files_flag && folders_flag);
+	if (parameters.recursive && !folders_flag) {
+		display_error(WARNING, 10);
+		parameters.recursive = false;
+	}
+	if (!parameters.recursive && parameters.keep_structure) {
+		display_error(WARNING, 11);
+		parameters.keep_structure = false;
+	}
+	if (parameters.keep_structure && (!folders_flag && parameters.files_count > 1)) {
+		display_error(WARNING, 4);
+		parameters.keep_structure = false;
+	}
 
-	return result;
+	return parameters;
 }
 
 int start_compression(cclt_options *options, cs_image_pars *parameters)
@@ -99,17 +122,36 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 	off_t input_file_size = 0;
 	off_t output_file_size = 0;
 	//TODO Support folder structure
-
 	//Create the output folder if does not exists
 	if (mkpath(options->output_folder, 0777) == -1) {
-		//TODO Error
+		display_error(ERROR, 5);
 		exit(EXIT_FAILURE);
 	}
 
 	for (int i = 0; i < options->files_count; i++) {
 		char *filename = get_filename(options->input_files[i]);
-		char *output_full_path = malloc((strlen(filename) + strlen(options->output_folder) + 1) * sizeof(char));
-		snprintf(output_full_path, (strlen(filename) + strlen(options->output_folder) + 1), "%s%s", options->output_folder, filename);
+		char *output_full_path;
+		//If we don't need to keep the structure, we put all the files in one folder by just the filename
+		if (!options->keep_structure) {
+			output_full_path = malloc((strlen(filename) + strlen(options->output_folder) + 1) * sizeof(char));
+			snprintf(output_full_path, (strlen(filename) + strlen(options->output_folder) + 1), "%s%s",
+					 options->output_folder, filename);
+		} else {
+			/*
+			 * Otherwise, we nee to compute the whole directory structure
+			 * We are sure we have a folder only as input, so that's the root
+			 * Just compute the subfolders without the filename, make them and append the filename
+			 * A piece of cake <3
+			*/
+
+			size_t index = strspn(options->input_folder, options->input_files[i]) + 1;
+			size_t size = strlen(options->input_files[i]) - index - strlen(filename);
+			char output_full_folder[strlen(options->output_folder) + size + 1];
+			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s", options->output_folder, &options->input_files[i][index]);
+			output_full_path = malloc((strlen(output_full_folder) + strlen(filename) + 1) * sizeof(char));
+			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s", output_full_folder, filename);
+			mkpath(output_full_folder, 0777);
+		}
 
 		fprintf(stdout, "(%d/%d) %s -> %s\n",
 				i + 1,
@@ -124,9 +166,12 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			output_file_size = get_file_size(output_full_path);
 			options->output_total_size += output_file_size;
 
+			char *human_input_size = get_human_size(input_file_size);
+			char *human_output_size = get_human_size(output_file_size);
+
 			fprintf(stdout, "%s -> %s [%.2f%%]\n",
-					get_human_size(input_file_size),
-					get_human_size(output_file_size),
+					human_input_size,
+					human_output_size,
 					((float) output_file_size - input_file_size) * 100 / input_file_size);
 		} else {
 			options->input_total_size -= get_file_size(options->input_files[i]);

@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.10.0-beta (build 20170307) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
+##### caesium-clt - v0.10.1-beta (build 20170310) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
 
 ----------
 
@@ -13,13 +13,13 @@
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X Sierra (v10.12.1)
-* Arch Linux
+* Mac OS X Sierra (v10.12.3)
+* Ubuntu 16.04
 * Windows 10
 
 ----------
 
-###### INSTALLATION
+###### COMPILATION
 See INSTALL for more details.
 
 ----------
@@ -46,15 +46,21 @@ Losslessly compress ```Pictures``` folder and subfolders, located in the ```home
 $ caesiumclt -q 0 -R -o ~/output/ ~/Pictures
 ```
 
+Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output``` retaining the input folder structure
+```
+$ caesiumclt -q 0 -RS-o ~/output/ ~/Pictures
+```
+
 ----------
 
 ###### TODO
 * Code cleaning
-* Keep folder structure
+* Deeper error handling
 
 ----------
 
 ###### CHANGELOG
+* 0.10.1-beta - All features are available
 * 0.10.0-beta - Switched to cmake build system and libcaesium
 * 0.9.1-beta - Initial development stage
 
