@@ -1,3 +1,6 @@
+set(CMAKE_C_FLAGS "--std=gnu99")
+
+
 FILE(GLOB CSources *.c)
 FILE(GLOB CHeaders *.h)
 
