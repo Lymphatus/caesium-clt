@@ -14,69 +14,68 @@
 #include <math.h>
 
 #ifdef __linux
-#include <linux/limits.h>
+	#include <linux/limits.h>
 #elif __APPLE__
-#include <sys/syslimits.h>
+	#include <sys/syslimits.h>
 #endif
 
 #include "utils.h"
 
-int string_to_int(char* in_string)
-{
+int string_to_int(char* in_string) {
 	long value = 0;
 	char* endptr;
+	errno = 0; //Error checking
 
 	value = strtol(in_string, &endptr, 0); //Convert the string
 
 	//Check errors
 	if ((errno == ERANGE) || (errno != 0 && value == 0)) {
-		trigger_error(8, true);
-	}
+        fprintf(stderr, "[ERROR] Cannot parse quality value.\n");
+        exit(-8);
+    }
 
-	if (endptr == in_string) {
-		trigger_error(7, true);
-	}
+   if (endptr == in_string) {
+        fprintf(stderr, "[ERROR] Parse error. No digits were found for -q option.\n");
+        exit(-7);
+    }
 
 	return value;
 }
 
-void print_help()
-{
+void print_help() {
 	fprintf(stdout,
 		"CaesiumCLT - Caesium Command Line Tools\n\n"
 		"Usage: caesiumclt [OPTIONS] INPUT...\n"
 		"Compress your pictures up to 90%% without visible quality loss.\n\n"
 
 		"Options:\n"
-		"\t-q\tset output file quality between [1-100], JPEG only\n"
-		"\t-e\tkeeps EXIF info during compression\n"
-		"\t-o\toutput folder\n"
-		"\t-l\tuse lossless optimization\n"
-		"\t-R\tif input is a folder, scan subfolders too\n"
-		//TODO Remove this warning
-		"\t-S\tkeep the folder structure [Not active yet]\n"
-		"\t-h\tdisplay this help and exit\n"
-		"\t-v\toutput version information and exit\n\n");
+			"\t-q\tset output file quality between [1-100], JPEG only\n"
+			"\t-e\tkeeps EXIF info during compression\n"
+			"\t-o\toutput folder\n"
+			"\t-l\tuse lossless optimization\n"
+			"\t-R\tif input is a folder, scan subfolders too\n"
+			//TODO Remove this warning
+			"\t-S\tkeep the folder structure [Not active yet]\n"
+			"\t-h\tdisplay this help and exit\n"
+			"\t-v\toutput version information and exit\n\n");
 	exit(0);
 }
 
 //TODO Recheck
-int mkpath(const char* pathname, mode_t mode)
-{
+int mkpath(const char *pathname, mode_t mode) {
 
 	char parent[PATH_MAX], *p;
 	/* make a parent directory path */
 	strncpy(parent, pathname, sizeof(parent));
 	parent[sizeof(parent) - 1] = '\0';
-	for (p = parent + strlen(parent); *p != '/' && p != parent; p--)
-		;
+	for (p = parent + strlen(parent); *p != '/' && p != parent; p--);
 	*p = '\0';
 	/* try make parent directory */
-	if (p != parent && mkpath(parent, mode) != 0) {
+	if(p != parent && mkpath(parent, mode) != 0) {
 		return -1;
 	}
 	/* make this one if parent has been made */
-	if (mkdir(pathname, mode) == 0) {
+	if(mkdir(pathname, mode) == 0) {
 		return 0;
 	}
 	/* if it already exists that is fine */
@@ -86,11 +85,10 @@ int mkpath(const char* pathname, mode_t mode)
 	return -1;
 }
 
-void scan_folder(cclt_parameters* parameters, char* basedir, int recur)
-{
-	//TODO CRITICAL Pass list as 1st parameter
-	DIR* dir;
-	struct dirent* ent;
+void scan_folder(cclt_parameters* parameters, char* basedir, int recur) {
+	//TODO CRITIAL Pass list as 1st parameter
+	DIR *dir;
+	struct dirent *ent;
 	char* entpath = NULL;
 	struct stat s;
 
@@ -128,68 +126,68 @@ void scan_folder(cclt_parameters* parameters, char* basedir, int recur)
 				parameters->input_files_count++;
 				//Alloc new room for the array
 				parameters->input_files = realloc(parameters->input_files, (n + 1) * sizeof(char*));
-				parameters->input_files[n] = (char*)malloc(strlen(entpath) * sizeof(char));
+				parameters->input_files[n] = (char*) malloc(strlen(entpath) * sizeof(char));
 				//Copy the file path in the array
 				parameters->input_files[n] = strcpy(parameters->input_files[n], entpath);
 			}
 		}
 		closedir(dir);
 	} else {
-		trigger_error(19, true, ptr);
+		fprintf(stderr, "[ERROR] Failed to open folder.\n");
+		exit(-19);
 	}
 	free(entpath);
 }
 
-enum image_type detect_image_type(char* path)
-{
+enum image_type detect_image_type(char* path) {
 	//Open the file
 	FILE* fp;
-	enum image_type type = UNKN;
-
-	unsigned char* type_buffer = (unsigned char*)malloc(2);
+	unsigned char* type_buffer = (unsigned char*) malloc(2);
 
 	fp = fopen(path, "r");
 
 	if (fp == NULL) {
-		trigger_error(14, true, path);
+		fprintf(stderr, "[ERROR] Cannot open input file for type detection.\n");
+		exit(-14);
 	}
 	//Read enough bytes
 	if (fread(type_buffer, 1, 2, fp) < 2) {
-		trigger_error(15, true, path);
+		fprintf(stderr, "[ERROR] Cannot read file type.\n");
+		exit(-15);
 	}
 	//We don't need it anymore
 	fclose(fp);
 
 	//Check the bytes against the JPEG and PNG specs
-	if (((int)type_buffer[0] == 0xFF) && ((int)type_buffer[1] == 0xD8)) {
-		type = JPEG;
-	} else if (((int)type_buffer[0] == 0x89) && ((int)type_buffer[1] == 0x50)) {
-		type = PNG;
+	if (((int) type_buffer[0] == 0xFF) && ((int) type_buffer[1] == 0xD8)) {
+		free(type_buffer);
+		return JPEG;
+	} else if (((int) type_buffer[0] == 0x89) && ((int) type_buffer[1] == 0x50)) {
+		free(type_buffer);
+		return PNG;
+	} else {
+		free(type_buffer);
+		return UNKN;
 	}
-
-	free(type_buffer);
-	return type;
 }
 
-int is_directory(const char* file_path)
-{
+int is_directory(const char *file_path) {
 	struct stat s;
 	stat(file_path, &s);
 	return S_ISDIR(s.st_mode);
 }
 
-char* get_human_size(long size)
-{
+char* get_human_size(long size) {
 	//We should not get more than TB images
-	char* unit[5] = { "B", "KB", "MB", "GB", "TB" };
+	char* unit[5] = {"B", "KB", "MB", "GB", "TB"};
 	//Index of the array containing the correct unit
 	double order = floor(log2(labs(size)) / 10);
 	//Alloc enough size for the final string
-	char* final = (char*)malloc(((int)(floor(log10(labs(size))) + 4)) * sizeof(char));
+	char* final = (char*) malloc(((int) (floor(log10(labs(size))) + 4)) * sizeof(char));
 
 	//If the order exceeds 4, something is fishy
 	if (order > 4) {
-		trigger_error(21, false);
+		fprintf(stdout, "[WARNING] Do you really have such a huge file?\n");
 		order = 4;
 	}
 

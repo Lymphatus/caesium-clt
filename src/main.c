@@ -28,8 +28,7 @@
 // we're gonna go in a infinite loop
 // TODO Trigger a warning if you are overwriting files
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char *argv[]) {
 	errno = 0;
 	off_t i_t_size = 0, o_t_size = 0;
 	// Parse arguments
@@ -43,13 +42,12 @@ int main(int argc, char* argv[])
 	diff = clock() - start;
 	long msec = diff * 1000 / CLOCKS_PER_SEC;
 
-	fprintf(stdout, "-------------------------------\n"
-					"Compression completed in "
+	fprintf(stdout, "-------------------------------\nCompression completed in "
 					"%lum%lus%lums\n%s -> %s [%.2f%% | %s]\n",
-		msec / 1000 / 60, msec / 1000 % 60, msec % 1000,
-		get_human_size((long)i_t_size), get_human_size((long)o_t_size),
-		((float)o_t_size - i_t_size) * 100 / i_t_size,
-		get_human_size(((long)o_t_size - i_t_size)));
+			msec / 1000 / 60, msec / 1000 % 60, msec % 1000,
+			get_human_size((long)i_t_size), get_human_size((long)o_t_size),
+			((float)o_t_size - i_t_size) * 100 / i_t_size,
+			get_human_size(((long)o_t_size - i_t_size)));
 
 	return 0;
 }

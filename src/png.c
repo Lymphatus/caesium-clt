@@ -7,8 +7,7 @@
 #include "png.h"
 #include "error.h"
 
-void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars)
-{
+void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars) {
 	//TODO Error handling
 	CZopfliPNGOptions png_options;
 
@@ -34,12 +33,11 @@ void cclt_png_optimize(char* input, char* output, cclt_png_parameters* pars)
 	}
 
 	if (CZopfliPNGOptimize(orig_buffer,
-			orig_buffer_size,
-			&png_options,
-			0,
-			&resultpng,
-			&resultpng_size)
-		!= 0) {
+							orig_buffer_size,
+							&png_options,
+							0,
+							&resultpng,
+							&resultpng_size) != 0) {
 		trigger_error(17, true);
 	}
 

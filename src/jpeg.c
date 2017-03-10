@@ -13,8 +13,7 @@
 
 //TODO Error handling
 
-struct jpeg_decompress_struct cclt_get_markers(char* input)
-{
+struct jpeg_decompress_struct cclt_get_markers(char* input) {
 	FILE* fp;
 	struct jpeg_decompress_struct einfo;
 	struct jpeg_error_mgr eerr;
@@ -22,7 +21,7 @@ struct jpeg_decompress_struct cclt_get_markers(char* input)
 
 	jpeg_create_decompress(&einfo);
 
-	//Open the input file
+  	//Open the input file
 	fp = fopen(input, "r");
 
 	//Check for errors
@@ -46,8 +45,7 @@ struct jpeg_decompress_struct cclt_get_markers(char* input)
 	return einfo;
 }
 
-int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char* exif_src)
-{
+int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char* exif_src) {
 	//TODO Bug on normal compress: the input file is a bogus long string
 	// Happened with a (bugged) server connection
 	//File pointer for both input and output
@@ -70,6 +68,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	dstinfo.err = jpeg_std_error(&jdsterr);
 	jpeg_create_compress(&dstinfo);
 
+
 	//Open the input file
 	fp = fopen(input_file, "r");
 
@@ -90,7 +89,8 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	}
 
 	//Read the input headers
-	(void)jpeg_read_header(&srcinfo, TRUE);
+	(void) jpeg_read_header(&srcinfo, TRUE);
+
 
 	//Read input coefficents
 	src_coef_arrays = jpeg_read_coefficients(&srcinfo);
@@ -139,7 +139,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	//Finish and free
 	jpeg_finish_compress(&dstinfo);
 	jpeg_destroy_compress(&dstinfo);
-	(void)jpeg_finish_decompress(&srcinfo);
+	(void) jpeg_finish_decompress(&srcinfo);
 	jpeg_destroy_decompress(&srcinfo);
 
 	//Close the output file
@@ -148,8 +148,7 @@ int cclt_jpeg_optimize(char* input_file, char* output_file, int exif_flag, char*
 	return 0;
 }
 
-void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_jpeg_parameters* pars)
-{
+void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_jpeg_parameters* pars) {
 	FILE* fp;
 	tjhandle tjCompressHandle;
 	unsigned char* output_buffer;
@@ -160,38 +159,38 @@ void cclt_jpeg_compress(char* output_file, unsigned char* image_buffer, cclt_jpe
 	//Check for errors
 	//TODO Use UNIX error messages
 	if (fp == NULL) {
-		trigger_error(106, true, output_file);
-	}
+	   trigger_error(106, true, output_file);
+   }
 
-	output_buffer = NULL;
-	tjCompressHandle = tjInitCompress();
+   output_buffer = NULL;
+   tjCompressHandle = tjInitCompress();
 
-	//TODO Error checks
-	tjCompress2(tjCompressHandle,
-		image_buffer,
-		pars->width,
-		0,
-		pars->height,
-		pars->color_space,
-		&output_buffer,
-		&output_size,
-		pars->subsample,
-		pars->quality,
-		pars->dct_method);
+   //TODO Error checks
+   tjCompress2(tjCompressHandle,
+	   image_buffer,
+	   pars->width,
+	   0,
+	   pars->height,
+	   pars->color_space,
+	   &output_buffer,
+	   &output_size,
+	   pars->subsample,
+	   pars->quality,
+	   pars->dct_method);
 
-	fwrite(output_buffer, output_size, 1, fp);
+   fwrite(output_buffer, output_size, 1, fp);
 
-	fclose(fp);
-	tjDestroy(tjCompressHandle);
-	tjFree(output_buffer);
+   fclose(fp);
+   tjDestroy(tjCompressHandle);
+   tjFree(output_buffer);
+
 }
 
-unsigned char* cclt_jpeg_decompress(char* fileName, cclt_jpeg_parameters* pars)
-{
+unsigned char* cclt_jpeg_decompress(char* fileName, cclt_jpeg_parameters* pars) {
 
 	//TODO I/O Error handling
 
-	FILE* file = NULL;
+	FILE *file = NULL;
 	int res = 0;
 	long int sourceJpegBufferSize = 0;
 	unsigned char* sourceJpegBuffer = NULL;
@@ -234,8 +233,7 @@ unsigned char* cclt_jpeg_decompress(char* fileName, cclt_jpeg_parameters* pars)
 	return temp;
 }
 
-void jcopy_markers_execute(j_decompress_ptr srcinfo, j_compress_ptr dstinfo)
-{
+void jcopy_markers_execute (j_decompress_ptr srcinfo, j_compress_ptr dstinfo) {
 	jpeg_saved_marker_ptr marker;
 
 	/* In the current implementation, we don't actually need to examine the
@@ -244,11 +242,25 @@ void jcopy_markers_execute(j_decompress_ptr srcinfo, j_compress_ptr dstinfo)
 	* if the encoder library already wrote one.
 	*/
 	for (marker = srcinfo->marker_list; marker != NULL; marker = marker->next) {
-		if (dstinfo->write_JFIF_header && marker->marker == JPEG_APP0 && marker->data_length >= 5 && GETJOCTET(marker->data[0]) == 0x4A && GETJOCTET(marker->data[1]) == 0x46 && GETJOCTET(marker->data[2]) == 0x49 && GETJOCTET(marker->data[3]) == 0x46 && GETJOCTET(marker->data[4]) == 0)
-			continue; /* reject duplicate JFIF */
-		if (dstinfo->write_Adobe_marker && marker->marker == JPEG_APP0 + 14 && marker->data_length >= 5 && GETJOCTET(marker->data[0]) == 0x41 && GETJOCTET(marker->data[1]) == 0x64 && GETJOCTET(marker->data[2]) == 0x6F && GETJOCTET(marker->data[3]) == 0x62 && GETJOCTET(marker->data[4]) == 0x65)
-			continue; /* reject duplicate Adobe */
+		if (dstinfo->write_JFIF_header &&
+			marker->marker == JPEG_APP0 &&
+			marker->data_length >= 5 &&
+			GETJOCTET(marker->data[0]) == 0x4A &&
+			GETJOCTET(marker->data[1]) == 0x46 &&
+			GETJOCTET(marker->data[2]) == 0x49 &&
+			GETJOCTET(marker->data[3]) == 0x46 &&
+			GETJOCTET(marker->data[4]) == 0)
+		continue;                 /* reject duplicate JFIF */
+		if (dstinfo->write_Adobe_marker &&
+			marker->marker == JPEG_APP0+14 &&
+			marker->data_length >= 5 &&
+			GETJOCTET(marker->data[0]) == 0x41 &&
+			GETJOCTET(marker->data[1]) == 0x64 &&
+			GETJOCTET(marker->data[2]) == 0x6F &&
+			GETJOCTET(marker->data[3]) == 0x62 &&
+			GETJOCTET(marker->data[4]) == 0x65)
+		continue;                 /* reject duplicate Adobe */
 		jpeg_write_marker(dstinfo, marker->marker,
-			marker->data, marker->data_length);
+						marker->data, marker->data_length);
 	}
 }
