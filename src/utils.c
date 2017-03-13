@@ -21,8 +21,7 @@ void print_help()
 					"\t-e, --exif\t\tkeeps EXIF info during compression\n"
 					"\t-o, --output\t\toutput folder\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
-					//TODO Remove this warning
-					"\t-S, --keep-structure\tkeep the folder structure [Not active yet], use with -R\n"
+					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
 					"\t-v, --version\t\toutput version information and exit\n\n");
 	exit(EXIT_SUCCESS);
@@ -34,7 +33,6 @@ bool is_directory(const char *path)
 
 	if (tinydir_file_open(&file, path) == -1) {
 		display_error(ERROR, 6);
-		exit(EXIT_FAILURE);
 	}
 
 	return (bool) file.is_dir;
@@ -118,7 +116,6 @@ off_t get_file_size(const char *path)
 
 	if (tinydir_file_open(&file, path) == -1) {
 		display_error(ERROR, 7);
-		exit(EXIT_FAILURE);
 	}
 
 	return file._s.st_size;

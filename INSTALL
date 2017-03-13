@@ -14,7 +14,7 @@ Unpack the archive (if not cloned from GIT), enter the directory
 and compile the program.
 The sequence should be something like:
 
-	$ tar xfv caesium-clt-*.tar.gz
+	$ tar xfv caesiumclt-*.tar.gz
 	$ cd caesium-clt-*
 	$ cmake .
 	$ make

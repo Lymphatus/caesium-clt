@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <caesium.h>
+#include <stdlib.h>
 
 #include "error.h"
 
@@ -10,6 +11,9 @@ void display_error(error_level level, int code)
 			error_level,
 			code,
 			get_error_message(code));
+	if (level == ERROR) {
+		exit(-code);
+	}
 }
 
 const char *get_error_message(int code)
@@ -38,6 +42,8 @@ const char *get_error_message(int code)
 			return "-R is useless on files.";
 		case 11:
 			return "-S is useless without -R.";
+		case 12:
+			return "Cannot set output folder inside the input one";
 
 		default:
 			return "Unrecognized error.";

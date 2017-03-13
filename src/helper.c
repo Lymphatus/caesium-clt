@@ -33,7 +33,6 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				options->jpeg.quality = atoi(opts.optarg);
 				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
 					display_error(ERROR, 1);
-					exit(EXIT_FAILURE);
 				}
 				break;
 			case 'e':
@@ -64,7 +63,6 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			default:
 				fprintf(stderr, "%s: %s\n", argv[0], opts.errmsg);
 				display_error(ERROR, 2);
-				exit(EXIT_FAILURE);
 		}
 	}
 
@@ -100,6 +98,10 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	}
 
 	//If there're files and folders, we cannot keep the structure
+	if (strstr(parameters.output_folder, parameters.input_folder) != NULL) {
+		display_error(ERROR, 12);
+	}
+
 	if (parameters.recursive && !folders_flag) {
 		display_error(WARNING, 10);
 		parameters.recursive = false;
@@ -125,7 +127,6 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 	//Create the output folder if does not exists
 	if (mkpath(options->output_folder, 0777) == -1) {
 		display_error(ERROR, 5);
-		exit(EXIT_FAILURE);
 	}
 
 	for (int i = 0; i < options->files_count; i++) {
