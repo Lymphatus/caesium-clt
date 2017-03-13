@@ -48,7 +48,7 @@ $ caesiumclt -q 0 -R -o ~/output/ ~/Pictures
 
 Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output``` retaining the input folder structure
 ```
-$ caesiumclt -q 0 -RS-o ~/output/ ~/Pictures
+$ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ```
 
 ----------
