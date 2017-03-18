@@ -4,7 +4,7 @@ project(caesiumclt)
 # The version number.
 set(VERSION_MAJOR 0)
 set(VERSION_MINOR 10)
-set(VERSION_PATCH 1)
+set(VERSION_PATCH 2)
 
 configure_file(
         "src/config.h.in"

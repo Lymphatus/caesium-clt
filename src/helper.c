@@ -97,11 +97,14 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		}
 	}
 
-	//If there're files and folders, we cannot keep the structure
-	if (strstr(parameters.output_folder, parameters.input_folder) != NULL) {
-		display_error(ERROR, 12);
+	//Check if the output folder is a subfolder of the input to avoid infinite loops
+	if (folders_flag) {
+		if (strstr(parameters.output_folder, parameters.input_folder) != NULL) {
+			display_error(ERROR, 12);
+		}
 	}
 
+	//-R and -S set warnings
 	if (parameters.recursive && !folders_flag) {
 		display_error(WARNING, 10);
 		parameters.recursive = false;
@@ -110,6 +113,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		display_error(WARNING, 11);
 		parameters.keep_structure = false;
 	}
+	//If there're files and folders, we cannot keep the structure
 	if (parameters.keep_structure && (!folders_flag && parameters.files_count > 1)) {
 		display_error(WARNING, 4);
 		parameters.keep_structure = false;
