@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.10.1-beta (build 20170310) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
+##### caesium-clt - v0.10.2-beta (build 20170318) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
 [![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
@@ -60,6 +60,7 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
+* 0.10.2-beta - Bugfixes
 * 0.10.1-beta - All features are available
 * 0.10.0-beta - Switched to cmake build system and libcaesium
 * 0.9.1-beta - Initial development stage
