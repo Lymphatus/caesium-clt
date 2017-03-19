@@ -21,9 +21,8 @@ char* get_human_size(off_t size);
 
 int mkpath(const char *pathname);
 
-char *str_replace(char *orig, char *rep, char *with);
-
 #ifdef _WIN32
+char *str_replace(char *orig, char *rep, char *with);
 char *strsep(char **stringp, const char *delim);
 #endif
 

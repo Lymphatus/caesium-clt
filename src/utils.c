@@ -91,7 +91,7 @@ int mkpath(const char *pathname)
 		return -1;
 	}
 	/* make this one if parent has been made */
-	if (mkdir(pathname) == 0) {
+	if (mkdir(pathname, 0777) == 0) {
 		return 0;
 	}
 	/* if it already exists that is fine */
@@ -158,6 +158,7 @@ char *get_human_size(off_t size)
 	return final;
 }
 
+#ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with) {
     char *result; // the return string
     char *ins;    // the next insert point
@@ -197,7 +198,6 @@ char *str_replace(char *orig, char *rep, char *with) {
     return result;
 }
 
-#ifdef _WIN32
 char *strsep (char **stringp, const char *delim)
 {
     char *begin, *end;
