@@ -12,4 +12,7 @@ configure_file(
 )
 
 include_directories("${PROJECT_BINARY_DIR}")
+if (WIN32)
+    include_directories("C:\\libcaesium\\caesium")
+endif()
 add_subdirectory(src)

@@ -39,12 +39,16 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				options->jpeg.exif_copy = true;
 				break;
 			case 'o':
-				if (opts.optarg[strlen(opts.optarg) - 1] == '/') {
+				if (opts.optarg[strlen(opts.optarg) - 1] == '/' || opts.optarg[strlen(opts.optarg) - 1] == '\\') {
 					parameters.output_folder = malloc((strlen(opts.optarg) + 1) * sizeof(char));
 					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
 				} else {
 					parameters.output_folder = malloc((strlen(opts.optarg) + 2) * sizeof(char));
+#ifdef _WIN32
+					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s\\", opts.optarg);
+#else
 					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
+#endif
 				}
 				break;
 			case 'R':
@@ -127,9 +131,8 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 	int compressed_files = 0;
 	off_t input_file_size = 0;
 	off_t output_file_size = 0;
-	//TODO Support folder structure
 	//Create the output folder if does not exists
-	if (mkpath(options->output_folder, 0777) == -1) {
+	if (mkpath(options->output_folder) == -1) {
 		display_error(ERROR, 5);
 	}
 
@@ -155,7 +158,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s", options->output_folder, &options->input_files[i][index]);
 			output_full_path = malloc((strlen(output_full_folder) + strlen(filename) + 1) * sizeof(char));
 			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s", output_full_folder, filename);
-			mkpath(output_full_folder, 0777);
+			mkpath(output_full_folder);
 		}
 
 		fprintf(stdout, "(%d/%d) %s -> %s\n",

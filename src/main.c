@@ -7,6 +7,12 @@
 
 int main(int argc, char *argv[])
 {
+	//Exit if no arguments
+	if (argc < 2) {
+		print_help();
+		exit(EXIT_FAILURE);
+	}
+
 	long compression_time = 0;
 	cs_image_pars compress_options;
 	cclt_options options;

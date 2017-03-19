@@ -13,13 +13,19 @@ bool is_directory(const char *path);
 
 int scan_folder(const char *directory, cclt_options *options, bool recursive);
 
-int mkpath(const char *pathname, mode_t mode);
-
 char *get_filename(char * full_path);
 
 off_t get_file_size(const char *path);
 
 char* get_human_size(off_t size);
+
+int mkpath(const char *pathname);
+
+char *str_replace(char *orig, char *rep, char *with);
+
+#ifdef _WIN32
+char *strsep(char **stringp, const char *delim);
+#endif
 
 
 #endif //CAESIUM_CLT_UTILS_H
