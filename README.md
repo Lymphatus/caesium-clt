@@ -20,7 +20,7 @@
 ----------
 
 ###### COMPILATION
-See INSTALL for more details.
+See INSTALL.md for more details.
 
 ----------
 
@@ -60,12 +60,10 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
-* 0.10.2-beta - Bugfixes
+* 0.10.2-beta - Bugfixes & full Windows support
 * 0.10.1-beta - All features are available
 * 0.10.0-beta - Switched to cmake build system and libcaesium
 * 0.9.1-beta - Initial development stage
-
-Check the [Commits](https://github.com/Lymphatus/caesium-clt/commits/master) for a detailed list of changes.
 
 ----------
 
