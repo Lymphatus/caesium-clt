@@ -18,6 +18,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	struct optparse_long longopts[] = {
 			{"quality",        'q', OPTPARSE_REQUIRED},
 			{"exif",           'e', OPTPARSE_NONE},
+			{"progressive",    'p', OPTPARSE_NONE},
 			{"output",         'o', OPTPARSE_REQUIRED},
 			{"recursive",      'R', OPTPARSE_NONE},
 			{"keep-structure", 'S', OPTPARSE_NONE},
@@ -37,6 +38,8 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				break;
 			case 'e':
 				options->jpeg.exif_copy = true;
+			case 'p':
+				options->jpeg.progressive = false;
 				break;
 			case 'o':
 				if (opts.optarg[strlen(opts.optarg) - 1] == '/' || opts.optarg[strlen(opts.optarg) - 1] == '\\') {
@@ -76,7 +79,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	while ((arg = optparse_arg(&opts))) {
 		if (folders_flag) {
 			display_error(WARNING, 8);
-			continue;
+			break;
 		}
 		//Check if it's a directory and add its content
 		if (is_directory(arg)) {
@@ -155,9 +158,11 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			size_t index = strspn(options->input_folder, options->input_files[i]) + 1;
 			size_t size = strlen(options->input_files[i]) - index - strlen(filename);
 			char output_full_folder[strlen(options->output_folder) + size + 1];
-			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s", options->output_folder, &options->input_files[i][index]);
+			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s", options->output_folder,
+					 &options->input_files[i][index]);
 			output_full_path = malloc((strlen(output_full_folder) + strlen(filename) + 1) * sizeof(char));
-			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s", output_full_folder, filename);
+			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s", output_full_folder,
+					 filename);
 			mkpath(output_full_folder);
 		}
 
