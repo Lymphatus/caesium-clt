@@ -13,6 +13,7 @@ typedef struct cclt_options
 	int files_count;
 	off_t input_total_size;
 	off_t output_total_size;
+	char **filters;
 } cclt_options;
 
 cclt_options parse_arguments(char *argv[], cs_image_pars *options);

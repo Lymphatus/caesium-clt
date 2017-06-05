@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-	//Exit if no arguments
+	//Exit if less than 2 arguments
 	if (argc < 2) {
 		print_help();
 		exit(EXIT_FAILURE);

@@ -18,10 +18,10 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	struct optparse_long longopts[] = {
 			{"quality",        'q', OPTPARSE_REQUIRED},
 			{"exif",           'e', OPTPARSE_NONE},
-			{"progressive",    'p', OPTPARSE_NONE},
 			{"output",         'o', OPTPARSE_REQUIRED},
 			{"recursive",      'R', OPTPARSE_NONE},
 			{"keep-structure", 'S', OPTPARSE_NONE},
+			{"filter",         'f', OPTPARSE_REQUIRED},
 			{"version",        'v', OPTPARSE_NONE},
 			{"help",           'h', OPTPARSE_NONE},
 			{0}
@@ -60,6 +60,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			case 'S':
 				parameters.keep_structure = true;
 				break;
+			case 'f':
+				parameters.filters = get_filters(opts.optarg);
+				break;
 			case 'v':
 				fprintf(stdout, "%d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 				exit(EXIT_SUCCESS);
@@ -85,7 +88,16 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		if (is_directory(arg)) {
 			if (!files_flag) {
 				folders_flag = true;
-				parameters.input_folder = strdup(arg);
+				if (arg[strlen(arg) - 1] == '/' || arg[strlen(arg) - 1] == '\\') {
+					parameters.input_folder = strdup(arg);
+				} else {
+					parameters.input_folder = malloc((strlen(arg) + 2) * sizeof(char));
+#ifdef _WIN32
+					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s\\", arg);
+#else
+					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s/", arg);
+#endif
+				}
 				int count = 0;
 				count = scan_folder(arg, &parameters, parameters.recursive);
 				if (count == 0) {
@@ -105,8 +117,10 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	}
 
 	//Check if the output folder is a subfolder of the input to avoid infinite loops
+	//However, if the folders are the same, we can let it go as it will overwrite the files
 	if (folders_flag) {
-		if (strstr(parameters.output_folder, parameters.input_folder) != NULL) {
+		if (strstr(parameters.output_folder, parameters.input_folder) != NULL
+			&& strcmp(parameters.output_folder, parameters.input_folder) != 0) {
 			display_error(ERROR, 12);
 		}
 	}
@@ -141,7 +155,9 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 
 	for (int i = 0; i < options->files_count; i++) {
 		char *filename = get_filename(options->input_files[i]);
-		char *output_full_path;
+		char *output_full_path = NULL;
+		char *original_output_full_path = NULL;
+		bool overwriting = false;
 		//If we don't need to keep the structure, we put all the files in one folder by just the filename
 		if (!options->keep_structure) {
 			output_full_path = malloc((strlen(filename) + strlen(options->output_folder) + 1) * sizeof(char));
@@ -158,11 +174,13 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			size_t index = strspn(options->input_folder, options->input_files[i]) + 1;
 			size_t size = strlen(options->input_files[i]) - index - strlen(filename);
 			char output_full_folder[strlen(options->output_folder) + size + 1];
+
 			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s", options->output_folder,
 					 &options->input_files[i][index]);
 			output_full_path = malloc((strlen(output_full_folder) + strlen(filename) + 1) * sizeof(char));
 			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s", output_full_folder,
 					 filename);
+
 			mkpath(output_full_folder);
 		}
 
@@ -171,6 +189,14 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 				options->files_count,
 				filename,
 				output_full_path);
+
+		//If the file already exist, create a temporary file
+		if (file_exists(output_full_path)) {
+			original_output_full_path = strdup(output_full_path);
+			output_full_path = realloc(output_full_path, (strlen(output_full_path) + 4) * sizeof(char));
+			snprintf(output_full_path, (strlen(original_output_full_path) + 4), "%s.cs", original_output_full_path);
+			overwriting = true;
+		}
 
 		input_file_size = get_file_size(options->input_files[i]);
 		options->input_total_size += input_file_size;
@@ -190,6 +216,12 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			options->input_total_size -= get_file_size(options->input_files[i]);
 		}
 
+		//Rename if we were overwriting
+		if (overwriting) {
+			rename(output_full_path, original_output_full_path);
+		}
+
+		free(original_output_full_path);
 		free(output_full_path);
 	}
 

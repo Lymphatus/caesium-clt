@@ -21,6 +21,12 @@ char* get_human_size(off_t size);
 
 int mkpath(const char *pathname);
 
+bool file_exists(const char* file_path);
+
+char** get_filters(const char* command_line_filter);
+
+char* strtolower(char* string);
+
 #ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with);
 char *strsep(char **stringp, const char *delim);

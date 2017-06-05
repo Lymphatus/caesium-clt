@@ -4,6 +4,7 @@
 #include <caesium.h>
 #include <limits.h>
 #include <math.h>
+#include <ctype.h>
 #include "utils.h"
 #include "tinydir.h"
 #include "error.h"
@@ -23,6 +24,7 @@ void print_help()
 					"\t-o, --output\t\toutput folder\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
+					"\t-f, --filter\t\tfilter by image format (eg. jpg or png)\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
 					"\t-v, --version\t\toutput version information and exit\n\n");
 	exit(EXIT_SUCCESS);
@@ -108,7 +110,6 @@ char *get_filename(char *full_path)
 
 	//Get just the filename
 	tofree = strdup(full_path);
-	snprintf(tofree, strlen(full_path) + 1, "%s", full_path);
 #ifdef _WIN32
 	while ((token = strsep(&tofree, "\\")) != NULL) {
 #else
@@ -155,6 +156,41 @@ char *get_human_size(off_t size)
 	sprintf(final, "%.2f %s", size / (pow(1024, order)), unit[(int) order]);
 	//And return it
 	return final;
+}
+
+bool file_exists(const char* file_path)
+{
+	struct stat buffer;
+	return (stat(file_path, &buffer) == 0);
+}
+
+char **get_filters(const char *command_line_filter)
+{
+	char** result = NULL;
+	char* token = NULL;
+	char* toFree = strdup(command_line_filter);
+	int i = 0;
+
+	while ((token = strsep(&toFree, ",")) != NULL) {
+		result = realloc(result, (i + 1) * sizeof(char*));
+		result[i] = strdup(token);
+		i++;
+	}
+
+	for (int j = 0; j < i; j++) {
+		printf(result[j]);
+	}
+
+	free(toFree);
+	free(token);
+
+	return result;
+}
+
+char *strtolower(char *string)
+{
+	for ( ; *string; ++string) *string = (char) tolower(*string);
+	return string;
 }
 
 #ifdef _WIN32
