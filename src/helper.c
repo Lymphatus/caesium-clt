@@ -1,6 +1,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#define getcwd _getcwd
+#else
+#include <unistd.h>
+#endif
+
 #include "helper.h"
 #include "optparse.h"
 #include "utils.h"
@@ -11,7 +20,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 {
 	struct optparse opts;
 	//Initialize application options
-	cclt_options parameters = {NULL, NULL, false, false, 0, 0, 0};
+	cclt_options parameters = {NULL, "", "", false, false, 0, 0, 0, false};
 
 	//Parse command line args
 	optparse_init(&opts, argv);
@@ -21,13 +30,13 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			{"output",         'o', OPTPARSE_REQUIRED},
 			{"recursive",      'R', OPTPARSE_NONE},
 			{"keep-structure", 'S', OPTPARSE_NONE},
-			{"filter",         'f', OPTPARSE_REQUIRED},
+			{"dry-run",        'd', OPTPARSE_NONE},
 			{"version",        'v', OPTPARSE_NONE},
 			{"help",           'h', OPTPARSE_NONE},
 			{0}
 	};
-	int option;
 
+	int option;
 	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
 		switch (option) {
 			case 'q':
@@ -42,17 +51,22 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				options->jpeg.progressive = false;
 				break;
 			case 'o':
-				if (opts.optarg[strlen(opts.optarg) - 1] == '/' || opts.optarg[strlen(opts.optarg) - 1] == '\\') {
-					parameters.output_folder = malloc((strlen(opts.optarg) + 1) * sizeof(char));
-					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
-				} else {
-					parameters.output_folder = malloc((strlen(opts.optarg) + 2) * sizeof(char));
-#ifdef _WIN32
-					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s\\", opts.optarg);
-#else
-					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
-#endif
+				realpath(opts.optarg, parameters.output_folder);
+				//TODO Resolve ~
+				if (opts.optarg[0] == '~') {
+					snprintf(parameters.output_folder, strlen(parameters.output_folder), "%s", parameters.output_folder);
 				}
+//				if (opts.optarg[strlen(opts.optarg) - 1] == '/' || opts.optarg[strlen(opts.optarg) - 1] == '\\') {
+//					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
+//				} else {
+//#ifdef _WIN32
+//					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s\\", opts.optarg);
+//#else
+//					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
+//#endif
+//				}
+
+				//Prepend the current directory if necessary
 				break;
 			case 'R':
 				parameters.recursive = true;
@@ -60,8 +74,8 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			case 'S':
 				parameters.keep_structure = true;
 				break;
-			case 'f':
-				parameters.filters = get_filters(opts.optarg);
+			case 'd':
+				parameters.dry_run = true;
 				break;
 			case 'v':
 				fprintf(stdout, "%d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
@@ -79,27 +93,35 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	//Remaining arguments
 	char *arg;
 	bool files_flag = false, folders_flag = false;
+	char resolved_path[MAX_PATH_SIZE];
 	while ((arg = optparse_arg(&opts))) {
 		if (folders_flag) {
 			display_error(WARNING, 8);
 			break;
 		}
+
 		//Check if it's a directory and add its content
-		if (is_directory(arg)) {
+		realpath(arg, resolved_path);
+		//TODO Resolve ~
+		if (arg[0] == '~') {
+			snprintf(resolved_path, strlen(resolved_path), "%s", resolved_path);
+		}
+		if (is_directory(resolved_path)) {
 			if (!files_flag) {
 				folders_flag = true;
-				if (arg[strlen(arg) - 1] == '/' || arg[strlen(arg) - 1] == '\\') {
-					parameters.input_folder = strdup(arg);
-				} else {
-					parameters.input_folder = malloc((strlen(arg) + 2) * sizeof(char));
-#ifdef _WIN32
-					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s\\", arg);
-#else
-					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s/", arg);
-#endif
-				}
+				snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);
+//				if (arg[strlen(arg) - 1] == '/' || arg[strlen(arg) - 1] == '\\') {
+//					parameters.input_folder = strdup(arg);
+//				} else {
+//					parameters.input_folder = malloc((strlen(arg) + 2) * sizeof(char));
+//#ifdef _WIN32
+//					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s\\", arg);
+//#else
+//					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s/", arg);
+//#endif
+//				}
 				int count = 0;
-				count = scan_folder(arg, &parameters, parameters.recursive);
+				count = scan_folder(resolved_path, &parameters, parameters.recursive);
 				if (count == 0) {
 					display_error(WARNING, 3);
 				}
@@ -108,7 +130,6 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			}
 		} else {
 			files_flag = true;
-			parameters.input_folder = NULL;
 			parameters.input_files = realloc(parameters.input_files, (parameters.files_count + 1) * sizeof(char *));
 			parameters.input_files[parameters.files_count] = malloc((strlen(arg) + 1) * sizeof(char));
 			snprintf(parameters.input_files[parameters.files_count], strlen(arg) + 1, "%s", arg);
@@ -171,12 +192,12 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			 * A piece of cake <3
 			*/
 
-			size_t index = strspn(options->input_folder, options->input_files[i]) + 1;
+			size_t index = strspn(options->input_folder, options->input_files[i]);
 			size_t size = strlen(options->input_files[i]) - index - strlen(filename);
 			char output_full_folder[strlen(options->output_folder) + size + 1];
 
-			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s", options->output_folder,
-					 &options->input_files[i][index]);
+			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s",
+					 options->output_folder, &options->input_files[i][index]);
 			output_full_path = malloc((strlen(output_full_folder) + strlen(filename) + 1) * sizeof(char));
 			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s", output_full_folder,
 					 filename);
@@ -200,24 +221,28 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 
 		input_file_size = get_file_size(options->input_files[i]);
 		options->input_total_size += input_file_size;
-		if (cs_compress(options->input_files[i], output_full_path, parameters)) {
-			compressed_files++;
-			output_file_size = get_file_size(output_full_path);
-			options->output_total_size += output_file_size;
 
-			char *human_input_size = get_human_size(input_file_size);
-			char *human_output_size = get_human_size(output_file_size);
+		//Prevent compression if running in dry mode
+		if (!options->dry_run) {
+			if (cs_compress(options->input_files[i], output_full_path, parameters)) {
+				compressed_files++;
+				output_file_size = get_file_size(output_full_path);
+				options->output_total_size += output_file_size;
 
-			fprintf(stdout, "%s -> %s [%.2f%%]\n",
-					human_input_size,
-					human_output_size,
-					((float) output_file_size - input_file_size) * 100 / input_file_size);
-		} else {
-			options->input_total_size -= get_file_size(options->input_files[i]);
+				char *human_input_size = get_human_size(input_file_size);
+				char *human_output_size = get_human_size(output_file_size);
+
+				fprintf(stdout, "%s -> %s [%.2f%%]\n",
+						human_input_size,
+						human_output_size,
+						((float) output_file_size - input_file_size) * 100 / input_file_size);
+			} else {
+				options->input_total_size -= get_file_size(options->input_files[i]);
+			}
 		}
 
 		//Rename if we were overwriting
-		if (overwriting) {
+		if (overwriting && !options->dry_run) {
 			rename(output_full_path, original_output_full_path);
 		}
 

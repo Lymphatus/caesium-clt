@@ -4,6 +4,8 @@
 #include <caesium.h>
 #include "utils.h"
 
+#include <unistd.h>
+
 
 int main(int argc, char *argv[])
 {
@@ -28,9 +30,7 @@ int main(int argc, char *argv[])
 	start_compression(&options, &compress_options);
 
 	//Cleanup the two memory allocated objects
-	free(options.output_folder);
 	free(options.input_files);
-	free(options.input_folder);
 
 	//Get the difference
 	diff = clock() - start;

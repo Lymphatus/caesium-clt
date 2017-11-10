@@ -3,17 +3,24 @@
 
 #include <caesium.h>
 
+#ifdef _WIN32
+#define MAX_PATH_SIZE _MAX_PATH
+#else
+#include <limits.h>
+#define MAX_PATH_SIZE PATH_MAX
+#endif
+
 typedef struct cclt_options
 {
 	char **input_files;
-	char *input_folder;
-	char *output_folder;
+	char input_folder[MAX_PATH_SIZE];
+	char output_folder[MAX_PATH_SIZE];
 	bool recursive;
 	bool keep_structure;
 	int files_count;
 	off_t input_total_size;
 	off_t output_total_size;
-	char **filters;
+	bool dry_run;
 } cclt_options;
 
 cclt_options parse_arguments(char *argv[], cs_image_pars *options);
