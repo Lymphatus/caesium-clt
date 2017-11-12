@@ -1,0 +1,125 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="ClangTidyInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="DeprecatedAPI" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="DuplicateSwitchCase" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="EndlessLoop" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="EqualityInConditionalOperator" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="FormatSpecifiers" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="FunctionImplicitDeclarationInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="HidesUpperScope" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="HidingNonVirtualFunction" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="ImplicitIntegerAndEnumConversion" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="ImplicitPointerAndIntegerConversion" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="IncompatibleEnums" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="IncompatibleInitializers" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="IncompatiblePointers" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="InfiniteRecursion" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="KRUnspecifiedParameters" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="LocalValueEscapesScope" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="MissingReturn" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="MissingSwitchCase" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="NotImplementedFunctions" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="NotInitializedVariable" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="NotSuperclass" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="OCDFAInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="OCLoopDoesntUseConditionVariableInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="OCSimplifyInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="OCUnusedGlobalDeclarationInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="OCUnusedMacroInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="OCUnusedStructInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="OCUnusedTemplateParameterInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="RedundantCast" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="ResourceNotFoundInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="SignednessMismatch" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="UnreachableCode" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="UnusedExpressionResult" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="UnusedImportStatement" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="UnusedLocalVariable" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="UnusedLocalization" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="UnusedParameter" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="UnusedValue" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="ValueMayNotFitIntoReceiver" enabled="true" level="WARNING" enabled_by_default="true">
+      <scope name="Inspection" level="WARNING" enabled="true" />
+    </inspection_tool>
+  </profile>
+</component>

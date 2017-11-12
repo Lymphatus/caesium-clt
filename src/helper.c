@@ -7,7 +7,7 @@
 #include <windows.h>
 #define getcwd _getcwd
 #else
-#include <unistd.h>
+
 #endif
 
 #include "helper.h"
@@ -40,33 +40,27 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
 		switch (option) {
 			case 'q':
-				options->jpeg.quality = atoi(opts.optarg);
+				options->jpeg.quality = (int)strtol(opts.optarg, (char **)NULL, 10);;
 				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
 					display_error(ERROR, 1);
 				}
 				break;
 			case 'e':
 				options->jpeg.exif_copy = true;
-			case 'p':
-				options->jpeg.progressive = false;
-				break;
 			case 'o':
-				realpath(opts.optarg, parameters.output_folder);
-				//TODO Resolve ~
 				if (opts.optarg[0] == '~') {
-					snprintf(parameters.output_folder, strlen(parameters.output_folder), "%s", parameters.output_folder);
+					if (opts.optarg[strlen(opts.optarg) - 1] == '/' || opts.optarg[strlen(opts.optarg) - 1] == '\\') {
+						snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
+					} else {
+#ifdef _WIN32
+						snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s\\", opts.optarg);
+#else
+						snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
+#endif
+					}
+				} else {
+					realpath(opts.optarg, parameters.output_folder);
 				}
-//				if (opts.optarg[strlen(opts.optarg) - 1] == '/' || opts.optarg[strlen(opts.optarg) - 1] == '\\') {
-//					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
-//				} else {
-//#ifdef _WIN32
-//					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s\\", opts.optarg);
-//#else
-//					snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
-//#endif
-//				}
-
-				//Prepend the current directory if necessary
 				break;
 			case 'R':
 				parameters.recursive = true;
@@ -89,7 +83,6 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				display_error(ERROR, 2);
 		}
 	}
-
 	//Remaining arguments
 	char *arg;
 	bool files_flag = false, folders_flag = false;
@@ -101,25 +94,23 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		}
 
 		//Check if it's a directory and add its content
-		realpath(arg, resolved_path);
-		//TODO Resolve ~
 		if (arg[0] == '~') {
-			snprintf(resolved_path, strlen(resolved_path), "%s", resolved_path);
+			if (arg[strlen(arg) - 1] == '/' || arg[strlen(arg) - 1] == '\\') {
+				snprintf(resolved_path, strlen(arg), "%s", arg);
+			} else {
+#ifdef _WIN32
+				snprintf(resolved_path, strlen(arg) + 1, "%s\\", arg);
+#else
+				snprintf(resolved_path, strlen(arg) + 1, "%s/", arg);
+#endif
+			}
+		} else {
+			realpath(arg, resolved_path);
 		}
 		if (is_directory(resolved_path)) {
 			if (!files_flag) {
 				folders_flag = true;
 				snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);
-//				if (arg[strlen(arg) - 1] == '/' || arg[strlen(arg) - 1] == '\\') {
-//					parameters.input_folder = strdup(arg);
-//				} else {
-//					parameters.input_folder = malloc((strlen(arg) + 2) * sizeof(char));
-//#ifdef _WIN32
-//					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s\\", arg);
-//#else
-//					snprintf(parameters.input_folder, (strlen(arg) + 2), "%s/", arg);
-//#endif
-//				}
 				int count = 0;
 				count = scan_folder(resolved_path, &parameters, parameters.recursive);
 				if (count == 0) {
@@ -199,7 +190,8 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			snprintf(output_full_folder, strlen(options->output_folder) + size + 1, "%s%s",
 					 options->output_folder, &options->input_files[i][index]);
 			output_full_path = malloc((strlen(output_full_folder) + strlen(filename) + 1) * sizeof(char));
-			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s", output_full_folder,
+			snprintf(output_full_path, strlen(output_full_folder) + strlen(filename) + 1, "%s%s",
+					 output_full_folder,
 					 filename);
 
 			mkpath(output_full_folder);

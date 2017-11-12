@@ -4,7 +4,6 @@
 #include <caesium.h>
 #include <limits.h>
 #include <math.h>
-#include <ctype.h>
 
 #include "utils.h"
 #include "tinydir.h"
@@ -21,7 +20,6 @@ void print_help()
 					"Options:\n"
 					"\t-q, --quality\t\tset output file quality between [0-100], 0 for optimization\n"
 					"\t-e, --exif\t\tkeeps EXIF info during compression\n"
-					"\t-p, --progressive\t\toutputs a progressive JPEG\n"
 					"\t-o, --output\t\toutput folder\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
@@ -141,6 +139,10 @@ off_t get_file_size(const char *path)
 
 char *get_human_size(off_t size)
 {
+	if (size == 0) {
+		return "0.00 B";
+	}
+
 	//We should not get more than TB images
 	char *unit[5] = {"B", "KB", "MB", "GB", "TB"};
 	//Index of the array containing the correct unit
