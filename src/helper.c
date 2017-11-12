@@ -1,15 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
 #ifdef _WIN32
 #include <direct.h>
-#include <windows.h>
-#define getcwd _getcwd
-#else
-
 #endif
-
 #include "helper.h"
 #include "optparse.h"
 #include "utils.h"
@@ -49,17 +43,16 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				options->jpeg.exif_copy = true;
 			case 'o':
 				if (opts.optarg[0] == '~') {
-					if (opts.optarg[strlen(opts.optarg) - 1] == '/' || opts.optarg[strlen(opts.optarg) - 1] == '\\') {
-						snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
-					} else {
-#ifdef _WIN32
-						snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s\\", opts.optarg);
-#else
-						snprintf(parameters.output_folder, strlen(opts.optarg) + 2, "%s/", opts.optarg);
-#endif
-					}
+					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
 				} else {
 					realpath(opts.optarg, parameters.output_folder);
+				}
+				if (parameters.output_folder[strlen(opts.optarg) - 1] != '/' && parameters.output_folder[strlen(opts.optarg) - 1] != '\\') {
+#ifdef _WIN32
+					snprintf(parameters.output_folder, strlen(parameters.output_folder) + 2, "%s\\", parameters.output_folder);
+#else
+					snprintf(parameters.output_folder, strlen(parameters.output_folder) + 2, "%s/", parameters.output_folder);
+#endif
 				}
 				break;
 			case 'R':
@@ -170,6 +163,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 		char *output_full_path = NULL;
 		char *original_output_full_path = NULL;
 		bool overwriting = false;
+		off_t file_size = 0;
 		//If we don't need to keep the structure, we put all the files in one folder by just the filename
 		if (!options->keep_structure) {
 			output_full_path = malloc((strlen(filename) + strlen(options->output_folder) + 1) * sizeof(char));
@@ -211,7 +205,12 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			overwriting = true;
 		}
 
-		input_file_size = get_file_size(options->input_files[i]);
+		file_size = get_file_size(options->input_files[i]);
+		if (file_size == 0) {
+			//We could not open the file
+			continue;
+		}
+		input_file_size = file_size;
 		options->input_total_size += input_file_size;
 
 		//Prevent compression if running in dry mode

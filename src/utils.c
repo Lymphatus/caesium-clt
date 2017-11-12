@@ -128,7 +128,8 @@ off_t get_file_size(const char *path)
 {
 	FILE *f = fopen(path, "rb");
 	if (f == NULL) {
-		display_error(ERROR, 7);
+		display_error(WARNING, 7);
+		return 0;
 	}
 	fseek(f, 0, SEEK_END);
 	off_t len = ftell(f);
