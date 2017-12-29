@@ -1,9 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #ifdef _WIN32
 #include <direct.h>
 #endif
+
 #include "helper.h"
 #include "optparse.h"
 #include "utils.h"
@@ -34,7 +36,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
 		switch (option) {
 			case 'q':
-				options->jpeg.quality = (int)strtol(opts.optarg, (char **)NULL, 10);;
+				options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);;
 				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
 					display_error(ERROR, 1);
 				}
@@ -47,11 +49,13 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				} else {
 					realpath(opts.optarg, parameters.output_folder);
 				}
-				if (parameters.output_folder[strlen(opts.optarg) - 1] != '/' && parameters.output_folder[strlen(opts.optarg) - 1] != '\\') {
+				if (parameters.output_folder[strlen(opts.optarg) - 1] != '/' &&
+					parameters.output_folder[strlen(opts.optarg) - 1] != '\\') {
 #ifdef _WIN32
 					snprintf(parameters.output_folder, strlen(parameters.output_folder) + 2, "%s\\", parameters.output_folder);
 #else
-					snprintf(parameters.output_folder, strlen(parameters.output_folder) + 2, "%s/", parameters.output_folder);
+					snprintf(parameters.output_folder, strlen(parameters.output_folder) + 2, "%s/",
+							 parameters.output_folder);
 #endif
 				}
 				break;
@@ -103,6 +107,16 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		if (is_directory(resolved_path)) {
 			if (!files_flag) {
 				folders_flag = true;
+
+				if (resolved_path[strlen(resolved_path) - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
+#ifdef _WIN32
+					resolved_path[strlen(resolved_path)] = '\\';
+#else
+					resolved_path[strlen(resolved_path)] = '/';
+#endif
+					resolved_path[strlen(resolved_path)] = '\0';
+				}
+
 				snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);
 				int count = 0;
 				count = scan_folder(resolved_path, &parameters, parameters.recursive);
@@ -122,10 +136,12 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	}
 
 	//Check if the output folder is a subfolder of the input to avoid infinite loops
+	//but just if the -R option is set
 	//However, if the folders are the same, we can let it go as it will overwrite the files
 	if (folders_flag) {
 		if (strstr(parameters.output_folder, parameters.input_folder) != NULL
-			&& strcmp(parameters.output_folder, parameters.input_folder) != 0) {
+			&& strcmp(parameters.output_folder, parameters.input_folder) != 0
+			&& parameters.recursive) {
 			display_error(ERROR, 12);
 		}
 	}
@@ -171,7 +187,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 					 options->output_folder, filename);
 		} else {
 			/*
-			 * Otherwise, we nee to compute the whole directory structure
+			 * Otherwise, we need to compute the whole directory structure
 			 * We are sure we have a folder only as input, so that's the root
 			 * Just compute the subfolders without the filename, make them and append the filename
 			 * A piece of cake <3

@@ -13,7 +13,7 @@
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X Sierra (v10.13.0)
+* Mac OS X High Sierra (v10.13.1)
 * Ubuntu 16.04
 * Windows 10
 
@@ -60,6 +60,7 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
+* 0.11.0-beta - Fixing paths issues and dry-run option
 * 0.10.2-beta - Bugfixes & full Windows support
 * 0.10.1-beta - All features are available
 * 0.10.0-beta - Switched to cmake build system and libcaesium
