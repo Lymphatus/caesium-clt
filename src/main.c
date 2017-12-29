@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-	//Exit if no arguments
+	//Exit if less than 2 arguments
 	if (argc < 2) {
 		print_help();
 		exit(EXIT_FAILURE);
@@ -27,10 +27,8 @@ int main(int argc, char *argv[])
 
 	start_compression(&options, &compress_options);
 
-	//Cleanup the two memory allocated objects
-	free(options.output_folder);
+	//Cleanup the memory allocated objects
 	free(options.input_files);
-	free(options.input_folder);
 
 	//Get the difference
 	diff = clock() - start;

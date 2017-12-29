@@ -4,6 +4,7 @@
 #include <caesium.h>
 #include <limits.h>
 #include <math.h>
+
 #include "utils.h"
 #include "tinydir.h"
 #include "error.h"
@@ -22,6 +23,7 @@ void print_help()
 					"\t-o, --output\t\toutput folder\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
+					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
 					"\t-v, --version\t\toutput version information and exit\n\n");
 	exit(EXIT_SUCCESS);
@@ -30,18 +32,18 @@ void print_help()
 bool is_directory(const char *path)
 {
 #ifdef _WIN32
-    tinydir_dir dir;
+	tinydir_dir dir;
 
-    return tinydir_open(&dir, path) != -1;
+	return tinydir_open(&dir, path) != -1;
 
 #else
-    tinydir_file file;
+	tinydir_file file;
 
-    if (tinydir_file_open(&file, path) == -1) {
-        display_error(ERROR, 6);
-    }
+	if (tinydir_file_open(&file, path) == -1) {
+		display_error(ERROR, 6);
+	}
 
-    return (bool) file.is_dir;
+	return (bool) file.is_dir;
 #endif
 }
 
@@ -62,10 +64,10 @@ int scan_folder(const char *directory, cclt_options *options, bool recursive)
 		} else {
 			options->input_files = realloc(options->input_files, (options->files_count + 1) * sizeof(char *));
 			options->input_files[options->files_count] = malloc((strlen(file.path) + 1) * sizeof(char));
-            snprintf(options->input_files[options->files_count],
-                     strlen(file.path) + 1, "%s", file.path);
+			snprintf(options->input_files[options->files_count],
+					 strlen(file.path) + 1, "%s", file.path);
 #ifdef _WIN32
-            options->input_files[options->files_count] = str_replace(options->input_files[options->files_count], "/", "\\");
+			options->input_files[options->files_count] = str_replace(options->input_files[options->files_count], "/", "\\");
 #endif
 			options->files_count++;
 			n++;
@@ -107,13 +109,10 @@ char *get_filename(char *full_path)
 
 	//Get just the filename
 	tofree = strdup(full_path);
-	//TODO change to strncpy
-	strcpy(tofree, full_path);
-	//TODO Windows?
 #ifdef _WIN32
-	    while ((token = strsep(&tofree, "\\")) != NULL) {
+	while ((token = strsep(&tofree, "\\")) != NULL) {
 #else
-        while ((token = strsep(&tofree, "/")) != NULL) {
+	while ((token = strsep(&tofree, "/")) != NULL) {
 #endif
 		if (tofree == NULL) {
 			break;
@@ -127,19 +126,24 @@ char *get_filename(char *full_path)
 
 off_t get_file_size(const char *path)
 {
-    FILE *f = fopen(path, "rb");
-    if (f == NULL) {
-        display_error(ERROR, 7);
-    }
-    fseek(f, 0, SEEK_END);
-    unsigned long len = (unsigned long)ftell(f);
-    fclose(f);
+	FILE *f = fopen(path, "rb");
+	if (f == NULL) {
+		display_error(WARNING, 7);
+		return 0;
+	}
+	fseek(f, 0, SEEK_END);
+	off_t len = ftell(f);
+	fclose(f);
 
-    return len;
+	return len;
 }
 
 char *get_human_size(off_t size)
 {
+	if (size == 0) {
+		return "0.00 B";
+	}
+
 	//We should not get more than TB images
 	char *unit[5] = {"B", "KB", "MB", "GB", "TB"};
 	//Index of the array containing the correct unit
@@ -158,88 +162,94 @@ char *get_human_size(off_t size)
 	return final;
 }
 
+bool file_exists(const char *file_path)
+{
+	struct stat buffer;
+	return (stat(file_path, &buffer) == 0);
+}
+
 #ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with) {
-    char *result; // the return string
-    char *ins;    // the next insert point
-    char *tmp;    // varies
-    int len_rep;  // length of rep (the string to remove)
-    int len_with; // length of with (the string to replace rep with)
-    int len_front; // distance between rep and end of last rep
-    int count;    // number of replacements
+	char *result; // the return string
+	char *ins;    // the next insert point
+	char *tmp;    // varies
+	int len_rep;  // length of rep (the string to remove)
+	int len_with; // length of with (the string to replace rep with)
+	int len_front; // distance between rep and end of last rep
+	int count;    // number of replacements
 
-    if (!orig || !rep)
-        return NULL;
-    len_rep = strlen(rep);
-    if (len_rep == 0)
-        return NULL;
-    if (!with)
-        with = "";
-    len_with = strlen(with);
+	if (!orig || !rep)
+		return NULL;
+	len_rep = strlen(rep);
+	if (len_rep == 0)
+		return NULL;
+	if (!with)
+		with = "";
+	len_with = strlen(with);
 
-    ins = orig;
-    for (count = 0; tmp = strstr(ins, rep); ++count) {
-        ins = tmp + len_rep;
-    }
+	ins = orig;
+	for (count = 0; tmp = strstr(ins, rep); ++count) {
+		ins = tmp + len_rep;
+	}
 
-    tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
+	tmp = result = malloc(strlen(orig) + (len_with - len_rep) * count + 1);
 
-    if (!result)
-        return NULL;
+	if (!result)
+		return NULL;
 
-    while (count--) {
-        ins = strstr(orig, rep);
-        len_front = ins - orig;
-        tmp = strncpy(tmp, orig, len_front) + len_front;
-        tmp = strcpy(tmp, with) + len_with;
-        orig += len_front + len_rep;
-    }
-    strcpy(tmp, orig);
-    return result;
+	while (count--) {
+		ins = strstr(orig, rep);
+		len_front = ins - orig;
+		tmp = strncpy(tmp, orig, len_front) + len_front;
+		tmp = strcpy(tmp, with) + len_with;
+		orig += len_front + len_rep;
+	}
+	strcpy(tmp, orig);
+	return result;
 }
 
 char *strsep (char **stringp, const char *delim)
 {
-    char *begin, *end;
+	char *begin, *end;
 
-    begin = *stringp;
-    if (begin == NULL)
-        return NULL;
+	begin = *stringp;
+	if (begin == NULL)
+		return NULL;
 
-    /* A frequent case is when the delimiter string contains only one
-       character.  Here we don't need to call the expensive `strpbrk'
-       function and instead work using `strchr'.  */
-    if (delim[0] == '\0' || delim[1] == '\0')
-    {
-        char ch = delim[0];
+	/* A frequent case is when the delimiter string contains only one
+	   character.  Here we don't need to call the expensive `strpbrk'
+	   function and instead work using `strchr'.  */
+	if (delim[0] == '\0' || delim[1] == '\0')
+	{
+		char ch = delim[0];
 
-        if (ch == '\0')
-            end = NULL;
-        else
-        {
-            if (*begin == ch)
-                end = begin;
-            else if (*begin == '\0')
-                end = NULL;
-            else
-                end = strchr (begin + 1, ch);
-        }
-    }
-    else
-        /* Find the end of the token.  */
-        end = strpbrk (begin, delim);
+		if (ch == '\0')
+			end = NULL;
+		else
+		{
+			if (*begin == ch)
+				end = begin;
+			else if (*begin == '\0')
+				end = NULL;
+			else
+				end = strchr (begin + 1, ch);
+		}
+	}
+	else
+		/* Find the end of the token.  */
+		end = strpbrk (begin, delim);
 
-    if (end)
-    {
-        /* Terminate the token and set *STRINGP past NUL character.  */
-        *end++ = '\0';
-        *stringp = end;
-    }
-    else
-        /* No more delimiters; this is the last token.  */
-        *stringp = NULL;
+	if (end)
+	{
+		/* Terminate the token and set *STRINGP past NUL character.  */
+		*end++ = '\0';
+		*stringp = end;
+	}
+	else
+		/* No more delimiters; this is the last token.  */
+		*stringp = NULL;
 
-    return begin;
+	return begin;
 }
 
 #endif

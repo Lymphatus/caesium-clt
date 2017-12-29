@@ -21,6 +21,8 @@ char* get_human_size(off_t size);
 
 int mkpath(const char *pathname);
 
+bool file_exists(const char* file_path);
+
 #ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with);
 char *strsep(char **stringp, const char *delim);

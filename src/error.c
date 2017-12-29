@@ -39,9 +39,9 @@ const char *get_error_message(int code)
 		case 9:
 			return "Input files provided. Cannot mix them with a folder.";
 		case 10:
-			return "-R is useless on files.";
+			return "-R has no effects on files.";
 		case 11:
-			return "-S is useless without -R.";
+			return "-S has no effect without -R.";
 		case 12:
 			return "Cannot set output folder inside the input one";
 

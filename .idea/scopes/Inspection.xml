@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Inspection" pattern="!file:src/optparse.c&amp;&amp;!file:src/optparse.h&amp;&amp;!file:src/tinydir.h&amp;&amp;!file:.gitignore" />
+</component>

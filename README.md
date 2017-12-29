@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.10.2-beta (build 20170318) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
+##### caesium-clt - v0.11.0-beta (build 20171109) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
 [![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
@@ -13,7 +13,7 @@
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X Sierra (v10.12.3)
+* Mac OS X High Sierra (v10.13.1)
 * Ubuntu 16.04
 * Windows 10
 
@@ -60,6 +60,7 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
+* 0.11.0-beta - Fixing paths issues and dry-run option
 * 0.10.2-beta - Bugfixes & full Windows support
 * 0.10.1-beta - All features are available
 * 0.10.0-beta - Switched to cmake build system and libcaesium
