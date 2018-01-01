@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.11.0-beta (build 20171109) - Copyright &copy; Matteo Paonessa, 2017. All Rights Reserved.
+##### caesium-clt - v0.12.0-beta (build 20180101) - Copyright &copy; Matteo Paonessa, 2018. All Rights Reserved.
 [![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
@@ -36,6 +36,11 @@ Compress ```image1.jpg```, located in the ```home``` directory, into a folder ca
 $ caesiumclt -q 80 -o ~/output/ ~/image.jpg
 ```
 
+Compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` with lossy compression, quality set to 80 and resize it to half
+```
+$ caesiumclt -q 80 -s 0.5 -o ~/output/ ~/image.jpg
+```
+
 Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` and keeps EXIF metadata
 ```
 $ caesiumclt -q 0 -e -o ~/output/ ~/image.jpg
@@ -60,6 +65,7 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
+* 0.12.0-beta - Resizing (experimental)
 * 0.11.0-beta - Fixing paths issues and dry-run option
 * 0.10.2-beta - Bugfixes & full Windows support
 * 0.10.1-beta - All features are available
@@ -71,6 +77,5 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ###### RESOURCES
 * caesium-clt website - [http://saerasoft.com/caesium/clt](http://saerasoft.com/caesium/clt)
 * Caesium website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium)
-* caesium-clt Git Repository - [https://github.com/Lymphatus/CaesiumCLT](https://github.com/Lymphatus/caesium-clt)
+* caesium-clt Git Repository - [https://github.com/Lymphatus/caesium-clt](https://github.com/Lymphatus/caesium-clt)
 * Author website - SaeraSoft - [http://saerasoft.com](http://saerasoft.com)
-* Twitter - [Matteo Paonessa](https://twitter.com/MatteoPaonessa)

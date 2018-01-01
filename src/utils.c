@@ -1,3 +1,20 @@
+/*
+ *
+ * Copyright 2018 Matteo Paonessa
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -6,22 +23,21 @@
 #include <math.h>
 
 #include "utils.h"
-#include "tinydir.h"
+#include "vendor/tinydir.h"
 #include "error.h"
-
 
 void print_help()
 {
 	fprintf(stdout,
 			"CaesiumCLT - Caesium Command Line Tools\n\n"
 					"Usage: caesiumclt [OPTIONS] INPUT...\n"
-					"Compress your pictures up to 90%% without visible quality loss.\n\n"
+					"Command line image compressor.\n\n"
 
 					"Options:\n"
 					"\t-q, --quality\t\tset output file quality between [0-100], 0 for optimization\n"
 					"\t-e, --exif\t\tkeeps EXIF info during compression\n"
 					"\t-o, --output\t\toutput folder\n"
-					"\t-s, --scale\t\tscale the image. Allowed values are [.x, 0.x, n/d, xx%%].\n\t\t\t\tMust be > 0 and <= 1.0.\n"
+					"\t-s, --scale\t\tscale the image. Allowed formats are [.x, 0.x, n/d, xx%%].\n\t\t\t\tMust be > 0 and <= 1.0.\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
 					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
@@ -80,7 +96,6 @@ int scan_folder(const char *directory, cclt_options *options, bool recursive)
 	return n;
 }
 
-//TODO Recheck
 int mkpath(const char *pathname)
 {
 	char parent[PATH_MAX], *p;

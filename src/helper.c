@@ -1,3 +1,20 @@
+/*
+ *
+ * Copyright 2018 Matteo Paonessa
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,7 +24,7 @@
 #endif
 
 #include "helper.h"
-#include "optparse.h"
+#include "vendor/optparse.h"
 #include "utils.h"
 #include "config.h"
 #include "error.h"
@@ -88,6 +105,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	char *arg;
 	bool files_flag = false, folders_flag = false;
 	char resolved_path[MAX_PATH_SIZE];
+
+	fprintf(stdout, "%s\n", "Collecting files...");
+
 	while ((arg = optparse_arg(&opts))) {
 		if (folders_flag) {
 			display_error(WARNING, 8);
@@ -95,7 +115,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		}
 
 		//Check if it's a directory and add its content
-		if (arg[0] == '~') {
+		if (arg[0] == '~' && is_directory(arg)) {
 			if (arg[strlen(arg) - 1] == '/' || arg[strlen(arg) - 1] == '\\') {
 				snprintf(resolved_path, strlen(arg), "%s", arg);
 			} else {
