@@ -44,6 +44,10 @@ const char *get_error_message(int code)
 			return "-S has no effect without -R.";
 		case 12:
 			return "Cannot set output folder inside the input one";
+		case 13:
+			return "Scale factor must be > 0 and <= 1.0. Setting it to 1.0.";
+		case 14:
+			return "Scale factor parsing error.";
 
 		default:
 			return "Unrecognized error.";

@@ -21,6 +21,7 @@ void print_help()
 					"\t-q, --quality\t\tset output file quality between [0-100], 0 for optimization\n"
 					"\t-e, --exif\t\tkeeps EXIF info during compression\n"
 					"\t-o, --output\t\toutput folder\n"
+					"\t-s, --scale\t\tscale the image. Allowed values are [.x, 0.x, n/d, xx%%].\n\t\t\t\tMust be > 0 and <= 1.0.\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
 					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
@@ -167,6 +168,79 @@ bool file_exists(const char *file_path)
 	struct stat buffer;
 	return (stat(file_path, &buffer) == 0);
 }
+
+int strndx(const char *string, const char search)
+{
+	char *pointer = strchr(string, search);
+	if (pointer == NULL) {
+		return -1;
+	} else {
+		return (int) (pointer - string);
+	}
+}
+
+double parse_scale_factor(const char *factor_string)
+{
+	/*
+	 * We're gonna accept scaling factor as such:
+	 * a. 0.5 or .5 or 1
+	 * b. 3/4
+	 * c. 80%
+	 * We're gonna test a. last since it's "standard"
+	 */
+	int index;
+	bool parse_error = false;
+	double scale_factor = 1.0;
+
+	if ((index = strndx(factor_string, '/')) != -1
+		&& strndx(factor_string, '%') == -1) {
+		if (index == 0 || index == strlen(factor_string) - 1) {
+			parse_error = true;
+		} else {
+			char *num_str = malloc((index + 1) * sizeof(char));
+			char *den_str = malloc((strlen(factor_string) - index) * sizeof(char));
+			snprintf(num_str, index + 1, "%s", factor_string);
+			snprintf(den_str, strlen(factor_string) - index, "%s", factor_string + index + 1);
+			long num = strtol(num_str, (char **) NULL, 10);
+			long den = strtol(den_str, (char **) NULL, 10);
+			if (num > 0 && den > 0) {
+				scale_factor = (double) num / (double) den;
+			} else {
+				parse_error = true;
+			}
+		}
+	} else if ((index = strndx(factor_string, '%')) != -1
+			   && strndx(factor_string, '/') == -1) {
+		if (index != strlen(factor_string) - 1) {
+			parse_error = true;
+		} else {
+			char *num_str = malloc((index + 1) * sizeof(char));
+			snprintf(num_str, index + 1, "%s", factor_string);
+			long num = strtol(num_str, (char **) NULL, 10);
+			scale_factor = (double) num / 100.0;
+			free(num_str);
+		}
+	} else {
+		// Maybe it's just a number!
+		char *endstr;
+		scale_factor = strtod(factor_string, &endstr);
+		if (scale_factor == 0.0 || endstr[0] != '\0') {
+			parse_error = true;
+		}
+	}
+
+	if (parse_error) {
+		display_error(WARNING, 14);
+		exit(-14);
+	}
+
+	if (scale_factor <= 0 || scale_factor > 1.0) {
+		display_error(WARNING, 13);
+		return 1.0;
+	}
+	return scale_factor;
+}
+
 
 #ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with) {

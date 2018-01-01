@@ -24,6 +24,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			{"quality",        'q', OPTPARSE_REQUIRED},
 			{"exif",           'e', OPTPARSE_NONE},
 			{"output",         'o', OPTPARSE_REQUIRED},
+			{"scale",		   's', OPTPARSE_REQUIRED},
 			{"recursive",      'R', OPTPARSE_NONE},
 			{"keep-structure", 'S', OPTPARSE_NONE},
 			{"dry-run",        'd', OPTPARSE_NONE},
@@ -36,7 +37,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
 		switch (option) {
 			case 'q':
-				options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);;
+				options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);
 				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
 					display_error(ERROR, 1);
 				}
@@ -58,6 +59,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 							 parameters.output_folder);
 #endif
 				}
+				break;
+			case 's':
+				options->jpeg.scale_factor = options->png.scale_factor = parse_scale_factor(opts.optarg);
 				break;
 			case 'R':
 				parameters.recursive = true;
@@ -107,14 +111,14 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		if (is_directory(resolved_path)) {
 			if (!files_flag) {
 				folders_flag = true;
-
-				if (resolved_path[strlen(resolved_path) - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
+				size_t len = strlen(resolved_path);
+				if (resolved_path[len - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
 #ifdef _WIN32
-					resolved_path[strlen(resolved_path)] = '\\';
+					resolved_path[len] = '\\';
 #else
-					resolved_path[strlen(resolved_path)] = '/';
+					resolved_path[len] = '/';
 #endif
-					resolved_path[strlen(resolved_path)] = '\0';
+					resolved_path[len + 1] = '\0';
 				}
 
 				snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);
