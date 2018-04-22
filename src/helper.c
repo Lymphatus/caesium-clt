@@ -49,13 +49,14 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				} else {
 					realpath(opts.optarg, parameters.output_folder);
 				}
-				if (parameters.output_folder[strlen(opts.optarg) - 1] != '/' &&
-					parameters.output_folder[strlen(opts.optarg) - 1] != '\\') {
+                int pathlen = strlen(parameters.output_folder);
+				if (parameters.output_folder[pathlen - 1] != '/' &&
+					parameters.output_folder[pathlen - 1] != '\\') {
+                  /* append the extra slash/backslash */
 #ifdef _WIN32
-					snprintf(parameters.output_folder, strlen(parameters.output_folder) + 2, "%s\\", parameters.output_folder);
+					snprintf(parameters.output_folder+pathlen, 2, "\\");
 #else
-					snprintf(parameters.output_folder, strlen(parameters.output_folder) + 2, "%s/",
-							 parameters.output_folder);
+				    snprintf(parameters.output_folder+pathlen, 2, "/");
 #endif
 				}
 				break;
@@ -160,7 +161,6 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		display_error(WARNING, 4);
 		parameters.keep_structure = false;
 	}
-
 	return parameters;
 }
 
