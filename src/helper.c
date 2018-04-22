@@ -165,6 +165,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		display_error(WARNING, 4);
 		parameters.keep_structure = false;
 	}
+
 	return parameters;
 }
 
