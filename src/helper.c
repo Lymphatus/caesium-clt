@@ -67,14 +67,14 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				} else {
 					realpath(opts.optarg, parameters.output_folder);
 				}
-                int pathlen = strlen(parameters.output_folder);
+				int pathlen = strlen(parameters.output_folder);
 				if (parameters.output_folder[pathlen - 1] != '/' &&
 					parameters.output_folder[pathlen - 1] != '\\') {
-                  /* append the extra slash/backslash */
+					// append the extra slash/backslash
 #ifdef _WIN32
 					snprintf(parameters.output_folder+pathlen, 2, "\\");
 #else
-				    snprintf(parameters.output_folder+pathlen, 2, "/");
+					snprintf(parameters.output_folder+pathlen, 2, "/");
 #endif
 				}
 				break;
