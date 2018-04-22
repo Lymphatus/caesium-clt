@@ -21,6 +21,7 @@ typedef struct cclt_options
 	off_t input_total_size;
 	off_t output_total_size;
 	bool dry_run;
+	bool no_clobber;
 } cclt_options;
 
 cclt_options parse_arguments(char *argv[], cs_image_pars *options);
