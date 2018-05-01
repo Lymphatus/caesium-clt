@@ -1,3 +1,20 @@
+/*
+ *
+ * Copyright 2018 Matteo Paonessa
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,7 +24,7 @@
 #endif
 
 #include "helper.h"
-#include "optparse.h"
+#include "vendor/optparse.h"
 #include "utils.h"
 #include "config.h"
 #include "error.h"
@@ -24,6 +41,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			{"quality",        'q', OPTPARSE_REQUIRED},
 			{"exif",           'e', OPTPARSE_NONE},
 			{"output",         'o', OPTPARSE_REQUIRED},
+			{"scale",		   's', OPTPARSE_REQUIRED},
 			{"recursive",      'R', OPTPARSE_NONE},
 			{"keep-structure", 'S', OPTPARSE_NONE},
 			{"dry-run",        'd', OPTPARSE_NONE},
@@ -36,7 +54,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
 		switch (option) {
 			case 'q':
-				options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);;
+				options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);
 				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
 					display_error(ERROR, 1);
 				}
@@ -58,6 +76,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 							 parameters.output_folder);
 #endif
 				}
+				break;
+			case 's':
+				options->jpeg.scale_factor = options->png.scale_factor = parse_scale_factor(opts.optarg);
 				break;
 			case 'R':
 				parameters.recursive = true;
@@ -84,6 +105,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 	char *arg;
 	bool files_flag = false, folders_flag = false;
 	char resolved_path[MAX_PATH_SIZE];
+
+	fprintf(stdout, "%s\n", "Collecting files...");
+
 	while ((arg = optparse_arg(&opts))) {
 		if (folders_flag) {
 			display_error(WARNING, 8);
@@ -91,7 +115,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		}
 
 		//Check if it's a directory and add its content
-		if (arg[0] == '~') {
+		if (arg[0] == '~' && is_directory(arg)) {
 			if (arg[strlen(arg) - 1] == '/' || arg[strlen(arg) - 1] == '\\') {
 				snprintf(resolved_path, strlen(arg), "%s", arg);
 			} else {
@@ -107,14 +131,14 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 		if (is_directory(resolved_path)) {
 			if (!files_flag) {
 				folders_flag = true;
-
-				if (resolved_path[strlen(resolved_path) - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
+				size_t len = strlen(resolved_path);
+				if (resolved_path[len - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
 #ifdef _WIN32
-					resolved_path[strlen(resolved_path)] = '\\';
+					resolved_path[len] = '\\';
 #else
-					resolved_path[strlen(resolved_path)] = '/';
+					resolved_path[len] = '/';
 #endif
-					resolved_path[strlen(resolved_path)] = '\0';
+					resolved_path[len + 1] = '\0';
 				}
 
 				snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);

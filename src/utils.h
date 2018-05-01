@@ -1,6 +1,19 @@
-//
-// Created by Matteo Paonessa on 15/12/16.
-//
+/*
+ *
+ * Copyright 2018 Matteo Paonessa
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 
 #ifndef CAESIUM_CLT_UTILS_H
 #define CAESIUM_CLT_UTILS_H
@@ -22,6 +35,10 @@ char* get_human_size(off_t size);
 int mkpath(const char *pathname);
 
 bool file_exists(const char* file_path);
+
+int strndx(const char* string, const char search);
+
+double parse_scale_factor(const char* factor_string);
 
 #ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with);

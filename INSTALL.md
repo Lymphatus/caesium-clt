@@ -1,7 +1,7 @@
 # Install
 
 ## Requirements
-CaesiumCLT is based on [libcaesium](https://github.com/Lymphatus/libcaesium) and requires it to be compiled.
+CaesiumCLT is based on [libcaesium](https://github.com/Lymphatus/libcaesium) and requires it to be compiled and installed.
 Please refer to its own documentation.  
 You will also need cmake if you want to compile it from source.
 
@@ -10,8 +10,10 @@ You will also need cmake if you want to compile it from source.
 ### Windows
 For Windows you just need to download the latest release package from [here](https://github.com/Lymphatus/caesium-clt/releases).  
 Unzip the package using your favorite software, open it and run `caesiumclt.exe` from the Command Prompt or PowerShell.
-### OS X
+
+### MacOS X
 **NOTE:** Homebrew installation will come soon. Use Linux instructions below for now.
+
 ### Linux
 Download the latest release package from [here](https://github.com/Lymphatus/caesium-clt/releases) or clone from git.  
 Then run:
