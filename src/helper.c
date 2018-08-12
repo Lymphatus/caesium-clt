@@ -33,7 +33,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 {
 	struct optparse opts;
 	//Initialize application options
-	cclt_options parameters = {NULL, "", "", false, false, 0, 0, 0, false};
+	cclt_options parameters = {NULL, "", "", false, false, 0, 0, 0, false, false};
 
 	//Parse command line args
 	optparse_init(&opts, argv);
@@ -45,6 +45,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 			{"recursive",      'R', OPTPARSE_NONE},
 			{"keep-structure", 'S', OPTPARSE_NONE},
 			{"dry-run",        'd', OPTPARSE_NONE},
+			{"no-clobber",     'n', OPTPARSE_NONE},
 			{"version",        'v', OPTPARSE_NONE},
 			{"help",           'h', OPTPARSE_NONE},
 			{0}
@@ -89,6 +90,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				break;
 			case 'd':
 				parameters.dry_run = true;
+				break;
+			case 'n':
+				parameters.no_clobber = true;
 				break;
 			case 'v':
 				fprintf(stdout, "%d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
@@ -231,19 +235,25 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			mkpath(output_full_folder);
 		}
 
-		fprintf(stdout, "(%d/%d) %s -> %s\n",
-				i + 1,
-				options->files_count,
-				filename,
-				output_full_path);
-
-		//If the file already exist, create a temporary file
+		//If the file already exist, skip or overwrite, regarding to the
+		//no-clobber option
 		if (file_exists(output_full_path)) {
+			//If no_clobber option was set, just skip
+			if (options->no_clobber)
+				goto free_and_go_on_with_next_file;
+
+			//or, create a temporary file
 			original_output_full_path = strdup(output_full_path);
 			output_full_path = realloc(output_full_path, (strlen(output_full_path) + 4) * sizeof(char));
 			snprintf(output_full_path, (strlen(original_output_full_path) + 4), "%s.cs", original_output_full_path);
 			overwriting = true;
 		}
+
+		fprintf(stdout, "(%d/%d) %s -> %s\n",
+				i + 1,
+				options->files_count,
+				filename,
+				output_full_path);
 
 		file_size = get_file_size(options->input_files[i]);
 		if (file_size == 0) {
@@ -277,6 +287,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters)
 			rename(output_full_path, original_output_full_path);
 		}
 
+	free_and_go_on_with_next_file:
 		free(original_output_full_path);
 		free(output_full_path);
 	}

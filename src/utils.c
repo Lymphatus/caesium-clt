@@ -41,6 +41,7 @@ void print_help()
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
 					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
+					"\t-n, --no-clobber\tdo not overwrite an existing file\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
 					"\t-v, --version\t\toutput version information and exit\n\n");
 	exit(EXIT_SUCCESS);
