@@ -94,6 +94,7 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
+* 0.12.1-beta - Bugfix
 * 0.12.0-beta - Resizing (experimental)
 * 0.11.0-beta - Fixing paths issues and dry-run option
 * 0.10.2-beta - Bugfixes & full Windows support
