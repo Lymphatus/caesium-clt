@@ -65,7 +65,11 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 				if (opts.optarg[0] == '~') {
 					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
 				} else {
+#ifdef _WIN32
+					_fullpath(parameters.output_folder, opts.optarg, MAX_PATH);
+#else
 					realpath(opts.optarg, parameters.output_folder);
+#endif
 				}
 				int pathlen = strlen(parameters.output_folder);
 				if (parameters.output_folder[pathlen - 1] != '/' &&
@@ -127,8 +131,13 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options)
 #endif
 			}
 		} else {
+#ifdef _WIN32
+			_fullpath(resolved_path, arg, MAX_PATH);
+#else
 			realpath(arg, resolved_path);
+#endif
 		}
+
 		if (is_directory(resolved_path)) {
 			if (!files_flag) {
 				folders_flag = true;
