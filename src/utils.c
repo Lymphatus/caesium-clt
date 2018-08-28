@@ -21,6 +21,9 @@
 #include <caesium.h>
 #include <limits.h>
 #include <math.h>
+#ifdef _WIN32
+#include <stdint.h>
+#endif
 
 #include "utils.h"
 #include "vendor/tinydir.h"
@@ -110,9 +113,15 @@ int mkpath(const char *pathname)
 		return -1;
 	}
 	/* make this one if parent has been made */
+#ifdef _WIN32
+	if (mkdir(pathname) == 0) {
+		return 0;
+	}
+#else
 	if (mkdir(pathname, 0777) == 0) {
 		return 0;
 	}
+#endif
 	/* if it already exists that is fine */
 	if (errno == EEXIST) {
 		return 0;

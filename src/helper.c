@@ -49,28 +49,31 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
             {0}
     };
     optparse_init(&opts, argv);
-
-    int option;
-    while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
-        switch (option) {
-            case 'q':
-                options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);
-                if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
-                    display_error(ERROR, 1);
-                }
-                break;
-            case 'e':
-                options->jpeg.exif_copy = true;
-            case 'o':
-                if (opts.optarg[0] == '~') {
-                    snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
-                } else {
-                    realpath(opts.optarg, parameters.output_folder);
-                }
-                int pathlen = (int) strlen(parameters.output_folder);
-                if (parameters.output_folder[pathlen - 1] != '/' &&
-                    parameters.output_folder[pathlen - 1] != '\\') {
-                    // append the extra slash/backslash
+	int option;
+	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
+		switch (option) {
+			case 'q':
+				options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);
+				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
+					display_error(ERROR, 1);
+				}
+				break;
+			case 'e':
+				options->jpeg.exif_copy = true;
+			case 'o':
+				if (opts.optarg[0] == '~') {
+					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
+				} else {
+#ifdef _WIN32
+					_fullpath(parameters.output_folder, opts.optarg, MAX_PATH);
+#else
+					realpath(opts.optarg, parameters.output_folder);
+#endif
+				}
+				int pathlen = strlen(parameters.output_folder);
+				if (parameters.output_folder[pathlen - 1] != '/' &&
+					parameters.output_folder[pathlen - 1] != '\\') {
+					// append the extra slash/backslash
 #ifdef _WIN32
                     snprintf(parameters.output_folder+pathlen, 2, "\\");
 #else
@@ -128,15 +131,20 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
 #else
                 snprintf(resolved_path, strlen(arg) + 1, "%s/", arg);
 #endif
-            }
-        } else {
-            realpath(arg, resolved_path);
-        }
-        if (is_directory(resolved_path)) {
-            if (!files_flag) {
-                folders_flag = true;
-                size_t len = strlen(resolved_path);
-                if (resolved_path[len - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
+			}
+		} else {
+#ifdef _WIN32
+			_fullpath(resolved_path, arg, MAX_PATH);
+#else
+			realpath(arg, resolved_path);
+#endif
+		}
+
+		if (is_directory(resolved_path)) {
+			if (!files_flag) {
+				folders_flag = true;
+				size_t len = strlen(resolved_path);
+				if (resolved_path[len - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
 #ifdef _WIN32
                     resolved_path[len] = '\\';
 #else
