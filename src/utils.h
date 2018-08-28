@@ -40,6 +40,8 @@ int strndx(const char* string, const char search);
 
 double parse_scale_factor(const char* factor_string);
 
+overwrite_policy parse_overwrite_policy(const char* overwrite_string);
+
 #ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with);
 char *strsep(char **stringp, const char *delim);

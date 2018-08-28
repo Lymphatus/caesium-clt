@@ -40,6 +40,7 @@ void print_help()
 					"\t-s, --scale\t\tscale the image. Allowed formats are [.x, 0.x, n/d, xx%%].\n\t\t\t\tMust be > 0 and <= 1.0.\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
+					"\t-O, --overwrite\t\tOverwrite policy: all, none, prompt, bigger. Default is all.\n"
 					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
 					"\t-v, --version\t\toutput version information and exit\n\n");
@@ -255,6 +256,22 @@ double parse_scale_factor(const char *factor_string)
 	}
 	return scale_factor;
 }
+
+overwrite_policy parse_overwrite_policy(const char* overwrite_string)
+{
+	if (strcmp(overwrite_string, "none") == 0) {
+		return none;
+	} else if (strcmp(overwrite_string, "prompt") == 0) {
+		return prompt;
+	} else if (strcmp(overwrite_string, "bigger") == 0) {
+		return bigger;
+	} else if(strcmp(overwrite_string, "all") == 0) {
+		return all;
+	}
+	display_error(WARNING, 15);
+	return all;
+}
+
 
 
 #ifdef _WIN32

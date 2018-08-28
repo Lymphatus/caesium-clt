@@ -27,6 +27,13 @@
 #define MAX_PATH_SIZE PATH_MAX
 #endif
 
+typedef enum overwrite_policy {
+	none,
+	prompt,
+	bigger,
+	all
+} overwrite_policy;
+
 typedef struct cclt_options
 {
 	char **input_files;
@@ -38,7 +45,10 @@ typedef struct cclt_options
 	off_t input_total_size;
 	off_t output_total_size;
 	bool dry_run;
+	overwrite_policy overwrite;
 } cclt_options;
+
+
 
 cclt_options parse_arguments(char *argv[], cs_image_pars *options);
 
