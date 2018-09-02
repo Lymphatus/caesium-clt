@@ -251,7 +251,8 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
         options->input_total_size += input_file_size;
 
         //If the file already exist, create a temporary file
-        if (file_exists(output_full_path)) {
+        bool f_exists = file_exists(output_full_path);
+        if (f_exists) {
             if (options->overwrite == none) {
                 fprintf(stdout, "[SKIPPED] %s\n", output_full_path);
                 options->output_total_size += get_file_size(output_full_path);
@@ -279,7 +280,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
                 i + 1,
                 options->files_count,
                 filename,
-                original_output_full_path);
+                f_exists ? original_output_full_path : output_full_path);
 
         //Prevent compression if running in dry mode
         if (!options->dry_run) {

@@ -175,7 +175,7 @@ char *get_human_size(off_t size)
 	//Index of the array containing the correct unit
 	double order = floor(log2(labs(size)) / 10);
 	//Alloc enough size for the final string
-	char *final = (char *) malloc(((int) (floor(log10(labs(size))) + 4)) * sizeof(char));
+	char *final = (char *) malloc(((int) (floor(log10(labs(size))) + 5)) * sizeof(char));
 
 	//If the order exceeds 4, something is fishy
 	if (order > 4) {
