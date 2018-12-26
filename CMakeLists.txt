@@ -3,8 +3,8 @@ project(caesiumclt)
 
 # The version number.
 set(VERSION_MAJOR 0)
-set(VERSION_MINOR 12)
-set(VERSION_PATCH 1)
+set(VERSION_MINOR 13)
+set(VERSION_PATCH 0)
 
 configure_file(
         "src/config.h.in"
@@ -14,5 +14,8 @@ configure_file(
 include_directories("${PROJECT_BINARY_DIR}")
 if (WIN32)
     include_directories("C:\\libcaesium\\caesium")
+else()
+    include_directories("/usr/local/include")
 endif()
+
 add_subdirectory(src)

@@ -24,7 +24,7 @@ void print_help();
 
 bool is_directory(const char *path);
 
-int scan_folder(const char *directory, cclt_options *options, bool recursive);
+void scan_folder(const char *directory, cclt_options *options, bool recursive);
 
 char *get_filename(char * full_path);
 
@@ -36,7 +36,7 @@ int mkpath(const char *pathname);
 
 bool file_exists(const char* file_path);
 
-int strndx(const char* string, const char search);
+int strndx(const char* string, char search);
 
 double parse_scale_factor(const char* factor_string);
 

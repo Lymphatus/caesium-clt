@@ -60,6 +60,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
 				break;
 			case 'e':
 				options->jpeg.exif_copy = true;
+				break;
 			case 'o':
 				if (opts.optarg[0] == '~') {
 					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
@@ -70,7 +71,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
 					realpath(opts.optarg, parameters.output_folder);
 #endif
 				}
-				int pathlen = strlen(parameters.output_folder);
+				int pathlen = (int)strlen(parameters.output_folder);
 				if (parameters.output_folder[pathlen - 1] != '/' &&
 					parameters.output_folder[pathlen - 1] != '\\') {
 					// append the extra slash/backslash
@@ -155,8 +156,8 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
 
                 snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);
                 int count = 0;
-                count = scan_folder(resolved_path, &parameters, parameters.recursive);
-                if (count == 0) {
+                scan_folder(resolved_path, &parameters, parameters.recursive);
+                if (parameters.files_count == 0) {
                     display_error(WARNING, 3);
                 }
             } else {

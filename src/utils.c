@@ -68,7 +68,7 @@ bool is_directory(const char *path)
 #endif
 }
 
-int scan_folder(const char *directory, cclt_options *options, bool recursive)
+void scan_folder(const char *directory, cclt_options *options, bool recursive)
 {
 	int n = 0;
 	tinydir_dir dir;
@@ -91,13 +91,11 @@ int scan_folder(const char *directory, cclt_options *options, bool recursive)
 			options->input_files[options->files_count] = str_replace(options->input_files[options->files_count], "/", "\\");
 #endif
 			options->files_count++;
-			n++;
 		}
 		tinydir_next(&dir);
 	}
 
 	tinydir_close(&dir);
-	return n;
 }
 
 int mkpath(const char *pathname)
