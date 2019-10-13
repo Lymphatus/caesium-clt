@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 Matteo Paonessa
+ * Copyright 2019 Matteo Paonessa
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -68,7 +69,23 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
 #ifdef _WIN32
 					_fullpath(parameters.output_folder, opts.optarg, MAX_PATH);
 #else
-					realpath(opts.optarg, parameters.output_folder);
+					char* computedPath = realpath(opts.optarg, parameters.output_folder);
+					if (computedPath == NULL) {
+					    //Folder does not exists and may just fail on some systems, like Docker Alpine
+					    if (errno == 2) {
+					        if (mkpath(opts.optarg) == 0) {
+                                computedPath = realpath(opts.optarg, parameters.output_folder);
+                                if (computedPath == NULL) {
+                                    //Just throw an error here
+                                    display_error(ERROR, 16);
+                                }
+					        } else {
+                                display_error(ERROR, 17);
+					        }
+					    } else {
+                            display_error(ERROR, 16);
+					    }
+					}
 #endif
 				}
 				int pathlen = (int)strlen(parameters.output_folder);
@@ -155,7 +172,6 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
                 }
 
                 snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);
-                int count = 0;
                 scan_folder(resolved_path, &parameters, parameters.recursive);
                 if (parameters.files_count == 0) {
                     display_error(WARNING, 3);
@@ -242,7 +258,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
             mkpath(output_full_folder);
         }
 
-        //Calculating the total input file size, ignoring of we are going to skip them later
+        //Calculating the total input file size, ignoring if we are going to skip them later
         file_size = get_file_size(options->input_files[i]);
         if (file_size == 0) {
             //We could not open the file

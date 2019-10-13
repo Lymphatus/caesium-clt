@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 Matteo Paonessa
+ * Copyright 2019 Matteo Paonessa
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,6 +21,7 @@
 #include <caesium.h>
 #include <limits.h>
 #include <math.h>
+#include <errno.h>
 #ifdef _WIN32
 #include <stdint.h>
 #endif
@@ -40,10 +41,10 @@ void print_help()
 					"\t-q, --quality\t\tset output file quality between [0-100], 0 for optimization\n"
 					"\t-e, --exif\t\tkeeps EXIF info during compression\n"
 					"\t-o, --output\t\toutput folder\n"
-					"\t-s, --scale\t\tscale the image. Allowed formats are [.x, 0.x, n/d, xx%%].\n\t\t\t\tMust be > 0 and <= 1.0.\n"
+					"\t-s, --scale\t\t[EXPERIMENTAL] scale the image. Allowed formats are [.x, 0.x, n/d, xx%%].\n\t\t\t\tMust be > 0 and <= 1.0.\n"
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
-					"\t-O, --overwrite\t\tOverwrite policy: all, none, prompt, bigger. Default is all.\n"
+					"\t-O, --overwrite\t\tOverwrite policy: all, none, prompt, bigger. Default is bigger.\n"
 					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
 					"\t-v, --version\t\toutput version information and exit\n\n");
@@ -116,7 +117,7 @@ int mkpath(const char *pathname)
 		return 0;
 	}
 #else
-	if (mkdir(pathname, 0777) == 0) {
+	if (mkdir(pathname, 0755) == 0) {
 		return 0;
 	}
 #endif
@@ -276,7 +277,7 @@ overwrite_policy parse_overwrite_policy(const char* overwrite_string)
 		return all;
 	}
 	display_error(WARNING, 15);
-	return all;
+	return bigger;
 }
 
 

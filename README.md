@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.13.0-beta (build 20190928) - Copyright &copy; Matteo Paonessa, 2018. All Rights Reserved.
+##### caesium-clt - v0.13.1-beta (build 20191013) - Copyright &copy; Matteo Paonessa, 2019. All Rights Reserved.
 [![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
@@ -15,7 +15,6 @@
 ###### TESTED PLATFORMS
 * Mac OS X Mojave (v10.14.4)
 * Ubuntu 19.04
-* Windows 10
 
 ----------
 
@@ -42,6 +41,8 @@ See INSTALL.md for more details.
     Note that this may end up building a large set of files to be compressed and should be used carefully.
 - `-S, --keep-structure`  
     If the input is a folder, and the `-R` option is set, caesiumclt will compress all the files keeping the original folder structure.
+- `-O, --overwrite`  
+    Sets the overwrite policy: `all` will overwrite any existing file, `prompt` will ask each time before overwriting, `bigger` will overwrite bigger files only, and `none` will silently skip existing files.
 - `-d, --dry-run`  
     If this option is set, no files will be compressed, but the entire process will just be simulated.  
     Useful for checking if all the files will be correctly handled.
@@ -94,6 +95,7 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
+* 0.13.0-beta - Bugfix
 * 0.13.0-beta - Bugfix
 * 0.12.1-beta - Bugfix
 * 0.12.0-beta - Resizing (experimental)

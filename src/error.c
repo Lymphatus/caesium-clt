@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2018 Matteo Paonessa
+ * Copyright 2019 Matteo Paonessa
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -58,13 +58,17 @@ const char *get_error_message(int code) {
         case 11:
             return "-S has no effect without -R.";
         case 12:
-            return "Cannot set output folder inside the input one";
+            return "Cannot set output folder inside the input one.";
         case 13:
             return "Scale factor must be between (0, 1.0]. Setting it to 1.0.";
         case 14:
             return "Scale factor parsing error.";
         case 15:
-            return "Overwrite policy value is invalid. Using 'all'.";
+            return "Overwrite policy value is invalid. Using 'bigger'.";
+        case 16:
+            return "Cannot get the full output path.";
+        case 17:
+            return "Cannot create the output folder.";
 
         default:
             return "Unrecognized error.";
