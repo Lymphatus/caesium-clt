@@ -29,6 +29,7 @@
 #include "utils.h"
 #include "config.h"
 #include "error.h"
+#include "shared.h"
 
 cclt_options parse_arguments(char **argv, cs_image_pars *options) {
     struct optparse opts;
@@ -45,6 +46,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
             {"keep-structure", 'S', OPTPARSE_NONE},
             {"overwrite",      'O', OPTPARSE_REQUIRED},
             {"dry-run",        'd', OPTPARSE_NONE},
+            {"quiet",          'Q', OPTPARSE_NONE},
             {"version",        'v', OPTPARSE_NONE},
             {"help",           'h', OPTPARSE_NONE},
             {0}
@@ -115,14 +117,17 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
                 parameters.dry_run = true;
                 break;
             case 'v':
-                fprintf(stdout, "%d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+                print_to_console(stdout, 1, "%d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
                 exit(EXIT_SUCCESS);
+		    case 'Q':
+		        verbose = 0;
+		        break;
             case 'h':
                 print_help();
                 break;
             case '?':
             default:
-                fprintf(stderr, "%s: %s\n", argv[0], opts.errmsg);
+                print_to_console(stderr, verbose, "%s: %s\n", argv[0], opts.errmsg);
                 display_error(ERROR, 2);
         }
     }
@@ -131,7 +136,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
     bool files_flag = false, folders_flag = false;
     char resolved_path[MAX_PATH_SIZE];
 
-    fprintf(stdout, "%s\n", "Collecting files...");
+    print_to_console(stdout, verbose,"%s\n", "Collecting files...");
 
     while ((arg = optparse_arg(&opts))) {
         if (folders_flag) {
@@ -271,17 +276,17 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
         bool f_exists = file_exists(output_full_path);
         if (f_exists) {
             if (options->overwrite == none) {
-                fprintf(stdout, "[SKIPPED] %s\n", output_full_path);
+                print_to_console(stdout, verbose, "[SKIPPED] %s\n", output_full_path);
                 options->output_total_size += get_file_size(output_full_path);
                 goto free_and_go_on_with_next_file;
             } else if (options->overwrite == prompt) {
-                fprintf(stdout, "Overwrite %s? [y/n]\n", output_full_path);
+                print_to_console(stdout, verbose, "Overwrite %s? [y/n]\n", output_full_path);
                 int prompt = getchar();
                 if (prompt == '\n') {
                     prompt = getchar();
                 }
                 if (prompt != 'y' && prompt != 'Y') {
-                    fprintf(stdout, "[SKIPPED] %s\n", output_full_path);
+                    print_to_console(stdout, verbose, "[SKIPPED] %s\n", output_full_path);
                     options->output_total_size += get_file_size(output_full_path);
                     goto free_and_go_on_with_next_file;
                 }
@@ -293,7 +298,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
             overwriting = true;
         }
 
-        fprintf(stdout, "(%d/%d) %s -> %s\n",
+        print_to_console(stdout, verbose, "(%d/%d) %s -> %s\n",
                 i + 1,
                 options->files_count,
                 filename,
@@ -309,13 +314,13 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
                 char *human_output_size = get_human_size(output_file_size);
 
                 if (options->overwrite == bigger && get_file_size(original_output_full_path) <= output_file_size) {
-                    fprintf(stdout, "Resulting file is bigger. Skipping.\n");
+                    print_to_console(stdout, verbose, "Resulting file is bigger. Skipping.\n");
                     remove(output_full_path);
                     options->output_total_size += get_file_size(original_output_full_path);
                     goto free_and_go_on_with_next_file;
                 }
                 options->output_total_size += output_file_size;
-                fprintf(stdout, "%s -> %s [%.2f%%]\n",
+                print_to_console(stdout, verbose, "%s -> %s [%.2f%%]\n",
                         human_input_size,
                         human_output_size,
                         ((float) output_file_size - input_file_size) * 100 / input_file_size);

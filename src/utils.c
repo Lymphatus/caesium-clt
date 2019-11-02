@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <math.h>
 #include <errno.h>
+#include <stdarg.h>
 #ifdef _WIN32
 #include <stdint.h>
 #endif
@@ -32,7 +33,7 @@
 
 void print_help()
 {
-	fprintf(stdout,
+	print_to_console(stdout, 1,
 			"CaesiumCLT - Caesium Command Line Tools\n\n"
 					"Usage: caesiumclt [OPTIONS] INPUT...\n"
 					"Command line image compressor.\n\n"
@@ -46,6 +47,7 @@ void print_help()
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
 					"\t-O, --overwrite\t\tOverwrite policy: all, none, prompt, bigger. Default is bigger.\n"
 					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
+					"\t-Q, --quiet\t\tsuppress all output\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
 					"\t-v, --version\t\toutput version information and exit\n\n");
 	exit(EXIT_SUCCESS);
@@ -280,6 +282,18 @@ overwrite_policy parse_overwrite_policy(const char* overwrite_string)
 	return bigger;
 }
 
+void print_to_console(FILE* buffer, int verbose, const char* format, ...)
+{
+	if (!verbose) {
+	    return;
+	}
+
+    va_list args;
+
+    va_start(args, format);
+    vfprintf(buffer, format, args);
+    va_end(args);
+}
 
 
 #ifdef _WIN32

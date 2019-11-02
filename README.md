@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.13.1-beta (build 20191013) - Copyright &copy; Matteo Paonessa, 2019. All Rights Reserved.
+##### caesium-clt - v0.14.0-beta (build 20191102) - Copyright &copy; Matteo Paonessa, 2019. All Rights Reserved.
 [![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
@@ -13,7 +13,7 @@
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X Mojave (v10.14.4)
+* Mac OS X Catalina (v10.15)
 * Ubuntu 19.04
 
 ----------
@@ -46,6 +46,8 @@ See INSTALL.md for more details.
 - `-d, --dry-run`  
     If this option is set, no files will be compressed, but the entire process will just be simulated.  
     Useful for checking if all the files will be correctly handled.
+- `-Q, --quiet`  
+    Suppress all output. Output from the libcaesium library will still be outputted.
 - `-h, --help`  
     Displays a summary of the command line arguments, much like this one you're reading.
 - `-v, --version`  
@@ -95,7 +97,8 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
-* 0.13.0-beta - Bugfix
+* 0.14.0-beta - Added --quiet option
+* 0.13.1-beta - Bugfix
 * 0.13.0-beta - Bugfix
 * 0.12.1-beta - Bugfix
 * 0.12.0-beta - Resizing (experimental)

@@ -20,13 +20,17 @@
 #include <stdlib.h>
 
 #include "error.h"
+#include "utils.h"
+#include "shared.h"
 
 void display_error(error_level level, int code) {
     char *error_level = ((level) ? "[WARNING]" : "[ERROR]");
-    fprintf(stderr, "%s %d: %s\n",
-            error_level,
-            code,
-            get_error_message(code));
+
+    print_to_console(stderr, verbose, "%s %d: %s\n",
+                     error_level,
+                     code,
+                     get_error_message(code));
+
     if (level == ERROR) {
         exit(-code);
     }

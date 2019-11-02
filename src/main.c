@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <caesium.h>
 #include "utils.h"
+#include "shared.h"
 
 int main(int argc, char *argv[])
 {
@@ -52,13 +53,13 @@ int main(int argc, char *argv[])
 
 
 	//Output the compression results
-	fprintf(stdout, "-------------------------------\n");
+	print_to_console(stdout, verbose, "-------------------------------\n");
 	compression_time / 1000 % 60 >= 1 ?
-		fprintf(stdout, "Compression completed in %lum%lus\n",
+		print_to_console(stdout, verbose, "Compression completed in %lum%lus\n",
 				compression_time / 1000 / 60, compression_time / 1000 % 60) :
-		fprintf(stdout, "Compression completed in %lum%lus%lums\n",
+		print_to_console(stdout, verbose, "Compression completed in %lum%lus%lums\n",
 				compression_time / 1000 / 60, compression_time / 1000 % 60, compression_time % 1000);
-	fprintf(stdout, "%s -> %s [%.2f%% | %s]\n",
+	print_to_console(stdout, verbose, "%s -> %s [%.2f%% | %s]\n",
 			get_human_size(options.input_total_size), get_human_size(options.output_total_size),
 			((float) options.output_total_size - options.input_total_size) * 100 / options.input_total_size,
 			get_human_size((options.output_total_size - options.input_total_size)));
