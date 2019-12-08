@@ -73,7 +73,6 @@ bool is_directory(const char *path)
 
 void scan_folder(const char *directory, cclt_options *options, bool recursive)
 {
-	int n = 0;
 	tinydir_dir dir;
 	tinydir_open(&dir, directory);
 

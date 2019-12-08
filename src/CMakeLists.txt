@@ -1,4 +1,4 @@
-set(CMAKE_C_FLAGS "--std=gnu99")
+set(CMAKE_C_FLAGS "--std=gnu99 -Wno-nullability-completeness")
 
 FILE(GLOB CSources *.c)
 FILE(GLOB CVendorSources vendor/*.c)

@@ -15,6 +15,5 @@
  *
  */
 
-#include "shared.h"
 
 int verbose = 1;
