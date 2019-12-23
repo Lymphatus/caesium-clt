@@ -236,6 +236,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
         char *original_output_full_path = NULL;
         bool overwriting = false;
         off_t file_size = 0;
+        int compression_error_code = 0;
         //If we don't need to keep the structure, we put all the files in one folder by just the filename
         if (!options->keep_structure) {
             output_full_path = malloc((strlen(filename) + strlen(options->output_folder) + 1) * sizeof(char));
@@ -306,7 +307,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
 
         //Prevent compression if running in dry mode
         if (!options->dry_run) {
-            if (cs_compress(options->input_files[i], output_full_path, parameters)) {
+            if (cs_compress(options->input_files[i], output_full_path, parameters, &compression_error_code)) {
                 compressed_files++;
                 output_file_size = get_file_size(output_full_path);
 
@@ -325,6 +326,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
                         human_output_size,
                         ((float) output_file_size - input_file_size) * 100 / input_file_size);
             } else {
+                print_to_console(stderr, verbose, "Compression failed with error %d\n", compression_error_code);
                 options->input_total_size -= get_file_size(options->input_files[i]);
             }
         }
