@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.14.0-beta (build 20191102) - Copyright &copy; Matteo Paonessa, 2019. All Rights Reserved.
+##### caesium-clt - v0.15.0-beta (build 20191223) - Copyright &copy; Matteo Paonessa, 2019. All Rights Reserved.
 [![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
