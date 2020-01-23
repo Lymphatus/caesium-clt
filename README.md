@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-##### caesium-clt - v0.15.0-beta (build 20191223) - Copyright &copy; Matteo Paonessa, 2019. All Rights Reserved.
+##### caesium-clt - v0.15.1-beta (build 20200123) - Copyright &copy; Matteo Paonessa, 2020. All Rights Reserved.
 [![Build Status](https://travis-ci.org/Lymphatus/caesium-clt.svg?branch=master)](https://travis-ci.org/Lymphatus/caesium-clt)
 ----------
 
@@ -15,6 +15,7 @@
 ###### TESTED PLATFORMS
 * Mac OS X Catalina (v10.15)
 * Ubuntu 19.04
+* Windows 10
 
 ----------
 
@@ -90,13 +91,9 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 
 ----------
 
-###### TODO
-* Code cleaning
-* Deeper error handling
-
-----------
-
 ###### CHANGELOG
+* 0.15.1-beta - Fixed rename bug on Windows + "Compressing..." message
+* 0.15.0-beta - Support for libcaesium 0.5.0
 * 0.14.0-beta - Added --quiet option
 * 0.13.1-beta - Bugfix
 * 0.13.0-beta - Bugfix
@@ -107,11 +104,3 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 * 0.10.1-beta - All features are available
 * 0.10.0-beta - Switched to cmake build system and libcaesium
 * 0.9.1-beta - Initial development stage
-
-----------
-
-###### RESOURCES
-* caesium-clt website - [http://saerasoft.com/caesium/clt](http://saerasoft.com/caesium/clt)
-* Caesium website - [http://saerasoft.com/caesium](http://saerasoft.com/caesium)
-* caesium-clt Git Repository - [https://github.com/Lymphatus/caesium-clt](https://github.com/Lymphatus/caesium-clt)
-* Author website - SaeraSoft - [http://saerasoft.com](http://saerasoft.com)

@@ -299,12 +299,12 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
             overwriting = true;
         }
 
-        print_to_console(stdout, verbose, "(%d/%d) %s -> %s\n",
+        print_to_console(stdout, verbose, "(%d/%d) %s -> %s\nCompressing...",
                 i + 1,
                 options->files_count,
                 filename,
                 f_exists ? original_output_full_path : output_full_path);
-
+        fflush(stdout);
         //Prevent compression if running in dry mode
         if (!options->dry_run) {
             if (cs_compress(options->input_files[i], output_full_path, parameters, &compression_error_code)) {
@@ -321,11 +321,12 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
                     goto free_and_go_on_with_next_file;
                 }
                 options->output_total_size += output_file_size;
-                print_to_console(stdout, verbose, "%s -> %s [%.2f%%]\n",
+                print_to_console(stdout, verbose, "\r%s -> %s [%.2f%%]\n",
                         human_input_size,
                         human_output_size,
                         ((float) output_file_size - input_file_size) * 100 / input_file_size);
             } else {
+                print_to_console(stdout, verbose, "\n");
                 print_to_console(stderr, verbose, "Compression failed with error %d\n", compression_error_code);
                 options->input_total_size -= get_file_size(options->input_files[i]);
             }
@@ -333,6 +334,9 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
 
         //Rename if we were overwriting
         if (overwriting && !options->dry_run) {
+#ifdef _WIN32
+            remove(original_output_full_path);
+#endif
             rename(output_full_path, original_output_full_path);
         }
 
