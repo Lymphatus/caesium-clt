@@ -13,13 +13,15 @@ configure_file(
 
 include_directories("${PROJECT_BINARY_DIR}")
 if (WIN32)
-    include_directories("C:\\libcaesium")
+    include_directories("C:\\libcaesium\\include")
 else ()
     include_directories("/usr/local/include")
 endif ()
 
 if (APPLE)
     link_directories(/usr/local/lib)
+elseif (WIN32)
+    link_directories("C:\\libcaesium\\lib")
 endif ()
 
 add_subdirectory(src)
