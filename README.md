@@ -4,7 +4,7 @@
 ----------
 
 ###### REQUIREMENTS
-* [libcaesium](https://github.com/Lymphatus/libcaesium)
+* [libcaesium](https://github.com/Lymphatus/libcaesium) >= 0.5.0
 
 ###### Included libraries
 * [optparse](https://github.com/skeeto/optparse)
