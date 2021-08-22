@@ -89,7 +89,7 @@ Losslessly compress ```Pictures``` folder and subfolders, located in the ```home
 $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ```
 
-Note: Empty files are generated when disk full.
+Note: Empty output pictures are generated when disk full, at least on GNU/Linux.
 
 ----------
 
