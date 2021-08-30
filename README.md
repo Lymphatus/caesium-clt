@@ -14,7 +14,7 @@
 
 ###### TESTED PLATFORMS
 * Mac OS X Catalina (v10.15)
-* Ubuntu 19.04
+* Ubuntu 19.04, 20.04
 * Windows 10
 
 ----------
@@ -88,6 +88,8 @@ Losslessly compress ```Pictures``` folder and subfolders, located in the ```home
 ```
 $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ```
+
+Note: Empty output pictures are generated when disk full, at least on GNU/Linux.
 
 ----------
 
