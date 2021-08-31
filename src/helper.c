@@ -31,6 +31,8 @@
 #include "error.h"
 #include "shared.h"
 
+extern bool ignore_errors; // defined in error.c
+
 cclt_options parse_arguments(char **argv, cs_image_pars *options) {
     struct optparse opts;
     //Initialize application options
@@ -45,6 +47,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
             {"recursive",      'R', OPTPARSE_NONE},
             {"keep-structure", 'S', OPTPARSE_NONE},
             {"overwrite",      'O', OPTPARSE_REQUIRED},
+            {"ignore-errors",  'I', OPTPARSE_NONE},
             {"dry-run",        'd', OPTPARSE_NONE},
             {"quiet",          'Q', OPTPARSE_NONE},
             {"version",        'v', OPTPARSE_NONE},
@@ -112,6 +115,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
                 break;
             case 'O':
                 parameters.overwrite = parse_overwrite_policy(opts.optarg);
+                break;
+            case 'I':
+                ignore_errors = true;
                 break;
             case 'd':
                 parameters.dry_run = true;

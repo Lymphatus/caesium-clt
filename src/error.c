@@ -23,6 +23,8 @@
 #include "utils.h"
 #include "shared.h"
 
+bool ignore_errors = false;
+
 void display_error(error_level level, int code) {
     char *error_level = ((level) ? "[WARNING]" : "[ERROR]");
 
@@ -31,7 +33,7 @@ void display_error(error_level level, int code) {
                      code,
                      get_error_message(code));
 
-    if (level == ERROR) {
+    if (level == ERROR && !ignore_errors) {
         exit(-code);
     }
 }

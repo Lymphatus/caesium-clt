@@ -46,6 +46,7 @@ void print_help()
 					"\t-R, --recursive\t\tif input is a folder, scan subfolders too\n"
 					"\t-S, --keep-structure\tkeep the folder structure, use with -R\n"
 					"\t-O, --overwrite\t\tOverwrite policy: all, none, prompt, bigger. Default is bigger.\n"
+                                        "\t-I, --ignore-errors\tkeep working when there are errors instead of exiting\n"
 					"\t-d, --dry-run\t\tdo not really compress files but just show output paths\n"
 					"\t-Q, --quiet\t\tsuppress all output\n"
 					"\t-h, --help\t\tdisplay this help and exit\n"
