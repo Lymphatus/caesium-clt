@@ -7,7 +7,6 @@ FILE(GLOB CVendorHeaders vendor/*.h)
 
 add_executable(caesiumclt ${CVendorSources} ${CVendorHeaders} ${CSources} ${CHeaders})
 
-target_link_libraries(caesiumclt LINK_PUBLIC caesium)
-target_link_libraries(caesiumclt LINK_PUBLIC m)
+target_link_libraries(caesiumclt LINK_PUBLIC caesium m)
 
 install(TARGETS caesiumclt DESTINATION bin)

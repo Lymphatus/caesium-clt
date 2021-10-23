@@ -23,6 +23,6 @@ before_install:
 before_script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake .. -DLIBCAESIUM_PATH=libcaesium/target/release
 
 script: make

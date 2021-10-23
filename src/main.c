@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <time.h>
 #include <stdio.h>
-#include <caesium.h>
 #include "utils.h"
 #include "shared.h"
 
@@ -31,18 +30,25 @@ int main(int argc, char *argv[])
 	}
 
 	long compression_time = 0;
-	cs_image_pars compress_options;
 	cclt_options options;
 
 	//Initialize the default parameters
-	compress_options = initialize_parameters();
+    C_CSParameters compress_options = {
+            false,
+            80,
+            3,
+            false,
+            20,
+            60,
+            false
+    };
 	//Set them according to command line parameters
 	options = parse_arguments(argv, &compress_options);
 
 	//Start a timer before calling the compression
 	clock_t start = clock(), diff;
 
-	start_compression(&options, &compress_options);
+	start_compression(&options, compress_options);
 
 	//Cleanup the memory allocated objects
 	free(options.input_files);

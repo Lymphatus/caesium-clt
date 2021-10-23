@@ -16,7 +16,6 @@
  */
 
 #include <stdio.h>
-#include <caesium.h>
 #include <stdlib.h>
 
 #include "error.h"

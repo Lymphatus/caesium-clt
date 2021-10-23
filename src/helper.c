@@ -31,7 +31,7 @@
 #include "error.h"
 #include "shared.h"
 
-cclt_options parse_arguments(char **argv, cs_image_pars *options) {
+cclt_options parse_arguments(char **argv, C_CSParameters *options) {
     struct optparse opts;
     //Initialize application options
     cclt_options parameters = {NULL, "", "", false, false, 0, 0, 0, false, all};
@@ -52,57 +52,63 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
             {0}
     };
     optparse_init(&opts, argv);
-	int option;
-	while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
-		switch (option) {
-			case 'q':
-				options->jpeg.quality = (int) strtol(opts.optarg, (char **) NULL, 10);
-				if (options->jpeg.quality < 0 || options->jpeg.quality > 100) {
-					display_error(ERROR, 1);
-				}
-				break;
-			case 'e':
-				options->jpeg.exif_copy = true;
-				break;
-			case 'o':
-				if (opts.optarg[0] == '~') {
-					snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
-				} else {
+    int option;
+    int quality = 0;
+    while ((option = optparse_long(&opts, longopts, NULL)) != -1) {
+        switch (option) {
+            case 'q':
+                quality = (int) strtol(opts.optarg, (char **) NULL, 10);
+                if (quality < 0 || quality > 100) {
+                    display_error(ERROR, 1);
+                }
+                if (quality == 0) {
+                    options->optimize = true;
+                } else {
+                    options->jpeg_quality = quality;
+                    options->png_level = parse_png_quality(quality);
+                    options->webp_quality = quality;
+                    options->gif_quality = quality;
+                }
+                break;
+            case 'e':
+                options->keep_metadata = true;
+                break;
+            case 'o':
+                if (opts.optarg[0] == '~') {
+                    snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
+                } else {
 #ifdef _WIN32
-					_fullpath(parameters.output_folder, opts.optarg, MAX_PATH);
+                    _fullpath(parameters.output_folder, opts.optarg, MAX_PATH);
 #else
-					char* computedPath = realpath(opts.optarg, parameters.output_folder);
-					if (computedPath == NULL) {
-					    //Folder does not exists and may just fail on some systems, like Docker Alpine
-					    if (errno == 2) {
-					        if (mkpath(opts.optarg) == 0) {
+                    char *computedPath = realpath(opts.optarg, parameters.output_folder);
+                    if (computedPath == NULL) {
+                        //Folder does not exists and may just fail on some systems, like Docker Alpine
+                        if (errno == 2) {
+                            if (mkpath(opts.optarg) == 0) {
                                 computedPath = realpath(opts.optarg, parameters.output_folder);
                                 if (computedPath == NULL) {
                                     //Just throw an error here
                                     display_error(ERROR, 16);
                                 }
-					        } else {
+                            } else {
                                 display_error(ERROR, 17);
-					        }
-					    } else {
+                            }
+                        } else {
                             display_error(ERROR, 16);
-					    }
-					}
+                        }
+                    }
 #endif
-				}
-				int pathlen = (int)strlen(parameters.output_folder);
-				if (parameters.output_folder[pathlen - 1] != '/' &&
-					parameters.output_folder[pathlen - 1] != '\\') {
-					// append the extra slash/backslash
+                }
+                int pathlen = (int) strlen(parameters.output_folder);
+                if (parameters.output_folder[pathlen - 1] != '/' &&
+                    parameters.output_folder[pathlen - 1] != '\\') {
+                    // append the extra slash/backslash
 #ifdef _WIN32
-                    snprintf(parameters.output_folder+pathlen, 2, "\\");
+                    snprintf(parameters.output_folder + pathlen, 2, "\\");
 #else
                     snprintf(parameters.output_folder + pathlen, 2, "/");
 #endif
                 }
-                break;
-            case 's':
-                options->jpeg.scale_factor = options->png.scale_factor = parse_scale_factor(opts.optarg);
                 break;
             case 'R':
                 parameters.recursive = true;
@@ -119,9 +125,9 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
             case 'v':
                 print_to_console(stdout, 1, "%d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
                 exit(EXIT_SUCCESS);
-		    case 'Q':
-		        verbose = 0;
-		        break;
+            case 'Q':
+                verbose = 0;
+                break;
             case 'h':
                 print_help();
                 break;
@@ -136,7 +142,7 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
     bool files_flag = false, folders_flag = false;
     char resolved_path[MAX_PATH_SIZE];
 
-    print_to_console(stdout, verbose,"%s\n", "Collecting files...");
+    print_to_console(stdout, verbose, "%s\n", "Collecting files...");
 
     while ((arg = optparse_arg(&opts))) {
         if (folders_flag) {
@@ -154,20 +160,20 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
 #else
                 snprintf(resolved_path, strlen(arg) + 1, "%s/", arg);
 #endif
-			}
-		} else {
+            }
+        } else {
 #ifdef _WIN32
-			_fullpath(resolved_path, arg, MAX_PATH);
+            _fullpath(resolved_path, arg, MAX_PATH);
 #else
-			realpath(arg, resolved_path);
+            realpath(arg, resolved_path);
 #endif
-		}
+        }
 
-		if (is_directory(resolved_path)) {
-			if (!files_flag) {
-				folders_flag = true;
-				size_t len = strlen(resolved_path);
-				if (resolved_path[len - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
+        if (is_directory(resolved_path)) {
+            if (!files_flag) {
+                folders_flag = true;
+                size_t len = strlen(resolved_path);
+                if (resolved_path[len - 1] != '/' && resolved_path[strlen(resolved_path) - 1] != '\\') {
 #ifdef _WIN32
                     resolved_path[len] = '\\';
 #else
@@ -221,11 +227,11 @@ cclt_options parse_arguments(char **argv, cs_image_pars *options) {
     return parameters;
 }
 
-int start_compression(cclt_options *options, cs_image_pars *parameters) {
+int start_compression(cclt_options *options, struct C_CSParameters parameters) {
     int compressed_files = 0;
-    off_t input_file_size = 0;
-    off_t output_file_size = 0;
-    //Create the output folder if does not exists
+    off_t input_file_size;
+    off_t output_file_size;
+    //Create the output folder if it does not exist
     if (mkpath(options->output_folder) == -1) {
         display_error(ERROR, 5);
     }
@@ -235,8 +241,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
         char *output_full_path = NULL;
         char *original_output_full_path = NULL;
         bool overwriting = false;
-        off_t file_size = 0;
-        int compression_error_code = 0;
+        off_t file_size;
         //If we don't need to keep the structure, we put all the files in one folder by just the filename
         if (!options->keep_structure) {
             output_full_path = malloc((strlen(filename) + strlen(options->output_folder) + 1) * sizeof(char));
@@ -300,14 +305,14 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
         }
 
         print_to_console(stdout, verbose, "(%d/%d) %s -> %s\nCompressing...",
-                i + 1,
-                options->files_count,
-                filename,
-                f_exists ? original_output_full_path : output_full_path);
+                         i + 1,
+                         options->files_count,
+                         filename,
+                         f_exists ? original_output_full_path : output_full_path);
         fflush(stdout);
         //Prevent compression if running in dry mode
         if (!options->dry_run) {
-            if (cs_compress(options->input_files[i], output_full_path, parameters, &compression_error_code)) {
+            if (c_compress(options->input_files[i], output_full_path, parameters)) {
                 compressed_files++;
                 output_file_size = get_file_size(output_full_path);
 
@@ -322,12 +327,11 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
                 }
                 options->output_total_size += output_file_size;
                 print_to_console(stdout, verbose, "\r%s -> %s [%.2f%%]\n",
-                        human_input_size,
-                        human_output_size,
-                        ((float) output_file_size - input_file_size) * 100 / input_file_size);
+                                 human_input_size,
+                                 human_output_size,
+                                 ((float) output_file_size - (float) input_file_size) * 100 / (float) input_file_size);
             } else {
-                print_to_console(stdout, verbose, "\n");
-                print_to_console(stderr, verbose, "Compression failed with error %d\n", compression_error_code);
+                print_to_console(stderr, verbose, "\nCompression failed\n");
                 options->input_total_size -= get_file_size(options->input_files[i]);
             }
         }
@@ -340,7 +344,7 @@ int start_compression(cclt_options *options, cs_image_pars *parameters) {
             rename(output_full_path, original_output_full_path);
         }
 
-free_and_go_on_with_next_file:
+        free_and_go_on_with_next_file:
         free(original_output_full_path);
         free(output_full_path);
     }

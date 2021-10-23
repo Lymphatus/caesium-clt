@@ -18,12 +18,12 @@
 #ifndef CAESIUM_CLT_HELPER_H
 #define CAESIUM_CLT_HELPER_H
 
-#include <caesium.h>
-
 #ifdef _WIN32
 #define MAX_PATH_SIZE _MAX_PATH
 #else
 #include <limits.h>
+#include <stdbool.h>
+
 #define MAX_PATH_SIZE PATH_MAX
 #endif
 
@@ -33,6 +33,18 @@ typedef enum overwrite_policy {
 	bigger,
 	all
 } overwrite_policy;
+
+typedef struct C_CSParameters {
+    bool keep_metadata;
+    unsigned int jpeg_quality;
+    unsigned int png_level;
+    bool png_force_zopfli;
+    unsigned int gif_quality;
+    unsigned int webp_quality;
+    bool optimize;
+} C_CSParameters;
+
+extern bool c_compress(const char *i, const char *o, struct C_CSParameters params);
 
 typedef struct cclt_options
 {
@@ -50,8 +62,8 @@ typedef struct cclt_options
 
 
 
-cclt_options parse_arguments(char *argv[], cs_image_pars *options);
+cclt_options parse_arguments(char *argv[], C_CSParameters *options);
 
-int start_compression(cclt_options *options, cs_image_pars *parameters);
+int start_compression(cclt_options *options, struct C_CSParameters parameters);
 
 #endif //CAESIUM_CLT_HELPER_H

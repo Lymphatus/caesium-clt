@@ -38,11 +38,11 @@ bool file_exists(const char* file_path);
 
 int strndx(const char* string, char search);
 
-double parse_scale_factor(const char* factor_string);
-
 overwrite_policy parse_overwrite_policy(const char* overwrite_string);
 
 void print_to_console(FILE* buffer, int verbose, const char* format, ...);
+
+int parse_png_quality(int quality);
 
 #ifdef _WIN32
 char *str_replace(char *orig, char *rep, char *with);
