@@ -1,4 +1,6 @@
 language: c
+rust:
+  - stable
 
 os:
   - linux
