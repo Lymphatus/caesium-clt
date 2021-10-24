@@ -3,25 +3,19 @@ project(caesiumclt)
 
 # The version number.
 set(VERSION_MAJOR 0)
-set(VERSION_MINOR 15)
-set(VERSION_PATCH 1)
+set(VERSION_MINOR 16)
+set(VERSION_PATCH 0)
 
 configure_file(
         "src/config.h.in"
         "${PROJECT_BINARY_DIR}/config.h"
 )
+if (NOT DEFINED LIBCAESIUM_PATH)
+    message(FATAL_ERROR "LIBCAESIUM_PATH is not defined. Cannot find libcaesium.")
+endif ()
+
+link_directories(${LIBCAESIUM_PATH})
 
 include_directories("${PROJECT_BINARY_DIR}")
-if (WIN32)
-    include_directories("C:\\libcaesium\\include")
-else ()
-    include_directories("/usr/local/include")
-endif ()
-
-if (APPLE)
-    link_directories(/usr/local/lib)
-elseif (WIN32)
-    link_directories("C:\\libcaesium\\lib")
-endif ()
 
 add_subdirectory(src)
