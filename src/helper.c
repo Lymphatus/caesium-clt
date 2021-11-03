@@ -219,7 +219,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
         display_error(WARNING, 11);
         parameters.keep_structure = false;
     }
-    //If there're files and folders, we cannot keep the structure
+    //If there are files and folders, we cannot keep the structure
     if (parameters.keep_structure && (!folders_flag && parameters.files_count > 1)) {
         display_error(WARNING, 4);
         parameters.keep_structure = false;
