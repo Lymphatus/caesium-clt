@@ -3,7 +3,7 @@ project(caesiumclt)
 
 # The version number.
 set(VERSION_MAJOR 0)
-set(VERSION_MINOR 16)
+set(VERSION_MINOR 17)
 set(VERSION_PATCH 0)
 
 configure_file(
