@@ -1,8 +1,8 @@
 ## Caesium CommandLineTools
-###### caesium-clt - v0.16.0-beta (build 20211023)
+###### caesium-clt - v0.17.0-beta (build 20221001)
 
 ###### REQUIREMENTS
-* [libcaesium](https://github.com/Lymphatus/libcaesium) >= 0.6.0
+* [libcaesium](https://github.com/Lymphatus/libcaesium) >= 0.9.2
 
 ###### Included libraries
 * [optparse](https://github.com/skeeto/optparse)
@@ -11,8 +11,8 @@
 ----------
 
 ###### TESTED PLATFORMS
-* Mac OS X Big Sur (v10.15)
-* Ubuntu 20.04
+* macOS Monterey (v12.6)
+* Ubuntu 22.04
 * Windows 10
 
 ----------

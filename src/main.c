@@ -36,11 +36,13 @@ int main(int argc, char *argv[])
     C_CSParameters compress_options = {
             false,
             80,
-            3,
+            80,
             false,
             20,
             60,
-            false
+            false,
+            0,
+            0
     };
 	//Set them according to command line parameters
 	options = parse_arguments(argv, &compress_options);

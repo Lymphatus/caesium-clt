@@ -65,7 +65,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
                     options->optimize = true;
                 } else {
                     options->jpeg_quality = quality;
-                    options->png_level = parse_png_quality(quality);
+                    options->png_quality = quality;
                     options->webp_quality = quality;
                     options->gif_quality = quality;
                 }

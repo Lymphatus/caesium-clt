@@ -37,11 +37,13 @@ typedef enum overwrite_policy {
 typedef struct C_CSParameters {
     bool keep_metadata;
     unsigned int jpeg_quality;
-    unsigned int png_level;
+    unsigned int png_quality;
     bool png_force_zopfli;
     unsigned int gif_quality;
     unsigned int webp_quality;
     bool optimize;
+    int width;
+    int height;
 } C_CSParameters;
 
 extern bool c_compress(const char *i, const char *o, struct C_CSParameters params);

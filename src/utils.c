@@ -157,7 +157,7 @@ int mkpath(const char *pathname) {
     parent[sizeof(parent) - 1] = '\0';
     for (p = parent + strlen(parent); *p != '/' && p != parent; p--);
     *p = '\0';
-    /* try make parent directory */
+    /* try to make parent directory */
     if (p != parent && mkpath(parent) != 0) {
         return -1;
     }
@@ -235,15 +235,6 @@ char *get_human_size(off_t size) {
 bool file_exists(const char *file_path) {
     struct stat buffer;
     return (stat(file_path, &buffer) == 0);
-}
-
-int strndx(const char *string, const char search) {
-    char *pointer = strchr(string, search);
-    if (pointer == NULL) {
-        return -1;
-    } else {
-        return (int) (pointer - string);
-    }
 }
 
 overwrite_policy parse_overwrite_policy(const char *overwrite_string) {
@@ -360,19 +351,3 @@ char *strsep(char **stringp, const char *delim)
 }
 
 #endif
-
-int parse_png_quality(int quality) {
-    if (quality >= 1 && quality <= 39) {
-        return 1;
-    } else if (quality >= 40 && quality <= 49) {
-        return 2;
-    } else if (quality >= 50 && quality <= 59) {
-        return 3;
-    } else if (quality >= 60 && quality <= 69) {
-        return 4;
-    } else if (quality >= 70 && quality <= 79) {
-        return 6;
-    } else {
-        return 7;
-    }
-}
