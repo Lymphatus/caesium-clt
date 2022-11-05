@@ -78,7 +78,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
                     snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
                 } else {
 #ifdef _WIN32
-                    _fullpath(parameters.output_folder, opts.optarg, MAX_PATH);
+                    _fullpath(parameters.output_folder, opts.optarg, MAX_PATH_SIZE);
 #else
                     char *computedPath = realpath(opts.optarg, parameters.output_folder);
                     if (computedPath == NULL) {
@@ -163,7 +163,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
             }
         } else {
 #ifdef _WIN32
-            _fullpath(resolved_path, arg, MAX_PATH);
+            _fullpath(resolved_path, arg, MAX_PATH_SIZE);
 #else
             realpath(arg, resolved_path);
 #endif
