@@ -17,12 +17,12 @@
 
 #ifndef CAESIUM_CLT_HELPER_H
 #define CAESIUM_CLT_HELPER_H
+#include <stdbool.h>
 
 #ifdef _WIN32
 #define MAX_PATH_SIZE _MAX_PATH
 #else
 #include <limits.h>
-#include <stdbool.h>
 
 #define MAX_PATH_SIZE PATH_MAX
 #endif
