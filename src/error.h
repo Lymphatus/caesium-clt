@@ -17,6 +17,7 @@
 
 #ifndef CAESIUMCLT_ERROR_H
 #define CAESIUMCLT_ERROR_H
+#undef ERROR
 
 typedef enum error_level
 {
