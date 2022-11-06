@@ -65,7 +65,7 @@ bool is_directory(const char *path) {
     tinydir_file file;
 
     if (tinydir_file_open(&file, path) == -1) {
-        display_error(ERROR, 6);
+        display_error(CS_ERROR, 6);
     }
 
     return (bool) file.is_dir;
@@ -199,7 +199,8 @@ char *get_filename(char *full_path) {
 off_t get_file_size(const char *path) {
     FILE *f = fopen(path, "rb");
     if (f == NULL) {
-        display_error(WARNING, 7);
+        perror("Cannot open output file");
+        display_error(CS_WARNING, 7);
         return 0;
     }
     fseek(f, 0, SEEK_END);
@@ -247,7 +248,7 @@ overwrite_policy parse_overwrite_policy(const char *overwrite_string) {
     } else if (strcmp(overwrite_string, "all") == 0) {
         return all;
     }
-    display_error(WARNING, 15);
+    display_error(CS_WARNING, 15);
     return bigger;
 }
 

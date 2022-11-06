@@ -25,12 +25,12 @@
 void display_error(error_level level, int code) {
     char *error_level = ((level) ? "[WARNING]" : "[ERROR]");
 
-    print_to_console(stderr, verbose, "%s %d: %s\n",
+    print_to_console(stderr, verbose, "%s %s (code: %d)\n",
                      error_level,
-                     code,
-                     get_error_message(code));
+                     get_error_message(code),
+                     code);
 
-    if (level == ERROR) {
+    if (level == CS_ERROR) {
         exit(-code);
     }
 }

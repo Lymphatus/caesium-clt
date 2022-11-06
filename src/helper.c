@@ -19,11 +19,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#endif
-
 #include "helper.h"
 #include "vendor/optparse.h"
 #include "utils.h"
@@ -59,7 +54,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
             case 'q':
                 quality = (int) strtol(opts.optarg, (char **) NULL, 10);
                 if (quality < 0 || quality > 100) {
-                    display_error(ERROR, 1);
+                    display_error(CS_ERROR, 1);
                 }
                 if (quality == 0) {
                     options->optimize = true;
@@ -78,7 +73,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
                     snprintf(parameters.output_folder, strlen(opts.optarg) + 1, "%s", opts.optarg);
                 } else {
 #ifdef _WIN32
-                    _fullpath(parameters.output_folder, opts.optarg, MAX_PATH);
+                    _fullpath(parameters.output_folder, opts.optarg, MAX_PATH_SIZE);
 #else
                     char *computedPath = realpath(opts.optarg, parameters.output_folder);
                     if (computedPath == NULL) {
@@ -88,13 +83,13 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
                                 computedPath = realpath(opts.optarg, parameters.output_folder);
                                 if (computedPath == NULL) {
                                     //Just throw an error here
-                                    display_error(ERROR, 16);
+                                    display_error(CS_ERROR, 16);
                                 }
                             } else {
-                                display_error(ERROR, 17);
+                                display_error(CS_ERROR, 17);
                             }
                         } else {
-                            display_error(ERROR, 16);
+                            display_error(CS_ERROR, 16);
                         }
                     }
 #endif
@@ -134,7 +129,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
             case '?':
             default:
                 print_to_console(stderr, verbose, "%s: %s\n", argv[0], opts.errmsg);
-                display_error(ERROR, 2);
+                display_error(CS_ERROR, 2);
         }
     }
     //Remaining arguments
@@ -146,7 +141,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
 
     while ((arg = optparse_arg(&opts))) {
         if (folders_flag) {
-            display_error(WARNING, 8);
+            display_error(CS_WARNING, 8);
             break;
         }
 
@@ -163,7 +158,7 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
             }
         } else {
 #ifdef _WIN32
-            _fullpath(resolved_path, arg, MAX_PATH);
+            _fullpath(resolved_path, arg, MAX_PATH_SIZE);
 #else
             realpath(arg, resolved_path);
 #endif
@@ -185,10 +180,10 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
                 snprintf(parameters.input_folder, strlen(resolved_path) + 1, "%s", resolved_path);
                 scan_folder(resolved_path, &parameters, parameters.recursive);
                 if (parameters.files_count == 0) {
-                    display_error(WARNING, 3);
+                    display_error(CS_WARNING, 3);
                 }
             } else {
-                display_error(WARNING, 9);
+                display_error(CS_WARNING, 9);
             }
         } else {
             files_flag = true;
@@ -206,22 +201,22 @@ cclt_options parse_arguments(char **argv, C_CSParameters *options) {
         if (strstr(parameters.output_folder, parameters.input_folder) != NULL
             && strcmp(parameters.output_folder, parameters.input_folder) != 0
             && parameters.recursive) {
-            display_error(ERROR, 12);
+            display_error(CS_ERROR, 12);
         }
     }
 
     //-R and -S set warnings
     if (parameters.recursive && !folders_flag) {
-        display_error(WARNING, 10);
+        display_error(CS_WARNING, 10);
         parameters.recursive = false;
     }
     if (!parameters.recursive && parameters.keep_structure) {
-        display_error(WARNING, 11);
+        display_error(CS_WARNING, 11);
         parameters.keep_structure = false;
     }
     //If there are files and folders, we cannot keep the structure
     if (parameters.keep_structure && (!folders_flag && parameters.files_count > 1)) {
-        display_error(WARNING, 4);
+        display_error(CS_WARNING, 4);
         parameters.keep_structure = false;
     }
     return parameters;
@@ -233,7 +228,7 @@ int start_compression(cclt_options *options, struct C_CSParameters parameters) {
     off_t output_file_size;
     //Create the output folder if it does not exist
     if (mkpath(options->output_folder) == -1) {
-        display_error(ERROR, 5);
+        display_error(CS_ERROR, 5);
     }
 
     for (int i = 0; i < options->files_count; i++) {
@@ -312,7 +307,8 @@ int start_compression(cclt_options *options, struct C_CSParameters parameters) {
         fflush(stdout);
         //Prevent compression if running in dry mode
         if (!options->dry_run) {
-            if (c_compress(options->input_files[i], output_full_path, parameters)) {
+            C_CSResult compression_result = c_compress(options->input_files[i], output_full_path, parameters);
+            if (compression_result.success) {
                 compressed_files++;
                 output_file_size = get_file_size(output_full_path);
 
@@ -331,7 +327,7 @@ int start_compression(cclt_options *options, struct C_CSParameters parameters) {
                                  human_output_size,
                                  ((float) output_file_size - (float) input_file_size) * 100 / (float) input_file_size);
             } else {
-                print_to_console(stderr, verbose, "\nCompression failed\n");
+                print_to_console(stderr, verbose, "\nCompression failed: %s\n", compression_result.error_message);
                 options->input_total_size -= get_file_size(options->input_files[i]);
             }
         }

@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 2.8.11)
+cmake_minimum_required(VERSION 3.16)
 project(caesiumclt)
 
 # The version number.
 set(VERSION_MAJOR 0)
-set(VERSION_MINOR 17)
+set(VERSION_MINOR 18)
 set(VERSION_PATCH 0)
 
 configure_file(

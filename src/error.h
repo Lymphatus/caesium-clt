@@ -20,8 +20,8 @@
 
 typedef enum error_level
 {
-    ERROR = 0,
-    WARNING = 1
+    CS_ERROR = 0,
+    CS_WARNING = 1
 } error_level;
 
 void display_error(error_level level, int code);

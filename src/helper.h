@@ -18,6 +18,8 @@
 #ifndef CAESIUM_CLT_HELPER_H
 #define CAESIUM_CLT_HELPER_H
 
+#include <stdbool.h>
+
 #ifdef _WIN32
 #define MAX_PATH_SIZE _MAX_PATH
 #else
@@ -46,7 +48,12 @@ typedef struct C_CSParameters {
     int height;
 } C_CSParameters;
 
-extern bool c_compress(const char *i, const char *o, struct C_CSParameters params);
+typedef struct C_CSResult {
+    bool success;
+    const char *error_message;
+} C_CSResult;
+
+extern C_CSResult c_compress(const char *i, const char *o, struct C_CSParameters params);
 
 typedef struct cclt_options
 {
