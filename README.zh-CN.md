@@ -1,8 +1,8 @@
 ## Caesium 命令行工具
-###### caesium-clt - v0.17.0-beta (build 20221001)
+###### caesium-clt - v0.18.0-beta (build 20221001)
 
 ###### 依赖
-* [libcaesium](https://github.com/Lymphatus/libcaesium) >= 0.9.2
+* [libcaesium](https://github.com/Lymphatus/libcaesium) >= 0.9.3
 
 ###### 已包含的库
 * [optparse](https://github.com/skeeto/optparse)
@@ -80,7 +80,8 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### 变更日志
-* 0.17.0-beta - libcaesium bump
+* 0.18.0-beta - Fixed Windows build + libcaesium 0.9.3
+* 0.17.0-beta - libcaesium 0.9.2
 * 0.16.0-beta - Using libcaesium Rust library
 * 0.15.2-beta - Fixed Windows -RS bug
 * 0.15.1-beta - Fixed rename bug on Windows + "Compressing..." message
