@@ -1,13 +1,8 @@
 ## Caesium CommandLineTools
-###### caesium-clt - v0.18.0-beta (build 20221106)
+###### caesium-clt - v0.19.0 (build 20221114)
 
 ###### REQUIREMENTS
-* [libcaesium](https://github.com/Lymphatus/libcaesium) >= 0.9.3
-
-###### Included libraries
-* [optparse](https://github.com/skeeto/optparse)
-* [tinydir](https://github.com/cxong/tinydir)
-
+* [Rust](https://www.rust-lang.org/tools/install)
 ----------
 
 ###### TESTED PLATFORMS
@@ -18,7 +13,7 @@
 ----------
 
 ###### COMPILATION
-See INSTALL.md for more details.
+`cargo build --release`
 
 ----------
 
@@ -37,7 +32,7 @@ See INSTALL.md for more details.
 - `-S, --keep-structure`  
   If the input is a folder, and the `-R` option is set, caesiumclt will compress all the files keeping the original folder structure.
 - `-O, --overwrite`  
-  Sets the overwrite policy: `all` will overwrite any existing file, `prompt` will ask each time before overwriting, `bigger` will overwrite bigger files only, and `none` will silently skip existing files.
+  Sets overwrite policy: `all` will overwrite any existing file, `prompt` will ask each time before overwriting, `bigger` will overwrite bigger files only, and `none` will silently skip existing files.
 - `-d, --dry-run`  
   If this option is set, no files will be compressed, but the entire process will just be simulated.  
   Useful for checking if all the files will be correctly handled.
@@ -81,19 +76,20 @@ $ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
 ----------
 
 ###### CHANGELOG
-* 0.18.0-beta - Fixed Windows build + libcaesium 0.9.3
-* 0.17.0-beta - libcaesium 0.9.2
-* 0.16.0-beta - Using libcaesium Rust library
-* 0.15.2-beta - Fixed Windows -RS bug
-* 0.15.1-beta - Fixed rename bug on Windows + "Compressing..." message
-* 0.15.0-beta - Support for libcaesium 0.5.0
-* 0.14.0-beta - Added --quiet option
-* 0.13.1-beta - Bugfix
-* 0.13.0-beta - Bugfix
-* 0.12.1-beta - Bugfix
-* 0.12.0-beta - Resizing (experimental)
-* 0.11.0-beta - Fixing paths issues and dry-run option
-* 0.10.2-beta - Bugfixes & full Windows support
-* 0.10.1-beta - All features are available
-* 0.10.0-beta - Switched to cmake build system and libcaesium
-* 0.9.1-beta - Initial development stage
+* 0.19.0 - Rust migration
+* 0.18.0 - Fixed Windows build + libcaesium 0.9.3
+* 0.17.0 - libcaesium 0.9.2
+* 0.16.0 - Using libcaesium Rust library
+* 0.15.2 - Fixed Windows -RS bug
+* 0.15.1 - Fixed rename bug on Windows + "Compressing..." message
+* 0.15.0 - Support for libcaesium 0.5.0
+* 0.14.0 - Added --quiet option
+* 0.13.1 - Bugfix
+* 0.13.0 - Bugfix
+* 0.12.1 - Bugfix
+* 0.12.0 - Resizing (experimental)
+* 0.11.0 - Fixing paths issues and dry-run option
+* 0.10.2 - Bugfixes & full Windows support
+* 0.10.1 - All features are available
+* 0.10.0 - Switched to cmake build system and libcaesium
+* 0.9.1 - Initial development stage

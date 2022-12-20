@@ -1,0 +1,17 @@
+[package]
+name = "caesiumclt"
+version = "0.19.0"
+authors = ["Matteo Paonessa <matteo.paonessa@gmail.com>"]
+edition = "2021"
+
+
+[dependencies]
+structopt = "0.3"
+indicatif = "0.17"
+walkdir = "2.3"
+num_cpus = "1.13"
+infer = "0.11"
+rayon = "1.5"
+rand = "0.8"
+human_bytes = { version = "0.4", default-features = false }
+libcaesium = { git = "https://github.com/Lymphatus/libcaesium", rev = "eca05e2" }
