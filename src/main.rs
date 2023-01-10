@@ -10,7 +10,7 @@ use rand::{Rng, thread_rng};
 use rand::distributions::Alphanumeric;
 use rayon::prelude::*;
 
-use crate::logger::ErrorLevel::{Error, Log, Warning};
+use crate::logger::ErrorLevel::{Error, Log, Notice, Warning};
 use crate::logger::log;
 use crate::options::OverwritePolicy;
 
@@ -53,6 +53,7 @@ fn main() {
     let mut compression_parameters = caesium::initialize_parameters();
     if opt.quality == 0 {
         compression_parameters.optimize = true;
+        compression_parameters.png.force_zopfli = opt.zopfli;
     } else {
         compression_parameters.jpeg.quality = opt.quality;
         compression_parameters.png.quality = opt.quality;
@@ -71,6 +72,10 @@ fn main() {
 
     let overwrite_policy = opt.overwrite;
     let keep_structure = opt.keep_structure;
+
+    if opt.zopfli {
+        log("Using zopfli may take a very long time, especially with large images!", 0, Notice, verbose);
+    }
 
     let progress_bar = setup_progress_bar(files.len() as u64, verbose);
     progress_bar.set_message("Compressing...");

@@ -1,5 +1,6 @@
 pub enum ErrorLevel {
     Log,
+    Notice,
     Warning,
     Error,
 }
@@ -11,6 +12,7 @@ pub fn log(message: &str, code: i32, level: ErrorLevel, verbose: u8) {
     match level {
         ErrorLevel::Error => panic!("[ERROR] {} (Code: {})", message, code),
         ErrorLevel::Warning => eprintln!("[WARNING] {} (Code: {})", message, code),
+        ErrorLevel::Notice => eprintln!("[NOTICE] {}", message),
         _ => println!("{}", message)
     };
 }

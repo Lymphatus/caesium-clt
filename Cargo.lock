@@ -89,11 +89,11 @@ checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
 name = "caesiumclt"
-version = "0.19.0"
+version = "0.19.1"
 dependencies = [
  "human_bytes",
  "indicatif",
- "infer 0.11.0",
+ "infer 0.12.0",
  "libcaesium",
  "num_cpus",
  "rand",
@@ -479,9 +479,9 @@ dependencies = [
 
 [[package]]
 name = "infer"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a6c16b11a665b26aeeb9b1d7f954cdeb034be38dd00adab4f2ae921a8fee804"
+checksum = "a898e4b7951673fce96614ce5751d13c40fc5674bc2d759288e46c3ab62598b3"
 dependencies = [
  "cfb",
 ]
@@ -531,7 +531,7 @@ checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 [[package]]
 name = "libcaesium"
 version = "0.10.0"
-source = "git+https://github.com/Lymphatus/libcaesium?rev=eca05e2#eca05e2eb8870c873118a9e43c2e9b60f83b12b8"
+source = "git+https://github.com/Lymphatus/libcaesium?tag=0.10.1#a71a855b9eb76451f46cfb0d171da0a39c07829e"
 dependencies = [
  "bytes",
  "gifsicle",

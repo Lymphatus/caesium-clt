@@ -63,6 +63,10 @@ pub struct Opt {
     #[structopt(long, default_value = "0")]
     pub threads: u32,
 
+    /// use zopfli when optimizing PNG files (it may take a very long time to complete)
+    #[structopt(long)]
+    pub zopfli: bool,
+
     /// select how much output you want to see, 0 is equal to -Q, --quiet
     #[structopt(long, default_value = "1")]
     pub verbose: u8,
