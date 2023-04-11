@@ -1,5 +1,5 @@
 ## Caesium CommandLineTools
-###### caesium-clt - v0.19.2
+###### caesium-clt - v0.19.1
 
 ###### REQUIREMENTS
 * [Rust](https://www.rust-lang.org/tools/install)
