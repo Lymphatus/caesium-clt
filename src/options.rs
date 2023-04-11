@@ -90,8 +90,4 @@ fn validate_opts(opt: &Opt) {
     if args.is_empty() {
         log("Please provide at least one file or folder.", 101, Error, verbose);
     }
-
-    if !opt.output.is_dir() {
-        log("Please provide a folder as output path.", 102, Error, verbose);
-    }
 }

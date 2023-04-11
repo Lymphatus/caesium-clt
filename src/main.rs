@@ -43,10 +43,16 @@ fn main() {
     };
     rayon::ThreadPoolBuilder::new().num_threads(cpus).build_global().unwrap_or_default();
 
-    match fs::create_dir_all(output_dir.clone()) {
-        Ok(_) => {}
-        Err(_) => log("Cannot create output path. Check your permissions.", 201, Error, verbose)
+    if dry_run {
+        log("Running in dry run mode", 0, Notice, verbose);
+    } else {
+        match fs::create_dir_all(output_dir.clone()) {
+            Ok(_) => {}
+            Err(_) => log("Cannot create output path. Check your permissions.", 201, Error, verbose)
+        }
     }
+
+
 
     let (base_path, files) = scanfiles::scanfiles(args, opt.recursive);
 
@@ -234,9 +240,11 @@ fn main() {
             total_compressed_files += 1;
         } else {
             total_compressed_size += result.original_size as f64;
-            total_errors += 1;
+            if !dry_run {
+                total_errors += 1;
 
-            log(format!("File {} was not compressed. Reason: {}", result.path, result.error).as_str(), 210, Warning, verbose);
+                log(format!("File {} was not compressed. Reason: {}", result.path, result.error).as_str(), 210, Warning, verbose);
+            }
         }
         total_original_size += result.original_size as f64;
     });
