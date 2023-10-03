@@ -95,7 +95,7 @@ checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
 name = "caesiumclt"
-version = "0.19.2"
+version = "0.19.1"
 dependencies = [
  "human_bytes",
  "indicatif",
@@ -405,9 +405,9 @@ dependencies = [
 
 [[package]]
 name = "human_bytes"
-version = "0.4.1"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39b528196c838e8b3da8b665e08c30958a6f2ede91d79f2ffcd0d4664b9c64eb"
+checksum = "91f255a4535024abf7640cb288260811fc14794f62b063652ed349f9a6c2348e"
 
 [[package]]
 name = "image"
