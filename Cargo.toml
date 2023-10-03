@@ -10,7 +10,7 @@ structopt = "0.3"
 indicatif = "0.17"
 walkdir = "2.3"
 num_cpus = "1.13"
-infer = "0.13"
+infer = "0.15"
 rayon = "1.5"
 rand = "0.8"
 human_bytes = { version = "0.4", default-features = false }

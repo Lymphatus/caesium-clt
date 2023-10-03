@@ -95,11 +95,11 @@ checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 
 [[package]]
 name = "caesiumclt"
-version = "0.19.2"
+version = "0.19.1"
 dependencies = [
  "human_bytes",
  "indicatif",
- "infer",
+ "infer 0.15.0",
  "libcaesium",
  "num_cpus",
  "rand",
@@ -483,6 +483,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "infer"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb33622da908807a06f9513c19b3c1ad50fab3e4137d82a78107d502075aa199"
+dependencies = [
+ "cfb",
+]
+
+[[package]]
 name = "iter-read"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -534,7 +543,7 @@ dependencies = [
  "image",
  "imagequant",
  "img-parts",
- "infer",
+ "infer 0.13.0",
  "libc",
  "lodepng",
  "mozjpeg-sys",
