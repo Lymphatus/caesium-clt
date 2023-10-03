@@ -14,4 +14,4 @@ infer = "0.13"
 rayon = "1.5"
 rand = "0.8"
 human_bytes = { version = "0.4", default-features = false }
-libcaesium = { git = "https://github.com/Lymphatus/libcaesium", tag = "0.10.2" }
+libcaesium = { git = "https://github.com/Lymphatus/libcaesium", tag = "0.12.1" }
