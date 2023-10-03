@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 structopt = "0.3"
 indicatif = "0.17"
-walkdir = "2.3"
+walkdir = "2.4"
 num_cpus = "1.13"
 infer = "0.13"
 rayon = "1.5"
