@@ -1,14 +1,14 @@
 ## Caesium 命令行工具
-###### caesium-clt - v0.19.0
+###### caesium-clt - v0.19.2
 
 ###### 依赖
 * [Rust](https://www.rust-lang.org/tools/install)
 ----------
 
 ###### 已通过测试的平台
-* macOS Ventura (v13.0)
+* macOS Sonoma (v14)
 * Ubuntu 22.04
-* Windows 10
+* Windows 11
 
 ----------
 

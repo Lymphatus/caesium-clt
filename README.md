@@ -1,14 +1,14 @@
 ## Caesium CommandLineTools
-###### caesium-clt - v0.19.1
+###### caesium-clt - v0.19.2
 
 ###### REQUIREMENTS
 * [Rust](https://www.rust-lang.org/tools/install)
 ----------
 
 ###### TESTED PLATFORMS
-* macOS Ventura (v13.0)
+* macOS Sonoma (v14)
 * Ubuntu 22.04
-* Windows 10
+* Windows 11
 
 ----------
 
