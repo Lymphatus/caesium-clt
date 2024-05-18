@@ -1,6 +1,6 @@
 [package]
 name = "caesiumclt"
-version = "0.19.2"
+version = "0.19.3"
 authors = ["Matteo Paonessa <matteo.paonessa@gmail.com>"]
 edition = "2021"
 
