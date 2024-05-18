@@ -1,6 +1,6 @@
 [package]
 name = "caesiumclt"
-version = "0.19.1"
+version = "0.20.0"
 authors = ["Matteo Paonessa <matteo.paonessa@gmail.com>"]
 edition = "2021"
 
@@ -8,10 +8,10 @@ edition = "2021"
 [dependencies]
 structopt = "0.3"
 indicatif = "0.17"
-walkdir = "2.3"
-num_cpus = "1.13"
-infer = "0.13"
-rayon = "1.5"
+walkdir = "2.5"
+num_cpus = "1.16"
+infer = "0.15"
+rayon = "1.10"
 rand = "0.8"
 human_bytes = { version = "0.4", default-features = false }
-libcaesium = { git = "https://github.com/Lymphatus/libcaesium", tag = "0.10.2" }
+libcaesium = { git = "https://github.com/Lymphatus/libcaesium", tag = "0.15.4" }

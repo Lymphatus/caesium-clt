@@ -98,12 +98,9 @@ fn compute_base_folder(base_folder: &Path, new_path: &Path) -> PathBuf {
 
 fn init_progress_bar() -> ProgressBar {
     let progress_bar = ProgressBar::new_spinner();
-    let style = match ProgressStyle::default_spinner()
+    let style = ProgressStyle::default_spinner()
         .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
-        .template("{spinner:.cyan} {msg}") {
-        Ok(s) => s,
-        Err(_) => ProgressStyle::default_spinner()
-    };
+        .template("{spinner:.cyan} {msg}").unwrap_or_else(|_| ProgressStyle::default_spinner());
 
     progress_bar.set_message("Collecting files...");
     progress_bar.enable_steady_tick(Duration::from_millis(80));

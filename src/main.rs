@@ -52,8 +52,6 @@ fn main() {
         }
     }
 
-
-
     let (base_path, files) = scanfiles::scanfiles(args, opt.recursive);
 
     let mut compression_parameters = caesium::initialize_parameters();
