@@ -1,7 +1,8 @@
 use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-
+use caesium::SupportedFileTypes;
+use filetime::{FileTime, set_file_times};
 use human_bytes::human_bytes;
 use indicatif::ProgressBar;
 use indicatif::ProgressDrawTarget;
@@ -27,12 +28,21 @@ struct CompressionResult {
     pub result: bool,
 }
 
+struct OutputFormat {
+    pub file_type: SupportedFileTypes,
+    pub extension: String
+}
+
 fn main() {
     let opt = options::get_opts();
     let mut verbose = opt.verbose;
     let args = opt.files;
     let dry_run = opt.dry_run;
     let output_dir = opt.output;
+    let output_format = map_output_format(opt.output_format);
+    let convert = output_format.file_type != SupportedFileTypes::Unkn;
+    let keep_dates = opt.keep_dates;
+
     if opt.quiet {
         verbose = 0;
     }
@@ -86,12 +96,13 @@ fn main() {
 
     let results = Arc::new(Mutex::new(Vec::new()));
     files.par_iter().for_each(|input_file| {
-        let input_size = match fs::metadata(input_file) {
-            Ok(s) => s.len(),
+        let input_file_metadata = fs::metadata(input_file);
+        let (input_size, input_mtime, input_atime) = match input_file_metadata {
+            Ok(s) => (s.len(), FileTime::from_last_modification_time(&s), FileTime::from_last_access_time(&s)),
             Err(e) => {
                 let error_message = format!("Cannot get file size for {}, Error: {}", input_file.display(), e);
                 log(error_message.as_str(), 202, Warning, verbose);
-                0
+                (0, FileTime::now(), FileTime::now())
             }
         };
 
@@ -130,7 +141,11 @@ fn main() {
             .map(char::from)
             .collect();
         let random_suffixed_name = format!("{}.{}", filename_str, random_suffix);
-        let final_output_full_path = output_dir.clone().join(filename);
+        let mut final_output_full_path = output_dir.clone().join(filename);
+        if convert {
+            final_output_full_path.set_extension(output_format.extension.clone());
+        }
+
         let output_full_path = output_dir.clone().join(random_suffixed_name);
         let output_full_dir = output_full_path.parent().unwrap_or_else(|| Path::new("/"));
         compression_result.output_path = final_output_full_path.display().to_string();
@@ -156,7 +171,13 @@ fn main() {
             Some(ofp) => ofp
         };
         if !dry_run {
-            match caesium::compress(input_full_path.to_string(), output_full_path_str.to_string(), &compression_parameters) {
+            let result = if convert {
+                caesium::convert(input_full_path.to_string(), output_full_path_str.to_string(), &compression_parameters, output_format.file_type)
+            } else {
+                caesium::compress(input_full_path.to_string(), output_full_path_str.to_string(), &compression_parameters)
+            };
+
+            match result {
                 Ok(_) => {
                     compression_result.result = true;
                     let output_metadata = fs::metadata(output_full_path.clone());
@@ -183,7 +204,7 @@ fn main() {
                             };
                             final_output_size = existing_file_size;
                         } else {
-                            match fs::rename(output_full_path, final_output_full_path) {
+                            match fs::rename(output_full_path, final_output_full_path.clone()) {
                                 Ok(_) => {}
                                 Err(e) => {
                                     compression_result.error = format!("Cannot rename existing file. Error: {}.", e);
@@ -192,7 +213,7 @@ fn main() {
                             };
                         }
                     } else {
-                        match fs::rename(output_full_path, final_output_full_path) {
+                        match fs::rename(output_full_path, final_output_full_path.clone()) {
                             Ok(_) => {}
                             Err(e) => {
                                 compression_result.error = format!("Cannot rename existing file. Error: {}.", e);
@@ -201,6 +222,16 @@ fn main() {
                         };
                     }
                     compression_result.compressed_size = final_output_size;
+                    if compression_result.result && keep_dates {
+
+
+                        match set_file_times(final_output_full_path, input_atime, input_mtime) {
+                            Ok(_) => {}
+                            Err(_) => {
+                                compression_result.error = "Cannot set original file dates.".into();
+                            }
+                        }
+                    }
                     results.lock().unwrap().push(compression_result);
                 }
                 Err(e) => {
@@ -272,4 +303,29 @@ fn setup_progress_bar(len: u64, verbose: u8) -> ProgressBar {
     }
 
     progress_bar
+}
+
+fn map_output_format(format: String) -> OutputFormat {
+    match format.to_lowercase().as_str() {
+        "jpg|jpeg" => OutputFormat {
+            file_type: SupportedFileTypes::Jpeg,
+            extension: format
+        },
+        "png" => OutputFormat {
+            file_type: SupportedFileTypes::Png,
+            extension: format
+        },
+        "webp" => OutputFormat {
+            file_type: SupportedFileTypes::WebP,
+            extension: format
+        },
+        "tiff|tif" => OutputFormat {
+            file_type: SupportedFileTypes::Tiff,
+            extension: format
+        },
+        _ =>OutputFormat {
+            file_type: SupportedFileTypes::Unkn,
+            extension: "".to_string()
+        },
+    }
 }

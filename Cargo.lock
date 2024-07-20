@@ -145,8 +145,9 @@ checksum = "514de17de45fdb8dc022b1a7975556c53c86f9f0aa5f534b98977b171857c2c9"
 
 [[package]]
 name = "caesiumclt"
-version = "0.19.3"
+version = "0.20.0"
 dependencies = [
+ "filetime",
  "human_bytes",
  "indicatif",
  "infer",
@@ -542,9 +543,9 @@ dependencies = [
 
 [[package]]
 name = "infer"
-version = "0.15.0"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb33622da908807a06f9513c19b3c1ad50fab3e4137d82a78107d502075aa199"
+checksum = "bc150e5ce2330295b8616ce0e3f53250e53af31759a9dbedad1621ba29151847"
 dependencies = [
  "cfb",
 ]
@@ -593,8 +594,8 @@ checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
 
 [[package]]
 name = "libcaesium"
-version = "0.15.4"
-source = "git+https://github.com/Lymphatus/libcaesium?tag=0.15.4#bf5fcec976da5d2526c235e93cadd4ef4fb73581"
+version = "0.16.1"
+source = "git+https://github.com/Lymphatus/libcaesium?rev=0.16.1#ef402d1a1dfe417907f2379cab88c2e3b245ac4c"
 dependencies = [
  "bytes",
  "gifsicle",
@@ -678,9 +679,9 @@ dependencies = [
 
 [[package]]
 name = "mozjpeg-sys"
-version = "1.1.1"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74c4fe4006093b2948ccb37bb413b6b9da2d654a9a50419b5861b0f4e8ad4da9"
+checksum = "9cf2a48f2f79f47fcce75d125d112e113a93f4a6f3cd8cc5b4cd6e16589d050f"
 dependencies = [
  "cc",
  "dunce",

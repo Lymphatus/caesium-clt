@@ -1,5 +1,4 @@
 use std::path::PathBuf;
-
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
@@ -16,7 +15,7 @@ arg_enum! {
 }
 
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt)]
 #[structopt(name = "", about = "CaesiumCLT - Command Line Tools for image compression")]
 pub struct Opt {
     /// sets output file quality between [0-100], 0 for optimization
@@ -52,7 +51,7 @@ pub struct Opt {
     pub overwrite: OverwritePolicy,
 
     /// do not compress files but just show output paths
-    #[structopt(short = "d", long)]
+    #[structopt(long = "dry-run", short = "d", long)]
     pub dry_run: bool,
 
     /// suppress all output
@@ -70,6 +69,14 @@ pub struct Opt {
     /// select how much output you want to see, 0 is equal to -Q, --quiet
     #[structopt(long, default_value = "1")]
     pub verbose: u8,
+
+    /// convert the image to the selected format (jpg, png, webp, tiff)
+    #[structopt(long = "output-format", default_value = "none")]
+    pub output_format: String,
+
+    /// keep original file date information
+    #[structopt(long = "keep-dates")]
+    pub keep_dates: bool,
 
     /// Files to process
     #[structopt(name = "FILE", parse(from_os_str))]
