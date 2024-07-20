@@ -581,6 +581,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f5d4a7da358eff58addd2877a45865158f0d78c911d43a5784ceb7bbf52833b0"
 
 [[package]]
+name = "kamadak-exif"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef4fc70d0ab7e5b6bafa30216a6b48705ea964cdfc29c050f2412295eba58077"
+dependencies = [
+ "mutate_once",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -594,8 +603,8 @@ checksum = "97b3888a4aecf77e811145cadf6eef5901f4782c53886191b2f693f24761847c"
 
 [[package]]
 name = "libcaesium"
-version = "0.16.1"
-source = "git+https://github.com/Lymphatus/libcaesium?rev=0.16.1#ef402d1a1dfe417907f2379cab88c2e3b245ac4c"
+version = "0.16.2"
+source = "git+https://github.com/Lymphatus/libcaesium?rev=0.16.2#a67f2475a0f69a2bf5b8da27a51cd50a2c610d86"
 dependencies = [
  "bytes",
  "gifsicle",
@@ -603,6 +612,7 @@ dependencies = [
  "imagequant",
  "img-parts",
  "infer",
+ "kamadak-exif",
  "libc",
  "lodepng",
  "mozjpeg-sys",
@@ -688,6 +698,12 @@ dependencies = [
  "libc",
  "nasm-rs",
 ]
+
+[[package]]
+name = "mutate_once"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16cf681a23b4d0a43fc35024c176437f9dcd818db34e0f42ab456a0ee5ad497b"
 
 [[package]]
 name = "nasm-rs"

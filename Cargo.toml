@@ -15,4 +15,4 @@ rayon = "1.10"
 rand = "0.8"
 human_bytes = { version = "0.4", default-features = false }
 filetime = "0.2"
-libcaesium = { git = "https://github.com/Lymphatus/libcaesium", rev = "0.16.1" }
+libcaesium = { git = "https://github.com/Lymphatus/libcaesium", rev = "0.16.2" }
