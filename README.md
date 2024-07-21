@@ -1,12 +1,12 @@
 ## Caesium CommandLineTools
-###### caesium-clt - v0.19.3
+###### caesium-clt - v0.20.0
 
 ###### REQUIREMENTS
 * [Rust](https://www.rust-lang.org/tools/install)
 ----------
 
 ###### TESTED PLATFORMS
-* macOS Sonoma (v14)
+* macOS Ventura
 * Ubuntu 22.04
 * Windows 11
 
@@ -18,31 +18,41 @@
 ----------
 
 ###### COMMAND LINE ARGUMENTS
-- `-q, --quality [value]` {Required}  
-  Sets the quality of the image. The higher the value is, better the result will be. Note that a value of 0 will mean
-  _lossless_ compression, which will not modify the original image, but will compress less. Allowed range is [0. 100].  
-  A common value for lossy compression is 80.
-- `-e, --exif`  
-  Keeps the JPEG metadata information during compression. File size will be slightly higher.
-- `-o, --output [value]` {Required}  
-  Path to the output folder where the compressed files will be stored. Can be the same input folder, which will overwrite the original files.
-- `-R, --recursive`  
-  If the input is a folder, caesiumclt will also scan every subfolder searching for images.  
-  Note that this may end up building a large set of files to be compressed and should be used carefully.
-- `-S, --keep-structure`  
-  If the input is a folder, and the `-R` option is set, caesiumclt will compress all the files keeping the original folder structure.
-- `-O, --overwrite`  
-  Sets overwrite policy: `all` will overwrite any existing file, `prompt` will ask each time before overwriting, `bigger` will overwrite bigger files only, and `none` will silently skip existing files.
-- `-d, --dry-run`  
-  If this option is set, no files will be compressed, but the entire process will just be simulated.  
-  Useful for checking if all the files will be correctly handled.
-- `-Q, --quiet`  
-  Suppress all output. Output from the libcaesium library will still be outputted.
-- `-h, --help`  
-  Displays a summary of the command line arguments, much like this one you're reading.
-- `-v, --version`  
-  Prints the current caesiumclt version.
+CaesiumCLT - Command Line Tools for image compression
 
+```
+USAGE:
+    caesiumclt.exe [FLAGS] [OPTIONS] --output <output> --quality <quality> [FILE]...
+
+FLAGS:
+    -d, --dry-run           do not compress files but just show output paths
+    -e, --exif              keeps EXIF info during compression
+    -h, --help              Prints help information
+        --keep-dates        keep original file date information
+    -S, --keep-structure    keep the folder structure, can be used only with -R
+    -Q, --quiet             suppress all output
+    -R, --recursive         if input is a folder, scan subfolders too
+    -V, --version           Prints version information
+        --zopfli            use zopfli when optimizing PNG files (it may take a very long time to complete)
+
+OPTIONS:
+        --height <height>                  height of the output image, if width is not set will preserve aspect ratio
+                                           [default: 0]
+    -o, --output <output>                  output folder
+        --output-format <output-format>    convert the image to the selected format (jpg, png, webp, tiff) [default:
+                                           none]
+    -O, --overwrite <overwrite>            overwrite policy [default: all]
+    -q, --quality <quality>                sets output file quality between [0-100], 0 for optimization
+        --threads <threads>                specify the number of parallel jobs (max is the number of processors
+                                           available) [default: 0]
+        --verbose <verbose>                select how much output you want to see, 0 is equal to -Q, --quiet [default:
+                                           1]
+        --width <width>                    width of the output image, if height is not set will preserve aspect ratio
+                                           [default: 0]
+
+ARGS:
+    <FILE>...    Files to process
+```
 
 ----------
 

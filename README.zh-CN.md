@@ -1,5 +1,5 @@
 ## Caesium 命令行工具
-###### caesium-clt - v0.19.3
+###### caesium-clt - v0.20.0
 
 ###### 依赖
 * [Rust](https://www.rust-lang.org/tools/install)
