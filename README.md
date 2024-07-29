@@ -22,7 +22,7 @@ CaesiumCLT - Command Line Tools for image compression
 
 ```
 USAGE:
-    caesiumclt.exe [FLAGS] [OPTIONS] --output <output> --quality <quality> [FILE]...
+    caesiumclt [FLAGS] [OPTIONS] --output <output> --quality <quality> [FILE]...
 
 FLAGS:
     -d, --dry-run           do not compress files but just show output paths
