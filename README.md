@@ -22,7 +22,7 @@ CaesiumCLT - Command Line Tools for image compression
 
 ```
 USAGE:
-    caesiumclt [FLAGS] [OPTIONS] --output <output> --quality <quality> [FILE]...
+    caesiumclt [FLAGS] [OPTIONS] --max-size <max-size> --output <output> --quality <quality> [FILE]...
 
 FLAGS:
     -d, --dry-run           do not compress files but just show output paths
@@ -38,6 +38,7 @@ FLAGS:
 OPTIONS:
         --height <height>                  height of the output image, if width is not set will preserve aspect ratio
                                            [default: 0]
+        --max-size <max-size>              set the expected maximum output size in bytes
     -o, --output <output>                  output folder
         --output-format <output-format>    convert the image to the selected format (jpg, png, webp, tiff) [default:
                                            none]

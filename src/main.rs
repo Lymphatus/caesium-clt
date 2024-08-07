@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
+
 use caesium::SupportedFileTypes;
 use filetime::{FileTime, set_file_times};
 use human_bytes::human_bytes;
@@ -30,7 +31,7 @@ struct CompressionResult {
 
 struct OutputFormat {
     pub file_type: SupportedFileTypes,
-    pub extension: String
+    pub extension: String,
 }
 
 fn main() {
@@ -42,6 +43,8 @@ fn main() {
     let output_format = map_output_format(opt.output_format);
     let convert = output_format.file_type != SupportedFileTypes::Unkn;
     let keep_dates = opt.keep_dates;
+
+    let compress_by_size = opt.max_size.is_some();
 
     if opt.quiet {
         verbose = 0;
@@ -65,15 +68,20 @@ fn main() {
     let (base_path, files) = scanfiles::scanfiles(args, opt.recursive);
 
     let mut compression_parameters = caesium::initialize_parameters();
-    if opt.quality == 0 {
-        compression_parameters.optimize = true;
-        compression_parameters.png.force_zopfli = opt.zopfli;
-    } else {
-        compression_parameters.jpeg.quality = opt.quality;
-        compression_parameters.png.quality = opt.quality;
-        compression_parameters.gif.quality = opt.quality;
-        compression_parameters.webp.quality = opt.quality;
+
+    if opt.quality.is_some() {
+        let quality = opt.quality.unwrap();
+        if quality == 0 {
+            compression_parameters.optimize = true;
+            compression_parameters.png.force_zopfli = opt.zopfli;
+        } else {
+            compression_parameters.jpeg.quality = quality;
+            compression_parameters.png.quality = quality;
+            compression_parameters.gif.quality = quality;
+            compression_parameters.webp.quality = quality;
+        }
     }
+
     compression_parameters.keep_metadata = opt.exif;
 
     if opt.width > 0 {
@@ -173,6 +181,8 @@ fn main() {
         if !dry_run {
             let result = if convert {
                 caesium::convert(input_full_path.to_string(), output_full_path_str.to_string(), &compression_parameters, output_format.file_type)
+            } else if compress_by_size {
+                caesium::compress_to_size(input_full_path.to_string(), output_full_path_str.to_string(), &mut compression_parameters.clone(), opt.max_size.unwrap() as usize, true)
             } else {
                 caesium::compress(input_full_path.to_string(), output_full_path_str.to_string(), &compression_parameters)
             };
@@ -223,8 +233,6 @@ fn main() {
                     }
                     compression_result.compressed_size = final_output_size;
                     if compression_result.result && keep_dates {
-
-
                         match set_file_times(final_output_full_path, input_atime, input_mtime) {
                             Ok(_) => {}
                             Err(_) => {
@@ -309,23 +317,23 @@ fn map_output_format(format: String) -> OutputFormat {
     match format.to_lowercase().as_str() {
         "jpg|jpeg" => OutputFormat {
             file_type: SupportedFileTypes::Jpeg,
-            extension: format
+            extension: format,
         },
         "png" => OutputFormat {
             file_type: SupportedFileTypes::Png,
-            extension: format
+            extension: format,
         },
         "webp" => OutputFormat {
             file_type: SupportedFileTypes::WebP,
-            extension: format
+            extension: format,
         },
         "tiff|tif" => OutputFormat {
             file_type: SupportedFileTypes::Tiff,
-            extension: format
+            extension: format,
         },
-        _ =>OutputFormat {
+        _ => OutputFormat {
             file_type: SupportedFileTypes::Unkn,
-            extension: "".to_string()
+            extension: "".to_string(),
         },
     }
 }

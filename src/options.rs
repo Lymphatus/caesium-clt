@@ -19,8 +19,12 @@ arg_enum! {
 #[structopt(name = "", about = "CaesiumCLT - Command Line Tools for image compression")]
 pub struct Opt {
     /// sets output file quality between [0-100], 0 for optimization
-    #[structopt(short = "q", long)]
-    pub quality: u32,
+    #[structopt(short = "q", long, required_unless="max-size")]
+    pub quality: Option<u32>,
+
+    /// set the expected maximum output size in bytes
+    #[structopt(long = "max-size", required_unless="quality")]
+    pub max_size: Option<u32>,
 
     /// keeps EXIF info during compression
     #[structopt(short = "e", long)]
