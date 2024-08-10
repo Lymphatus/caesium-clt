@@ -1,15 +1,8 @@
 ## Caesium CommandLineTools
-###### caesium-clt - v0.20.0
+###### caesium-clt - v0.21.0
 
 ###### REQUIREMENTS
 * [Rust](https://www.rust-lang.org/tools/install)
-----------
-
-###### TESTED PLATFORMS
-* macOS Ventura
-* Ubuntu 22.04
-* Windows 11
-
 ----------
 
 ###### COMPILATION
@@ -18,11 +11,10 @@
 ----------
 
 ###### COMMAND LINE ARGUMENTS
-CaesiumCLT - Command Line Tools for image compression
 
 ```
 USAGE:
-    caesiumclt [FLAGS] [OPTIONS] --max-size <max-size> --output <output> --quality <quality> [FILE]...
+    caesiumcl [FLAGS] [OPTIONS] --max-size <max-size> --output <output> --quality <quality> [FILE]...
 
 FLAGS:
     -d, --dry-run           do not compress files but just show output paths
@@ -37,19 +29,19 @@ FLAGS:
 
 OPTIONS:
         --height <height>                  height of the output image, if width is not set will preserve aspect ratio
-                                           [default: 0]
+        --long-edge <long-edge>            sets the size of the longest edge of the image
         --max-size <max-size>              set the expected maximum output size in bytes
     -o, --output <output>                  output folder
         --output-format <output-format>    convert the image to the selected format (jpg, png, webp, tiff) [default:
                                            none]
     -O, --overwrite <overwrite>            overwrite policy [default: all]
     -q, --quality <quality>                sets output file quality between [0-100], 0 for optimization
+        --short-edge <short-edge>          sets the size of the shortest edge of the image
         --threads <threads>                specify the number of parallel jobs (max is the number of processors
                                            available) [default: 0]
         --verbose <verbose>                select how much output you want to see, 0 is equal to -Q, --quiet [default:
                                            1]
         --width <width>                    width of the output image, if height is not set will preserve aspect ratio
-                                           [default: 0]
 
 ARGS:
     <FILE>...    Files to process

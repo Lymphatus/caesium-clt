@@ -31,12 +31,20 @@ pub struct Opt {
     pub exif: bool,
 
     /// width of the output image, if height is not set will preserve aspect ratio
-    #[structopt(long, default_value = "0")]
-    pub width: u32,
+    #[structopt(long, conflicts_with_all(&["height", "long-edge", "short-edge"]))]
+    pub width: Option<u32>,
 
     /// height of the output image, if width is not set will preserve aspect ratio
-    #[structopt(long, default_value = "0")]
-    pub height: u32,
+    #[structopt(long, conflicts_with_all(&["width", "long-edge", "short-edge"]))]
+    pub height: Option<u32>,
+
+    /// sets the size of the longest edge of the image
+    #[structopt(long="long-edge", conflicts_with_all(&["width", "height", "short-edge"]))]
+    pub long_edge: Option<u32>,
+
+    /// sets the size of the shortest edge of the image
+    #[structopt(long="short-edge", conflicts_with_all(&["width", "height", "long-edge"]))]
+    pub short_edge: Option<u32>,
 
     /// output folder
     #[structopt(short = "o", long, parse(from_os_str))]

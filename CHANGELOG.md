@@ -1,5 +1,5 @@
 ## CHANGELOG
-* 0.21.0 - Compress by quality
+* 0.21.0 - Compress by quality and long/short edge resize options
 * 0.20.0 - Keep original dates and format conversion
 * 0.19.0 - Rust migration
 * 0.18.0 - Fixed Windows build + libcaesium 0.9.3

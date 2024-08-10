@@ -83,13 +83,13 @@ fn main() {
     }
 
     compression_parameters.keep_metadata = opt.exif;
-
-    if opt.width > 0 {
-        compression_parameters.width = opt.width;
+    
+    if opt.width.is_some() {
+        compression_parameters.width = opt.width.unwrap_or(0);
     }
 
-    if opt.height > 0 {
-        compression_parameters.height = opt.height;
+    if opt.height.is_some() {
+        compression_parameters.height = opt.height.unwrap_or(0);
     }
 
     let overwrite_policy = opt.overwrite;
@@ -104,6 +104,7 @@ fn main() {
 
     let results = Arc::new(Mutex::new(Vec::new()));
     files.par_iter().for_each(|input_file| {
+        let mut local_compression_parameters = compression_parameters.clone();
         let input_file_metadata = fs::metadata(input_file);
         let (input_size, input_mtime, input_atime) = match input_file_metadata {
             Ok(s) => (s.len(), FileTime::from_last_modification_time(&s), FileTime::from_last_access_time(&s)),
@@ -178,13 +179,29 @@ fn main() {
             }
             Some(ofp) => ofp
         };
+
+        if opt.long_edge.is_some() || opt.short_edge.is_some() {
+            let size = imagesize::size(input_full_path).unwrap();
+
+            if size.width > size.height {
+                if opt.long_edge.is_some() {
+                    local_compression_parameters.width = opt.long_edge.unwrap_or(0);
+                } else if opt.short_edge.is_some() {
+                    local_compression_parameters.height = opt.short_edge.unwrap_or(0);
+                }
+            } else if opt.long_edge.is_some() {
+                local_compression_parameters.height = opt.long_edge.unwrap_or(0);
+            }  else if opt.short_edge.is_some() {
+                local_compression_parameters.width = opt.short_edge.unwrap_or(0);
+            }
+        }
         if !dry_run {
             let result = if convert {
-                caesium::convert(input_full_path.to_string(), output_full_path_str.to_string(), &compression_parameters, output_format.file_type)
+                caesium::convert(input_full_path.to_string(), output_full_path_str.to_string(), &local_compression_parameters, output_format.file_type)
             } else if compress_by_size {
-                caesium::compress_to_size(input_full_path.to_string(), output_full_path_str.to_string(), &mut compression_parameters.clone(), opt.max_size.unwrap() as usize, true)
+                caesium::compress_to_size(input_full_path.to_string(), output_full_path_str.to_string(), &mut local_compression_parameters, opt.max_size.unwrap() as usize, true)
             } else {
-                caesium::compress(input_full_path.to_string(), output_full_path_str.to_string(), &compression_parameters)
+                caesium::compress(input_full_path.to_string(), output_full_path_str.to_string(), &local_compression_parameters)
             };
 
             match result {
