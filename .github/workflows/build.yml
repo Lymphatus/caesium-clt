@@ -1,9 +1,4 @@
 # .github/workflows/deploy.yml
-
-# https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
-# https://rust-lang.github.io/rustup/installation/other.html
-# https://rust-lang.github.io/rustup-components-history/
-# https://myedgetech.com/deploy-rust-cross-platform-github-actions/
 name: Build Release
 
 on:
@@ -52,7 +47,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get the release version from the tag
         shell: bash
@@ -67,7 +62,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Build
-        uses: actions-rs/cargo@v1
+        uses: clechasseur/rs-cargo@v2
         with:
           use-cross: true
           command: build
@@ -97,7 +92,7 @@ jobs:
       
       # https://github.com/softprops/action-gh-release?tab=readme-ov-file#-customizing
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             ${{ env.ASSET }}
@@ -111,7 +106,7 @@ jobs:
 |Windows x86_64| caesiumclt-v*-x86_64-pc-windows-msvc.zip|\n"
 
       - name: Upload Artifact 🚀
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.ASSET }}
           path: ${{ env.ASSET }}
