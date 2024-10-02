@@ -13,7 +13,7 @@ pub fn is_filetype_supported(path: &Path) -> bool {
     match infer::get_from_path(file_path) {
         Ok(v) => match v {
             None => false,
-            Some(ft) => matches!(ft.mime_type(), "image/jpeg" | "image/png" | "image/gif" | "image/webp"),
+            Some(ft) => matches!(ft.mime_type(), "image/jpeg" | "image/png" | "image/gif" | "image/webp" |  "image/tiff"),
         },
         Err(_) => false
     }

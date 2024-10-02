@@ -43,6 +43,7 @@ fn main() {
     let output_format = map_output_format(opt.output_format);
     let convert = output_format.file_type != SupportedFileTypes::Unkn;
     let keep_dates = opt.keep_dates;
+    let png_optimization_level = opt.png_opt_level.clamp(0, 6);
 
     let compress_by_size = opt.max_size.is_some();
 
@@ -70,7 +71,7 @@ fn main() {
     let mut compression_parameters = caesium::initialize_parameters();
 
     if opt.quality.is_some() {
-        let quality = opt.quality.unwrap();
+        let quality = opt.quality.unwrap_or(80);
         if quality == 0 {
             compression_parameters.optimize = true;
             compression_parameters.png.force_zopfli = opt.zopfli;
@@ -83,6 +84,7 @@ fn main() {
     }
 
     compression_parameters.keep_metadata = opt.exif;
+    compression_parameters.png.optimization_level = png_optimization_level;
     
     if opt.width.is_some() {
         compression_parameters.width = opt.width.unwrap_or(0);
@@ -104,7 +106,7 @@ fn main() {
 
     let results = Arc::new(Mutex::new(Vec::new()));
     files.par_iter().for_each(|input_file| {
-        let mut local_compression_parameters = compression_parameters.clone();
+        let mut local_compression_parameters = compression_parameters;
         let input_file_metadata = fs::metadata(input_file);
         let (input_size, input_mtime, input_atime) = match input_file_metadata {
             Ok(s) => (s.len(), FileTime::from_last_modification_time(&s), FileTime::from_last_access_time(&s)),

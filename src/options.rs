@@ -90,6 +90,10 @@ pub struct Opt {
     #[structopt(long = "keep-dates")]
     pub keep_dates: bool,
 
+    /// select level for PNG optimization, between [0-6]
+    #[structopt(long = "png-opt-level", default_value="3")]
+    pub png_opt_level: u8,
+
     /// Files to process
     #[structopt(name = "FILE", parse(from_os_str))]
     pub files: Vec<PathBuf>,

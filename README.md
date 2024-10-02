@@ -14,7 +14,7 @@
 
 ```
 USAGE:
-    caesiumcl [FLAGS] [OPTIONS] --max-size <max-size> --output <output> --quality <quality> [FILE]...
+    caesiumclt.exe [FLAGS] [OPTIONS] --max-size <max-size> --output <output> --quality <quality> [FILE]...
 
 FLAGS:
     -d, --dry-run           do not compress files but just show output paths
@@ -35,6 +35,7 @@ OPTIONS:
         --output-format <output-format>    convert the image to the selected format (jpg, png, webp, tiff) [default:
                                            none]
     -O, --overwrite <overwrite>            overwrite policy [default: all]
+        --png-opt-level <png-opt-level>    select level for PNG optimization, between [0-6] [default: 3]
     -q, --quality <quality>                sets output file quality between [0-100], 0 for optimization
         --short-edge <short-edge>          sets the size of the shortest edge of the image
         --threads <threads>                specify the number of parallel jobs (max is the number of processors
