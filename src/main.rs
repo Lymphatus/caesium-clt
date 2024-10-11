@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-
+use caesium::parameters::CSParameters;
 use caesium::SupportedFileTypes;
 use filetime::{FileTime, set_file_times};
 use human_bytes::human_bytes;
@@ -39,7 +39,6 @@ fn main() {
     let mut verbose = opt.verbose;
     let args = opt.files;
     let dry_run = opt.dry_run;
-    let output_dir = opt.output;
     let output_format = map_output_format(opt.output_format);
     let convert = output_format.file_type != SupportedFileTypes::Unkn;
     let keep_dates = opt.keep_dates;
@@ -56,6 +55,14 @@ fn main() {
         num_cpus::get()
     };
     rayon::ThreadPoolBuilder::new().num_threads(cpus).build_global().unwrap_or_default();
+    let (base_path, files) = scanfiles::scanfiles(args, opt.recursive);
+
+    let same_folder_as_input = opt.same_folder_as_input;
+    let output_dir = if same_folder_as_input {
+        base_path.clone()
+    } else {
+        opt.output.unwrap()
+    };
 
     if dry_run {
         log("Running in dry run mode", 0, Notice, verbose);
@@ -66,9 +73,7 @@ fn main() {
         }
     }
 
-    let (base_path, files) = scanfiles::scanfiles(args, opt.recursive);
-
-    let mut compression_parameters = caesium::initialize_parameters();
+    let mut compression_parameters = CSParameters::new();
 
     if opt.quality.is_some() {
         let quality = opt.quality.unwrap_or(80);
@@ -209,19 +214,15 @@ fn main() {
             match result {
                 Ok(_) => {
                     compression_result.result = true;
-                    let output_metadata = fs::metadata(output_full_path.clone());
-                    let output_size = if let Ok(..) = output_metadata {
-                        output_metadata.unwrap().len()
-                    } else {
-                        0
+                    let output_size = match fs::metadata(output_full_path.clone()) {
+                        Ok(s) => s.len(),
+                        Err(_) => 0
                     };
                     let mut final_output_size = output_size;
                     if matches!(overwrite_policy, OverwritePolicy::Bigger) && final_output_full_path.exists() {
-                        let existing_file_metadata = fs::metadata(final_output_full_path.clone());
-                        let existing_file_size = if let Ok(..) = existing_file_metadata {
-                            existing_file_metadata.unwrap().len()
-                        } else {
-                            0
+                        let existing_file_size = match fs::metadata(final_output_full_path.clone()) {
+                            Ok(s) => s.len(),
+                            Err(_) => 0
                         };
                         if output_size >= existing_file_size {
                             match fs::remove_file(output_full_path) {

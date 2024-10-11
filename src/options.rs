@@ -31,11 +31,11 @@ pub struct Opt {
     pub exif: bool,
 
     /// width of the output image, if height is not set will preserve aspect ratio
-    #[structopt(long, conflicts_with_all(&["height", "long-edge", "short-edge"]))]
+    #[structopt(long, conflicts_with_all(&["long-edge", "short-edge"]))]
     pub width: Option<u32>,
 
     /// height of the output image, if width is not set will preserve aspect ratio
-    #[structopt(long, conflicts_with_all(&["width", "long-edge", "short-edge"]))]
+    #[structopt(long, conflicts_with_all(&["long-edge", "short-edge"]))]
     pub height: Option<u32>,
 
     /// sets the size of the longest edge of the image
@@ -47,8 +47,8 @@ pub struct Opt {
     pub short_edge: Option<u32>,
 
     /// output folder
-    #[structopt(short = "o", long, parse(from_os_str))]
-    pub output: PathBuf,
+    #[structopt(short = "o", long, conflicts_with="same-folder-as-input",  parse(from_os_str))]
+    pub output: Option<PathBuf>,
 
     /// if input is a folder, scan subfolders too
     #[structopt(short = "R", long)]
@@ -93,6 +93,10 @@ pub struct Opt {
     /// select level for PNG optimization, between [0-6]
     #[structopt(long = "png-opt-level", default_value="3")]
     pub png_opt_level: u8,
+
+    /// sets the output folder to be the same as the input folder. Overwrites original files
+    #[structopt(long = "same-folder-as-input", conflicts_with="output")]
+    pub same_folder_as_input: bool,
 
     /// Files to process
     #[structopt(name = "FILE", parse(from_os_str))]

@@ -24,6 +24,7 @@ FLAGS:
     -S, --keep-structure    keep the folder structure, can be used only with -R
     -Q, --quiet             suppress all output
     -R, --recursive         if input is a folder, scan subfolders too
+        --same-folder-as-input    sets the output folder to be the same as the input folder. Overwrites original files
     -V, --version           Prints version information
         --zopfli            use zopfli when optimizing PNG files (it may take a very long time to complete)
 

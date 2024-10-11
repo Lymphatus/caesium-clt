@@ -1,6 +1,6 @@
 [package]
 name = "caesiumclt"
-version = "0.21.0"
+version = "0.22.0"
 authors = ["Matteo Paonessa <matteo.paonessa@gmail.com>"]
 edition = "2021"
 
@@ -16,4 +16,4 @@ rand = "0.8"
 human_bytes = { version = "0.4", default-features = false }
 filetime = "0.2"
 imagesize = "0.13"
-libcaesium = { git = "https://github.com/Lymphatus/libcaesium", rev = "0.16.5" }
+libcaesium = "0.17.0"

@@ -151,7 +151,7 @@ checksum = "428d9aa8fbc0670b7b8d6030a7fadd0f86151cae55e4dbbece15f3780a3dfaf3"
 
 [[package]]
 name = "caesiumclt"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "filetime",
  "human_bytes",
@@ -598,8 +598,9 @@ checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
 
 [[package]]
 name = "libcaesium"
-version = "0.16.5"
-source = "git+https://github.com/Lymphatus/libcaesium?rev=0.16.5#5499d2ff9d051da54d085952180a2763168062c9"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a76975eb2d706a0759e61fdabbbfce62ba97ae9785997e451e29a080fc67a098"
 dependencies = [
  "bytes",
  "gifsicle",
