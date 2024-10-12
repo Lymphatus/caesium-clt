@@ -2,8 +2,8 @@ use std::path::PathBuf;
 use structopt::clap::arg_enum;
 use structopt::StructOpt;
 
-use crate::logger::ErrorLevel::Error;
 use crate::logger::log;
+use crate::logger::ErrorLevel::Error;
 
 arg_enum! {
     #[derive(Debug, Clone, Copy)]
@@ -19,12 +19,16 @@ arg_enum! {
 #[structopt(name = "", about = "CaesiumCLT - Command Line Tools for image compression")]
 pub struct Opt {
     /// sets output file quality between [0-100], 0 for optimization
-    #[structopt(short = "q", long, required_unless="max-size")]
+    #[structopt(short = "q", long, conflicts_with_all(&["lossless", "max-size"]), required_unless="lossless", required_unless="max-size")]
     pub quality: Option<u32>,
 
     /// set the expected maximum output size in bytes
-    #[structopt(long = "max-size", required_unless="quality")]
+    #[structopt(long = "max-size", conflicts_with_all(&["quality", "lossless"]))]
     pub max_size: Option<u32>,
+
+    /// perform lossless compression
+    #[structopt(short = "l", long = "lossless", conflicts_with_all(&["quality", "max-size"]))]
+    pub lossless: bool,
 
     /// keeps EXIF info during compression
     #[structopt(short = "e", long)]
@@ -39,15 +43,15 @@ pub struct Opt {
     pub height: Option<u32>,
 
     /// sets the size of the longest edge of the image
-    #[structopt(long="long-edge", conflicts_with_all(&["width", "height", "short-edge"]))]
+    #[structopt(long = "long-edge", conflicts_with_all(&["width", "height", "short-edge"]))]
     pub long_edge: Option<u32>,
 
     /// sets the size of the shortest edge of the image
-    #[structopt(long="short-edge", conflicts_with_all(&["width", "height", "long-edge"]))]
+    #[structopt(long = "short-edge", conflicts_with_all(&["width", "height", "long-edge"]))]
     pub short_edge: Option<u32>,
 
     /// output folder
-    #[structopt(short = "o", long, conflicts_with="same-folder-as-input",  parse(from_os_str))]
+    #[structopt(short = "o", long, conflicts_with = "same-folder-as-input", parse(from_os_str))]
     pub output: Option<PathBuf>,
 
     /// if input is a folder, scan subfolders too
@@ -91,11 +95,11 @@ pub struct Opt {
     pub keep_dates: bool,
 
     /// select level for PNG optimization, between [0-6]
-    #[structopt(long = "png-opt-level", default_value="3")]
+    #[structopt(long = "png-opt-level", default_value = "3")]
     pub png_opt_level: u8,
 
     /// sets the output folder to be the same as the input folder. Overwrites original files
-    #[structopt(long = "same-folder-as-input", conflicts_with="output")]
+    #[structopt(long = "same-folder-as-input", conflicts_with = "output")]
     pub same_folder_as_input: bool,
 
     /// Files to process

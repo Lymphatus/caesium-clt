@@ -43,6 +43,7 @@ fn main() {
     let convert = output_format.file_type != SupportedFileTypes::Unkn;
     let keep_dates = opt.keep_dates;
     let png_optimization_level = opt.png_opt_level.clamp(0, 6);
+    let lossless = opt.lossless;
 
     let compress_by_size = opt.max_size.is_some();
 
@@ -77,15 +78,13 @@ fn main() {
 
     if opt.quality.is_some() {
         let quality = opt.quality.unwrap_or(80);
-        if quality == 0 {
-            compression_parameters.optimize = true;
-            compression_parameters.png.force_zopfli = opt.zopfli;
-        } else {
-            compression_parameters.jpeg.quality = quality;
-            compression_parameters.png.quality = quality;
-            compression_parameters.gif.quality = quality;
-            compression_parameters.webp.quality = quality;
-        }
+        compression_parameters.jpeg.quality = quality;
+        compression_parameters.png.quality = quality;
+        compression_parameters.gif.quality = quality;
+        compression_parameters.webp.quality = quality;
+    } else if lossless { 
+        compression_parameters.optimize = true;
+        compression_parameters.png.force_zopfli = opt.zopfli;
     }
 
     compression_parameters.keep_metadata = opt.exif;
