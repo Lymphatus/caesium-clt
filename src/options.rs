@@ -102,6 +102,10 @@ pub struct Opt {
     #[structopt(long = "same-folder-as-input", conflicts_with = "output")]
     pub same_folder_as_input: bool,
 
+    /// convert the image to the selected format (jpg, png, webp, tiff)
+    #[structopt(long = "suffix", default_value = "none")]
+    pub suffix: String,
+
     /// Files to process
     #[structopt(name = "FILE", parse(from_os_str))]
     pub files: Vec<PathBuf>,

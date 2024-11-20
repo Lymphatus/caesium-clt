@@ -44,6 +44,7 @@ fn main() {
     let keep_dates = opt.keep_dates;
     let png_optimization_level = opt.png_opt_level.clamp(0, 6);
     let lossless = opt.lossless;
+    let suffix = opt.suffix;
 
     let compress_by_size = opt.max_size.is_some();
 
@@ -130,11 +131,21 @@ fn main() {
             result: false,
         };
 
-        let filename = if keep_structure {
+        let mut filename = if keep_structure {
             input_file.strip_prefix(base_path.clone()).unwrap_or_else(|_| Path::new("")).as_os_str()
         } else {
             input_file.file_name().unwrap_or_default()
         };
+        let mut basename = Path::new(filename).file_stem().unwrap_or_default().to_os_string();
+
+        if !suffix.is_empty() {
+            basename.push(suffix.clone());
+            if let Some(ext) = input_file.extension() {
+                basename.push(".");
+                basename.push(ext);
+            }
+            filename = basename.as_os_str();
+        }
 
         if filename.is_empty() {
             compression_result.error = "Cannot retrieve filename for {}. Skipping.".to_string();
