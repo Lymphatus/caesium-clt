@@ -102,7 +102,7 @@ pub struct Opt {
     #[structopt(long = "same-folder-as-input", conflicts_with = "output")]
     pub same_folder_as_input: bool,
 
-    /// convert the image to the selected format (jpg, png, webp, tiff)
+    /// add a suffix to the output filename
     #[structopt(long = "suffix", default_value = "none")]
     pub suffix: String,
 

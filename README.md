@@ -14,19 +14,20 @@
 
 ```
 USAGE:
-    caesiumclt.exe [FLAGS] [OPTIONS] --max-size <max-size> --output <output> --quality <quality> [FILE]...
+    caesiumclt.exe [FLAGS] [OPTIONS] --quality <quality> [FILE]...
 
 FLAGS:
-    -d, --dry-run           do not compress files but just show output paths
-    -e, --exif              keeps EXIF info during compression
-    -h, --help              Prints help information
-        --keep-dates        keep original file date information
-    -S, --keep-structure    keep the folder structure, can be used only with -R
-    -Q, --quiet             suppress all output
-    -R, --recursive         if input is a folder, scan subfolders too
+    -d, --dry-run                 do not compress files but just show output paths
+    -e, --exif                    keeps EXIF info during compression
+    -h, --help                    Prints help information
+        --keep-dates              keep original file date information
+    -S, --keep-structure          keep the folder structure, can be used only with -R
+    -l, --lossless                perform lossless compression
+    -Q, --quiet                   suppress all output
+    -R, --recursive               if input is a folder, scan subfolders too
         --same-folder-as-input    sets the output folder to be the same as the input folder. Overwrites original files
-    -V, --version           Prints version information
-        --zopfli            use zopfli when optimizing PNG files (it may take a very long time to complete)
+    -V, --version                 Prints version information
+        --zopfli                  use zopfli when optimizing PNG files (it may take a very long time to complete)
 
 OPTIONS:
         --height <height>                  height of the output image, if width is not set will preserve aspect ratio
@@ -39,6 +40,8 @@ OPTIONS:
         --png-opt-level <png-opt-level>    select level for PNG optimization, between [0-6] [default: 3]
     -q, --quality <quality>                sets output file quality between [0-100], 0 for optimization
         --short-edge <short-edge>          sets the size of the shortest edge of the image
+        --suffix <suffix>                  convert the image to the selected format (jpg, png, webp, tiff) [default:
+                                           none]
         --threads <threads>                specify the number of parallel jobs (max is the number of processors
                                            available) [default: 0]
         --verbose <verbose>                select how much output you want to see, 0 is equal to -Q, --quiet [default:

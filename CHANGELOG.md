@@ -1,4 +1,5 @@
 ## CHANGELOG
+* 0.22.0 - Same folder as input, suffix options + lossless flag
 * 0.21.0 - Compress by quality and long/short edge resize options
 * 0.20.0 - Keep original dates and format conversion
 * 0.19.0 - Rust migration
