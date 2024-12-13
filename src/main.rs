@@ -1,369 +1,375 @@
-use std::fs;
-use std::path::Path;
-use std::sync::{Arc, Mutex};
+use crate::options::{CommandLineArgs, OverwritePolicy};
+use crate::scan_files::scan_files;
+use caesium::compress_in_memory;
 use caesium::parameters::CSParameters;
-use caesium::SupportedFileTypes;
-use filetime::{FileTime, set_file_times};
-use human_bytes::human_bytes;
-use indicatif::ProgressBar;
-use indicatif::ProgressDrawTarget;
-use indicatif::ProgressStyle;
-use rand::{Rng, thread_rng};
-use rand::distributions::Alphanumeric;
-use rayon::prelude::*;
+use clap::Parser;
+use filetime::{set_file_times, FileTime};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressDrawTarget, ProgressStyle};
+use rayon::iter::IntoParallelRefIterator;
+use rayon::iter::ParallelIterator;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::num::NonZero;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+use std::{fs, io};
 
-use crate::logger::ErrorLevel::{Error, Log, Notice, Warning};
-use crate::logger::log;
-use crate::options::OverwritePolicy;
-
-mod scanfiles;
 mod options;
+mod scan_files;
 mod logger;
 
-struct CompressionResult {
-    pub path: String,
-    pub output_path: String,
-    pub original_size: u64,
-    pub compressed_size: u64,
-    pub error: String,
-    pub result: bool,
+enum CompressionStatus {
+    Success,
+    Skipped,
+    Error,
 }
 
-struct OutputFormat {
-    pub file_type: SupportedFileTypes,
-    pub extension: String,
+struct CompressionResult {
+    original_path: String,
+    output_path: String,
+    original_size: u64,
+    compressed_size: u64,
+    status: CompressionStatus,
+    message: String,
 }
 
 fn main() {
-    let opt = options::get_opts();
-    let mut verbose = opt.verbose;
-    let args = opt.files;
-    let dry_run = opt.dry_run;
-    let output_format = map_output_format(opt.output_format);
-    let convert = output_format.file_type != SupportedFileTypes::Unkn;
-    let keep_dates = opt.keep_dates;
-    let png_optimization_level = opt.png_opt_level.clamp(0, 6);
-    let lossless = opt.lossless;
-    let suffix = opt.suffix;
+    let args = CommandLineArgs::parse();
 
-    let compress_by_size = opt.max_size.is_some();
-
-    if opt.quiet {
-        verbose = 0;
-    }
-    let cpus = if opt.threads > 0 {
-        std::cmp::min(num_cpus::get(), opt.threads as usize)
-    } else {
-        num_cpus::get()
-    };
-    rayon::ThreadPoolBuilder::new().num_threads(cpus).build_global().unwrap_or_default();
-    let (base_path, files) = scanfiles::scanfiles(args, opt.recursive);
-
-    let same_folder_as_input = opt.same_folder_as_input;
-    let output_dir = if same_folder_as_input {
-        base_path.clone()
-    } else {
-        opt.output.unwrap()
-    };
-
-    if dry_run {
-        log("Running in dry run mode", 0, Notice, verbose);
-    } else {
-        match fs::create_dir_all(output_dir.clone()) {
-            Ok(_) => {}
-            Err(_) => log("Cannot create output path. Check your permissions.", 201, Error, verbose)
-        }
-    }
-
-    let mut compression_parameters = CSParameters::new();
-
-    if opt.quality.is_some() {
-        let quality = opt.quality.unwrap_or(80);
-        compression_parameters.jpeg.quality = quality;
-        compression_parameters.png.quality = quality;
-        compression_parameters.gif.quality = quality;
-        compression_parameters.webp.quality = quality;
-    } else if lossless { 
-        compression_parameters.optimize = true;
-        compression_parameters.png.force_zopfli = opt.zopfli;
-    }
-
-    compression_parameters.keep_metadata = opt.exif;
-    compression_parameters.png.optimization_level = png_optimization_level;
-    
-    if opt.width.is_some() {
-        compression_parameters.width = opt.width.unwrap_or(0);
-    }
-
-    if opt.height.is_some() {
-        compression_parameters.height = opt.height.unwrap_or(0);
-    }
-
-    let overwrite_policy = opt.overwrite;
-    let keep_structure = opt.keep_structure;
-
-    if opt.zopfli {
-        log("Using zopfli may take a very long time, especially with large images!", 0, Notice, verbose);
-    }
-
-    let progress_bar = setup_progress_bar(files.len() as u64, verbose);
-    progress_bar.set_message("Compressing...");
-
-    let results = Arc::new(Mutex::new(Vec::new()));
-    files.par_iter().for_each(|input_file| {
-        let mut local_compression_parameters = compression_parameters;
-        let input_file_metadata = fs::metadata(input_file);
-        let (input_size, input_mtime, input_atime) = match input_file_metadata {
-            Ok(s) => (s.len(), FileTime::from_last_modification_time(&s), FileTime::from_last_access_time(&s)),
-            Err(e) => {
-                let error_message = format!("Cannot get file size for {}, Error: {}", input_file.display(), e);
-                log(error_message.as_str(), 202, Warning, verbose);
-                (0, FileTime::now(), FileTime::now())
-            }
-        };
-
-        let mut compression_result = CompressionResult {
-            path: input_file.display().to_string(),
-            output_path: "".to_string(),
-            original_size: input_size,
-            compressed_size: 0,
-            error: "Unknown".to_string(),
-            result: false,
-        };
-
-        let mut filename = if keep_structure {
-            input_file.strip_prefix(base_path.clone()).unwrap_or_else(|_| Path::new("")).as_os_str()
-        } else {
-            input_file.file_name().unwrap_or_default()
-        };
-        let mut basename = Path::new(filename).file_stem().unwrap_or_default().to_os_string();
-
-        if !suffix.is_empty() {
-            basename.push(suffix.clone());
-            if let Some(ext) = input_file.extension() {
-                basename.push(".");
-                basename.push(ext);
-            }
-            filename = basename.as_os_str();
-        }
-
-        if filename.is_empty() {
-            compression_result.error = "Cannot retrieve filename for {}. Skipping.".to_string();
-            results.lock().unwrap().push(compression_result);
-            return;
-        }
-        let filename_str = match filename.to_str() {
-            None => {
-                compression_result.error = "Cannot convert filename for {}. Skipping.".to_string();
-                results.lock().unwrap().push(compression_result);
-                return;
-            }
-            Some(fs) => fs
-        };
-
-
-        let random_suffix: String = (&mut thread_rng()).sample_iter(Alphanumeric)
-            .take(8)
-            .map(char::from)
-            .collect();
-        let random_suffixed_name = format!("{}.{}", filename_str, random_suffix);
-        let mut final_output_full_path = output_dir.clone().join(filename);
-        if convert {
-            final_output_full_path.set_extension(output_format.extension.clone());
-        }
-
-        let output_full_path = output_dir.clone().join(random_suffixed_name);
-        let output_full_dir = output_full_path.parent().unwrap_or_else(|| Path::new("/"));
-        compression_result.output_path = final_output_full_path.display().to_string();
-        if !output_full_dir.exists() {
-            match fs::create_dir_all(output_full_dir) {
-                Ok(_) => {}
-                Err(e) => {
-                    compression_result.error = format!("Cannot create output directory. Error: {}.", e);
-                    results.lock().unwrap().push(compression_result);
-                    return;
-                }
-            };
-        }
-        if !matches!(overwrite_policy, OverwritePolicy::All) && final_output_full_path.exists() {
-            if let OverwritePolicy::None = overwrite_policy { return; }
-        }
-        let input_full_path = input_file.to_str().unwrap();
-        let output_full_path_str = match output_full_path.to_str() {
-            None => {
-                compression_result.error = "Cannot convert output_full_path. Skipping.".to_string();
-                return;
-            }
-            Some(ofp) => ofp
-        };
-
-        if opt.long_edge.is_some() || opt.short_edge.is_some() {
-            let size = imagesize::size(input_full_path).unwrap();
-
-            if size.width > size.height {
-                if opt.long_edge.is_some() {
-                    local_compression_parameters.width = opt.long_edge.unwrap_or(0);
-                } else if opt.short_edge.is_some() {
-                    local_compression_parameters.height = opt.short_edge.unwrap_or(0);
-                }
-            } else if opt.long_edge.is_some() {
-                local_compression_parameters.height = opt.long_edge.unwrap_or(0);
-            }  else if opt.short_edge.is_some() {
-                local_compression_parameters.width = opt.short_edge.unwrap_or(0);
-            }
-        }
-        if !dry_run {
-            let result = if convert {
-                caesium::convert(input_full_path.to_string(), output_full_path_str.to_string(), &local_compression_parameters, output_format.file_type)
-            } else if compress_by_size {
-                caesium::compress_to_size(input_full_path.to_string(), output_full_path_str.to_string(), &mut local_compression_parameters, opt.max_size.unwrap() as usize, true)
-            } else {
-                caesium::compress(input_full_path.to_string(), output_full_path_str.to_string(), &local_compression_parameters)
-            };
-
-            match result {
-                Ok(_) => {
-                    compression_result.result = true;
-                    let output_size = match fs::metadata(output_full_path.clone()) {
-                        Ok(s) => s.len(),
-                        Err(_) => 0
-                    };
-                    let mut final_output_size = output_size;
-                    if matches!(overwrite_policy, OverwritePolicy::Bigger) && final_output_full_path.exists() {
-                        let existing_file_size = match fs::metadata(final_output_full_path.clone()) {
-                            Ok(s) => s.len(),
-                            Err(_) => 0
-                        };
-                        if output_size >= existing_file_size {
-                            match fs::remove_file(output_full_path) {
-                                Ok(_) => {}
-                                Err(e) => {
-                                    compression_result.error = format!("Cannot remove existing file. Error: {}.", e);
-                                    compression_result.result = false;
-                                }
-                            };
-                            final_output_size = existing_file_size;
-                        } else {
-                            match fs::rename(output_full_path, final_output_full_path.clone()) {
-                                Ok(_) => {}
-                                Err(e) => {
-                                    compression_result.error = format!("Cannot rename existing file. Error: {}.", e);
-                                    compression_result.result = false;
-                                }
-                            };
-                        }
-                    } else {
-                        match fs::rename(output_full_path, final_output_full_path.clone()) {
-                            Ok(_) => {}
-                            Err(e) => {
-                                compression_result.error = format!("Cannot rename existing file. Error: {}.", e);
-                                compression_result.result = false;
-                            }
-                        };
-                    }
-                    compression_result.compressed_size = final_output_size;
-                    if compression_result.result && keep_dates {
-                        match set_file_times(final_output_full_path, input_atime, input_mtime) {
-                            Ok(_) => {}
-                            Err(_) => {
-                                compression_result.error = "Cannot set original file dates.".into();
-                            }
-                        }
-                    }
-                    results.lock().unwrap().push(compression_result);
-                }
-                Err(e) => {
-                    compression_result.error = e.to_string();
-                    results.lock().unwrap().push(compression_result);
-                }
-            }
-        } else {
-            results.lock().unwrap().push(compression_result)
-        }
-        progress_bar.inc(1);
-    });
-
-
-    progress_bar.finish_with_message("Compression completed!");
-
-    let mut total_original_size = 0.0;
-    let mut total_compressed_size = 0.0;
-    let mut total_errors: u32 = 0;
-    let mut total_compressed_files = 0;
-
-    results.lock().unwrap().iter().for_each(|result| {
-        if result.result {
-            total_compressed_size += result.compressed_size as f64;
-            if verbose > 1 {
-                let message = format!("{} -> {}\n{} -> {} [{:.2}%]",
-                                      result.path,
-                                      result.output_path,
-                                      human_bytes(result.original_size as f64),
-                                      human_bytes(result.compressed_size as f64),
-                                      (result.compressed_size as f64 - result.original_size as f64) * 100.0 / result.original_size as f64
-                );
-                log(message.as_str(), 0, Log, verbose);
-            }
-            total_compressed_files += 1;
-        } else {
-            total_compressed_size += result.original_size as f64;
-            if !dry_run {
-                total_errors += 1;
-
-                log(format!("File {} was not compressed. Reason: {}", result.path, result.error).as_str(), 210, Warning, verbose);
-            }
-        }
-        total_original_size += result.original_size as f64;
-    });
-
-    let recap_message = format!("\nCompressed {} files ({} errors)\n{} -> {} [{:.2}% | -{}]",
-                                total_compressed_files,
-                                total_errors,
-                                human_bytes(total_original_size),
-                                human_bytes(total_compressed_size),
-                                (total_compressed_size - total_original_size) * 100.0 / total_original_size,
-                                human_bytes(total_original_size - total_compressed_size) //TODO can be positive
+    let quiet = args.quiet || args.verbose == 0;
+    let threads_number = get_parallelism_count(
+        args.threads,
+        std::thread::available_parallelism()
+            .unwrap_or(NonZero::new(1).unwrap())
+            .get(),
     );
+    let verbose = if quiet { 0 } else { args.verbose };
+    let compression_parameters = build_compression_parameters(&args);
+    let (base_path, input_files) = scan_files(args.files, args.recursive, quiet);
 
-    log(recap_message.as_str(), 0, Log, verbose);
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(threads_number)
+        .build_global()
+        .unwrap_or_default();
+
+    let total_files = input_files.len();
+
+    let progress_bar = setup_progress_bar(total_files, verbose);
+    let compression_results: Vec<CompressionResult> = input_files
+        .par_iter()
+        .progress_with(progress_bar)
+        .map(|input_file| {
+            let mut compression_result = CompressionResult {
+                original_path: input_file.display().to_string(),
+                output_path: String::new(),
+                original_size: 0,
+                compressed_size: 0,
+                status: CompressionStatus::Error,
+                message: String::new(),
+            };
+
+            let original_file_size = match input_file.metadata() {
+                Ok(m) => m.len(),
+                Err(_) => {
+                    compression_result.message = "Error reading file metadata".to_string();
+                    return compression_result;
+                }
+            };
+
+            compression_result.original_size = original_file_size;
+
+            let output_directory = if args.output_destination.same_folder_as_input {
+                match input_file.parent() {
+                    Some(p) => p,
+                    None => {
+                        compression_result.message = "Error getting parent directory".to_string();
+                        return compression_result;
+                    }
+                }
+            } else {
+                match args.output_destination.output.as_ref() {
+                    Some(p) => p,
+                    None => {
+                        compression_result.message = "Error getting output directory".to_string();
+                        return compression_result;
+                    }
+                }
+            };
+
+            let output_full_path = match compute_output_full_path(
+                output_directory.to_path_buf(),
+                input_file.to_path_buf(),
+                base_path.to_path_buf(),
+                args.keep_structure,
+                args.suffix.as_ref().unwrap_or(&String::new()).as_ref(),
+            ) {
+                Some(p) => p,
+                None => {
+                    compression_result.message = "Error computing output path".to_string();
+                    return compression_result;
+                }
+            };
+
+            if args.dry_run {
+                compression_result.status = CompressionStatus::Success;
+                return compression_result;
+            };
+
+            let compressed_image = match compress_in_memory(
+                read_file_to_vec(input_file).unwrap(),
+                &compression_parameters,
+            ) {
+                Ok(v) => v,
+                Err(e) => {
+                    compression_result.message = format!("Error compressing file: {}", e);
+                    return compression_result;
+                }
+            };
+            compression_result.output_path = output_full_path.display().to_string();
+            let output_file_size = compressed_image.len() as u64;
+
+            if output_full_path.exists() {
+                match args.overwrite {
+                    OverwritePolicy::None => {
+                        compression_result.status = CompressionStatus::Skipped;
+                        compression_result.compressed_size = original_file_size;
+                        compression_result.message =
+                            "File already exists, skipped due overwrite policy".to_string();
+                        return compression_result;
+                    }
+                    OverwritePolicy::Bigger => {
+                        if output_file_size >= original_file_size {
+                            compression_result.status = CompressionStatus::Skipped;
+                            compression_result.compressed_size = original_file_size;
+                            compression_result.message =
+                                "File already exists, skipped due overwrite policy".to_string();
+                            return compression_result;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            let mut output_file = match File::create(&output_full_path) {
+                Ok(f) => f,
+                Err(_) => {
+                    compression_result.message = "Error creating output file".to_string();
+                    return compression_result;
+                }
+            };
+            match output_file.write_all(&compressed_image) {
+                Ok(_) => {}
+                Err(_) => {
+                    compression_result.message = "Error writing output file".to_string();
+                    return compression_result;
+                }
+            };
+
+            if args.keep_dates {
+                let output_file_metadata = match output_file.metadata() {
+                    Ok(m) => m,
+                    Err(_) => {
+                        compression_result.message =
+                            "Error reading output file metadata".to_string();
+                        return compression_result;
+                    }
+                };
+                let (last_modification_time, last_access_time) = (
+                    FileTime::from_last_modification_time(&output_file_metadata),
+                    FileTime::from_last_access_time(&output_file_metadata),
+                );
+                match preserve_dates(&output_full_path, last_modification_time, last_access_time) {
+                    Ok(_) => {}
+                    Err(_) => {
+                        compression_result.message = "Error preserving file dates".to_string();
+                        return compression_result;
+                    }
+                }
+            }
+
+            compression_result.status = CompressionStatus::Success;
+            compression_result.compressed_size = output_file_size;
+            compression_result
+        })
+        .collect();
+
+    let recap_message = format!("Processed {} files", compression_results.len());
 }
 
-fn setup_progress_bar(len: u64, verbose: u8) -> ProgressBar {
-    let progress_bar = ProgressBar::new(len);
-    progress_bar.set_draw_target(ProgressDrawTarget::stdout());
-    progress_bar.set_style(ProgressStyle::default_bar()
-        .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len}\n{msg}")
-        .unwrap()
-        .progress_chars("#>-"));
+fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> usize {
+    if requested_threads > 0 {
+        std::cmp::min(available_threads, requested_threads as usize)
+    } else {
+        available_threads
+    }
+}
 
-    if verbose == 0 {
-        progress_bar.set_draw_target(ProgressDrawTarget::hidden());
+fn build_compression_parameters(args: &CommandLineArgs) -> CSParameters {
+    let mut parameters = CSParameters::new();
+    let quality = args.compression.quality.unwrap_or(80) as u32;
+
+    parameters.jpeg.quality = quality;
+    parameters.png.quality = quality;
+    parameters.webp.quality = quality;
+    parameters.gif.quality = quality;
+
+    parameters.keep_metadata = args.exif;
+
+    parameters.png.optimization_level = args.png_opt_level;
+    parameters.png.force_zopfli = args.zopfli;
+
+    parameters
+}
+
+fn compute_output_full_path(
+    output_directory: PathBuf,
+    input_file_path: PathBuf,
+    base_directory: PathBuf,
+    keep_structure: bool,
+    suffix: &str,
+) -> Option<PathBuf> {
+    let extension = input_file_path
+        .extension()
+        .unwrap_or_default()
+        .to_os_string();
+    let base_name = input_file_path
+        .file_stem()
+        .unwrap_or_default()
+        .to_os_string();
+    let mut output_file_name = base_name;
+    output_file_name.push(suffix);
+    if !extension.is_empty() {
+        output_file_name.push(".");
+        output_file_name.push(extension);
     }
 
+    if keep_structure {
+        let parent = match input_file_path.parent()?.canonicalize() {
+            Ok(p) => p,
+            Err(_) => return None,
+        };
+
+        let output_path_prefix = match parent.strip_prefix(base_directory) {
+            Ok(p) => p,
+            Err(_) => return None,
+        };
+        let full_output_directory = output_directory.join(output_path_prefix);
+        fs::create_dir_all(&full_output_directory).ok()?; // TODO I don't like that the creation is done inside this function because the name is a bit obscure
+        Some(full_output_directory.join(output_file_name))
+    } else {
+        fs::create_dir_all(&output_directory).ok()?; // TODO I don't like that the creation is done inside this function because the name is a bit obscure
+        Some(output_directory.join(output_file_name))
+    }
+}
+
+fn read_file_to_vec(file_path: &PathBuf) -> io::Result<Vec<u8>> {
+    let mut file = File::open(file_path)?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer)?;
+    Ok(buffer)
+}
+
+fn preserve_dates(
+    output_file: &PathBuf,
+    input_atime: FileTime,
+    input_mtime: FileTime,
+) -> io::Result<()> {
+    set_file_times(output_file, input_atime, input_mtime)
+}
+
+fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
+    let progress_bar = ProgressBar::new(len as u64);
+    if verbose == 0 {
+        progress_bar.set_draw_target(ProgressDrawTarget::hidden());
+    } else {
+        progress_bar.set_draw_target(ProgressDrawTarget::stdout());
+    }
+    progress_bar.set_style(
+        ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len}\n{msg}")
+            .unwrap() //TODO: handle error
+            .progress_chars("#>-"),
+    );
+    progress_bar.enable_steady_tick(Duration::new(1, 0));
     progress_bar
 }
 
-fn map_output_format(format: String) -> OutputFormat {
-    match format.to_lowercase().as_str() {
-        "jpg|jpeg" => OutputFormat {
-            file_type: SupportedFileTypes::Jpeg,
-            extension: format,
-        },
-        "png" => OutputFormat {
-            file_type: SupportedFileTypes::Png,
-            extension: format,
-        },
-        "webp" => OutputFormat {
-            file_type: SupportedFileTypes::WebP,
-            extension: format,
-        },
-        "tiff|tif" => OutputFormat {
-            file_type: SupportedFileTypes::Tiff,
-            extension: format,
-        },
-        _ => OutputFormat {
-            file_type: SupportedFileTypes::Unkn,
-            extension: "".to_string(),
-        },
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn test_get_parallelism_count() {
+        let result = get_parallelism_count(4, 4);
+        assert_eq!(result, 4);
+
+        let result = get_parallelism_count(2, 8);
+        assert_eq!(result, 2);
+
+        let result = get_parallelism_count(0, 8);
+        assert_eq!(result, 8);
+
+        let result = get_parallelism_count(1, 8);
+        assert_eq!(result, 1);
+
+        let result = get_parallelism_count(8, 2);
+        assert_eq!(result, 2);
+
+        let result = get_parallelism_count(0, 0);
+        assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn test_compute_output_full_path() {
+        let output_directory = PathBuf::from("/output");
+        let base_directory = PathBuf::from("/base");
+
+        // Test case 1: keep_structure = true
+        let input_file_path = PathBuf::from("/base/folder/test.jpg");
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            true,
+            "_suffix",
+        )
+        .unwrap();
+        assert_eq!(result, Path::new("/output/folder/test_suffix.jpg"));
+
+        // Test case 2: keep_structure = false
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            false,
+            "_suffix",
+        )
+        .unwrap();
+        assert_eq!(result, Path::new("/output/test_suffix.jpg"));
+
+        // Test case 3: input file without extension
+        let input_file_path = PathBuf::from("/base/folder/test");
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            false,
+            "_suffix",
+        )
+        .unwrap();
+        assert_eq!(result, Path::new("/output/test_suffix"));
+
+        // Test case 4: input file with different base directory
+        let input_file_path = PathBuf::from("/different_base/folder/test.jpg");
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            false,
+            "_suffix",
+        )
+        .unwrap();
+        assert_eq!(result, Path::new("/output/test_suffix.jpg"));
     }
 }

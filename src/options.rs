@@ -1,128 +1,100 @@
 use std::path::PathBuf;
-use structopt::clap::arg_enum;
-use structopt::StructOpt;
+use clap::{Args, Parser, ValueEnum};
 
-use crate::logger::log;
-use crate::logger::ErrorLevel::Error;
-
-arg_enum! {
-    #[derive(Debug, Clone, Copy)]
-    pub enum OverwritePolicy {
-        All,
-        None,
-        Bigger
-    }
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+pub enum OverwritePolicy {
+    /// Always overwrite
+    All,
+    /// Never overwrite
+    None,
+    /// Overwrite only if the file to be overwritten is bigger
+    Bigger
 }
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct CommandLineArgs {
+    #[command(flatten)]
+    pub compression: Compression,
 
-#[derive(StructOpt)]
-#[structopt(name = "", about = "CaesiumCLT - Command Line Tools for image compression")]
-pub struct Opt {
-    /// sets output file quality between [0-100], 0 for optimization
-    #[structopt(short = "q", long, conflicts_with_all(&["lossless", "max-size"]), required_unless="lossless", required_unless="max-size")]
-    pub quality: Option<u32>,
+    #[command(flatten)]
+    pub output_destination: OutputDestination,
 
-    /// set the expected maximum output size in bytes
-    #[structopt(long = "max-size", conflicts_with_all(&["quality", "lossless"]))]
-    pub max_size: Option<u32>,
+    /// select level for PNG optimization, between [0-6]
+    #[arg(long, default_value = "3")]
+    pub png_opt_level: u8,
 
-    /// perform lossless compression
-    #[structopt(short = "l", long = "lossless", conflicts_with_all(&["quality", "max-size"]))]
-    pub lossless: bool,
-
+    /// use zopfli when optimizing PNG files (it may take a very long time to complete)
+    #[arg(long)]
+    pub zopfli: bool,
+    
     /// keeps EXIF info during compression
-    #[structopt(short = "e", long)]
+    #[arg(short, long)]
     pub exif: bool,
 
-    /// width of the output image, if height is not set will preserve aspect ratio
-    #[structopt(long, conflicts_with_all(&["long-edge", "short-edge"]))]
-    pub width: Option<u32>,
+    /// keep original file date information
+    #[arg(long)]
+    pub keep_dates: bool,
 
-    /// height of the output image, if width is not set will preserve aspect ratio
-    #[structopt(long, conflicts_with_all(&["long-edge", "short-edge"]))]
-    pub height: Option<u32>,
-
-    /// sets the size of the longest edge of the image
-    #[structopt(long = "long-edge", conflicts_with_all(&["width", "height", "short-edge"]))]
-    pub long_edge: Option<u32>,
-
-    /// sets the size of the shortest edge of the image
-    #[structopt(long = "short-edge", conflicts_with_all(&["width", "height", "long-edge"]))]
-    pub short_edge: Option<u32>,
-
-    /// output folder
-    #[structopt(short = "o", long, conflicts_with = "same-folder-as-input", parse(from_os_str))]
-    pub output: Option<PathBuf>,
+    /// add a suffix to the output filename
+    #[arg(long)]
+    pub suffix: Option<String>,
 
     /// if input is a folder, scan subfolders too
-    #[structopt(short = "R", long)]
+    #[arg(short = 'R', long)]
     pub recursive: bool,
 
     /// keep the folder structure, can be used only with -R
-    #[structopt(short = "S", long)]
+    #[arg(short = 'S', long)]
     pub keep_structure: bool,
 
-    /// overwrite policy
-    #[structopt(short = "O", long, default_value = "all")]
-    pub overwrite: OverwritePolicy,
-
-    /// do not compress files but just show output paths
-    #[structopt(long = "dry-run", short = "d", long)]
+    /// do not write output files
+    #[arg(long, short, default_value = "false")]
     pub dry_run: bool,
 
-    /// suppress all output
-    #[structopt(short = "Q", long)]
-    pub quiet: bool,
-
     /// specify the number of parallel jobs (max is the number of processors available)
-    #[structopt(long, default_value = "0")]
+    #[arg(long, default_value = "0")]
     pub threads: u32,
 
-    /// use zopfli when optimizing PNG files (it may take a very long time to complete)
-    #[structopt(long)]
-    pub zopfli: bool,
+    /// suppress all output
+    #[arg(short = 'Q', long, group = "verbosity")]
+    pub quiet: bool,
+
+    /// overwrite policy
+    #[arg(short = 'O', long, value_enum, default_value = "all")]
+    pub overwrite: OverwritePolicy,
 
     /// select how much output you want to see, 0 is equal to -Q, --quiet
-    #[structopt(long, default_value = "1")]
+    #[arg(long, default_value = "1", group = "verbosity")]
     pub verbose: u8,
 
-    /// convert the image to the selected format (jpg, png, webp, tiff)
-    #[structopt(long = "output-format", default_value = "none")]
-    pub output_format: String,
+    pub files: Vec<String>,
+}
 
-    /// keep original file date information
-    #[structopt(long = "keep-dates")]
-    pub keep_dates: bool,
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+pub struct Compression {
+    /// sets output file quality between [0-100]
+    #[arg(short, long)]
+    pub quality: Option<u8>,
 
-    /// select level for PNG optimization, between [0-6]
-    #[structopt(long = "png-opt-level", default_value = "3")]
-    pub png_opt_level: u8,
+    /// perform lossless compression
+    #[arg(long, default_value = "false")]
+    pub lossless: bool,
 
-    /// sets the output folder to be the same as the input folder. Overwrites original files
-    #[structopt(long = "same-folder-as-input", conflicts_with = "output")]
+    /// set the expected maximum output size in bytes
+    #[arg(long)]
+    pub max_size: Option<u8>,
+}
+
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+pub struct OutputDestination {
+    /// output folder
+    #[arg(short = 'o', long, group = "output_destination")]
+    pub output: Option<PathBuf>,
+
+    /// sets the output folder to be the same as the input folder, overwrites original files
+    #[arg(long, default_value = "false", group = "output_destination")]
     pub same_folder_as_input: bool,
-
-    /// add a suffix to the output filename
-    #[structopt(long = "suffix", default_value = "none")]
-    pub suffix: String,
-
-    /// Files to process
-    #[structopt(name = "FILE", parse(from_os_str))]
-    pub files: Vec<PathBuf>,
-}
-
-pub fn get_opts() -> Opt {
-    let opt = Opt::from_args();
-    validate_opts(&opt);
-
-    opt
-}
-
-fn validate_opts(opt: &Opt) {
-    let args = &opt.files;
-    let verbose = opt.verbose;
-
-    if args.is_empty() {
-        log("Please provide at least one file or folder.", 101, Error, verbose);
-    }
 }
