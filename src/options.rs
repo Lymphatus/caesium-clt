@@ -6,9 +6,18 @@ pub enum OverwritePolicy {
     /// Always overwrite
     All,
     /// Never overwrite
-    None,
+    Never,
     /// Overwrite only if the file to be overwritten is bigger
     Bigger
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+pub enum OutputFormat {
+    Jpeg,
+    Png,
+    Webp,
+    Tiff,
+    Original,
 }
 
 #[derive(Parser, Debug)]
@@ -23,6 +32,10 @@ pub struct CommandLineArgs {
     #[command(flatten)]
     pub output_destination: OutputDestination,
 
+    /// convert to the selected output format, or keep the original
+    #[arg(long, value_enum, default_value = "original")]
+    pub format: OutputFormat,
+    
     /// select level for PNG optimization, between [0-6]
     #[arg(long, default_value = "3")]
     pub png_opt_level: u8,
@@ -59,13 +72,13 @@ pub struct CommandLineArgs {
     #[arg(long, default_value = "0")]
     pub threads: u32,
 
-    /// suppress all output
-    #[arg(short = 'Q', long, group = "verbosity")]
-    pub quiet: bool,
-
     /// overwrite policy
     #[arg(short = 'O', long, value_enum, default_value = "all")]
     pub overwrite: OverwritePolicy,
+
+    /// suppress all output
+    #[arg(short = 'Q', long, group = "verbosity")]
+    pub quiet: bool,
 
     /// select how much output you want to see, 0 is equal to -Q, --quiet
     #[arg(long, default_value = "1", group = "verbosity")]

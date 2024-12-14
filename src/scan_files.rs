@@ -1,4 +1,4 @@
-use std::path::{Path, PathBuf};
+use std::path::{absolute, Path, PathBuf};
 use std::time::Duration;
 
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressIterator};
@@ -16,10 +16,7 @@ fn is_filetype_supported(path: &Path) -> bool {
 
 pub fn get_file_mime_type(path: &Path) -> Option<String> {
     match infer::get_from_path(path) {
-        Ok(v) => match v {
-            None => None,
-            Some(ft) => Some(ft.mime_type().to_string()),
-        },
+        Ok(v) => v.map(|ft| ft.mime_type().to_string()),
         Err(_) => None,
     }
 }
@@ -28,7 +25,7 @@ fn is_valid(entry: &Path) -> bool {
     entry.exists() && entry.is_file() && is_filetype_supported(entry)
 }
 
-pub fn scan_files(args: &Vec<String>, recursive: bool, quiet: bool) -> (PathBuf, Vec<PathBuf>) {
+pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (PathBuf, Vec<PathBuf>) {
     if args.is_empty() {
         return (PathBuf::new(), vec![]);
     }
@@ -37,7 +34,7 @@ pub fn scan_files(args: &Vec<String>, recursive: bool, quiet: bool) -> (PathBuf,
 
     let progress_bar = init_progress_bar(quiet);
 
-    for path in args.into_iter().progress_with(progress_bar) {
+    for path in args.iter().progress_with(progress_bar) {
         let input = PathBuf::from(path);
         if input.exists() && input.is_dir() {
             let mut walk_dir = WalkDir::new(input);
@@ -59,7 +56,7 @@ pub fn scan_files(args: &Vec<String>, recursive: bool, quiet: bool) -> (PathBuf,
 }
 
 fn canonicalize_and_push(path: &Path, mut base_path: PathBuf, files: &mut Vec<PathBuf>) -> PathBuf {
-    if let Ok(ap) = path.canonicalize() {
+    if let Ok(ap) = absolute(path) {
         base_path = compute_base_folder(&base_path, &ap);
         files.push(ap);
     }

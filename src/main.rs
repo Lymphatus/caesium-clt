@@ -1,9 +1,10 @@
-use crate::options::{CommandLineArgs, OverwritePolicy};
+use crate::options::{CommandLineArgs, OutputFormat, OverwritePolicy};
 use crate::scan_files::{get_file_mime_type, scan_files};
-use caesium::compress_in_memory;
 use caesium::parameters::CSParameters;
+use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
 use clap::Parser;
 use filetime::{set_file_times, FileTime};
+use human_bytes::human_bytes;
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
@@ -11,15 +12,15 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufReader, Read, Write};
 use std::num::NonZero;
-use std::path::{Path, PathBuf};
+use std::path::{absolute, Path, PathBuf};
 use std::time::Duration;
 use std::{fs, io};
-use human_bytes::human_bytes;
+use std::ffi::OsString;
 
-mod logger;
 mod options;
 mod scan_files;
 
+#[derive(Debug)]
 enum CompressionStatus {
     Success,
     Skipped,
@@ -101,7 +102,7 @@ fn main() {
                 }
             };
 
-            let output_full_path = match compute_output_full_path(
+            let (output_directory, filename) = match compute_output_full_path(
                 output_directory.to_path_buf(),
                 input_file.to_path_buf(),
                 base_path.to_path_buf(),
@@ -114,29 +115,60 @@ fn main() {
                     return compression_result;
                 }
             };
+            if !output_directory.exists() {
+                match fs::create_dir_all(&output_directory) {
+                    Ok(_) => {}
+                    Err(_) => {
+                        compression_result.message = "Error creating output directory".to_string();
+                        return compression_result;
+                    }
+                }
+            }
+            let output_full_path = output_directory.join(filename);
 
             if args.dry_run {
                 compression_result.status = CompressionStatus::Success;
                 return compression_result;
             };
 
-            let compression_parameters = build_compression_parameters(&args, input_file, needs_resize);
+            let mut compression_parameters = build_compression_parameters(&args, input_file, needs_resize);
+            let input_file_buffer = match read_file_to_vec(input_file) {
+                Ok(b) => b,
+                Err(_) => {
+                    compression_result.message = "Error reading input file".to_string();
+                    return compression_result;
+                }
+            };
+            let compression = if args.compression.max_size.is_some() {
+                compress_to_size_in_memory(
+                    input_file_buffer,
+                    &mut compression_parameters,
+                    args.compression.max_size.unwrap() as usize,
+                    true,
+                )
+            } else if args.format != OutputFormat::Original {
+                convert_in_memory(
+                    input_file_buffer,
+                    &compression_parameters,
+                    map_supported_formats(args.format),
+                )
+            } else {
+                compress_in_memory(input_file_buffer, &compression_parameters)
+            };
 
-            let compressed_image =
-                match compress_in_memory(read_file_to_vec(input_file).unwrap(), &compression_parameters) {
-                    //TODO: handle error
-                    Ok(v) => v,
-                    Err(e) => {
-                        compression_result.message = format!("Error compressing file: {}", e);
-                        return compression_result;
-                    }
-                };
+            let compressed_image = match compression {
+                Ok(v) => v,
+                Err(e) => {
+                    compression_result.message = format!("Error compressing file: {}", e);
+                    return compression_result;
+                }
+            };
             compression_result.output_path = output_full_path.display().to_string();
             let output_file_size = compressed_image.len() as u64;
 
             if output_full_path.exists() {
                 match args.overwrite {
-                    OverwritePolicy::None => {
+                    OverwritePolicy::Never => {
                         compression_result.status = CompressionStatus::Skipped;
                         compression_result.compressed_size = original_file_size;
                         compression_result.message = "File already exists, skipped due overwrite policy".to_string();
@@ -189,7 +221,7 @@ fn main() {
             compression_result
         })
         .collect();
-    
+
     write_recap_message(&compression_results, verbose);
 }
 
@@ -207,7 +239,27 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
         match result.status {
             CompressionStatus::Skipped => total_skipped += 1,
             CompressionStatus::Error => total_errors += 1,
-            _ => total_success += 1
+            _ => total_success += 1,
+        }
+
+        if verbose > 1 {
+            if verbose < 3 && matches!(result.status, CompressionStatus::Success) {
+                continue;
+            }
+            println!(
+                "[{:?}] {} -> {}\n{} -> {} [{:.2}%]",
+                result.status,
+                result.original_path,
+                result.output_path,
+                human_bytes(result.original_size as f64),
+                human_bytes(result.compressed_size as f64),
+                (result.compressed_size as f64 - result.original_size as f64) * 100.0 / result.original_size as f64
+            );
+
+            if !result.message.is_empty() {
+                println!("{}", result.message);
+            }
+            println!();
         }
     }
 
@@ -215,16 +267,28 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
     let total_saved_percent = total_saved / total_original_size as f64 * 100.0;
 
     if verbose > 0 {
-        println!("Total files: {}", total_files);
-        println!("Total success: {}", total_success);
-        println!("Total skipped: {}", total_skipped);
-        println!("Total errors: {}", total_errors);
-        println!("Total original size: {}", human_bytes(total_original_size as f64));
-        println!("Total compressed size: {}", human_bytes(total_compressed_size as f64));
-        println!("Total saved: {:.2} bytes ({:.2}%)", human_bytes(total_saved), total_saved_percent);
+        println!("Total files: {}\nSuccess: {}\nSkipped: {}\nErrors: {}\nOriginal size: {}\nCompressed size: {}\nSaved: {} ({:.2}%)",
+            total_files,
+            total_success,
+            total_skipped,
+            total_errors,
+            human_bytes(total_original_size as f64),
+            human_bytes(total_compressed_size as f64),
+            human_bytes(total_saved),
+            total_saved_percent * -1.0
+        );
     }
 }
 
+fn map_supported_formats(format: OutputFormat) -> SupportedFileTypes {
+    match format {
+        OutputFormat::Jpeg => SupportedFileTypes::Jpeg,
+        OutputFormat::Png => SupportedFileTypes::Png,
+        OutputFormat::Webp => SupportedFileTypes::WebP,
+        OutputFormat::Tiff => SupportedFileTypes::Tiff,
+        _ => SupportedFileTypes::Unkn,
+    }
+}
 fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> usize {
     if requested_threads > 0 {
         std::cmp::min(available_threads, requested_threads as usize)
@@ -293,7 +357,7 @@ fn compute_output_full_path(
     base_directory: PathBuf,
     keep_structure: bool,
     suffix: &str,
-) -> Option<PathBuf> {
+) -> Option<(PathBuf, OsString)> {
     let extension = input_file_path.extension().unwrap_or_default().to_os_string();
     let base_name = input_file_path.file_stem().unwrap_or_default().to_os_string();
     let mut output_file_name = base_name;
@@ -304,7 +368,7 @@ fn compute_output_full_path(
     }
 
     if keep_structure {
-        let parent = match input_file_path.parent()?.canonicalize() {
+        let parent = match absolute(input_file_path.parent()?) {
             Ok(p) => p,
             Err(_) => return None,
         };
@@ -314,11 +378,9 @@ fn compute_output_full_path(
             Err(_) => return None,
         };
         let full_output_directory = output_directory.join(output_path_prefix);
-        fs::create_dir_all(&full_output_directory).ok()?; // TODO I don't like that the creation is done inside this function because the name is a bit obscure
-        Some(full_output_directory.join(output_file_name))
+        Some((full_output_directory, output_file_name))
     } else {
-        fs::create_dir_all(&output_directory).ok()?; // TODO I don't like that the creation is done inside this function because the name is a bit obscure
-        Some(output_directory.join(output_file_name))
+        Some((output_directory, output_file_name))
     }
 }
 
@@ -376,7 +438,7 @@ fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
     progress_bar
 }
 
-#[cfg(test)] 
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::path::Path;
@@ -402,6 +464,7 @@ mod tests {
         assert_eq!(result, 0);
     }
 
+    #[cfg(not(target_os = "windows"))]
     #[test]
     fn test_compute_output_full_path() {
         let output_directory = PathBuf::from("/output");
@@ -417,7 +480,7 @@ mod tests {
             "_suffix",
         )
         .unwrap();
-        assert_eq!(result, Path::new("/output/folder/test_suffix.jpg"));
+        assert_eq!(result, (Path::new("/output/folder").to_path_buf(), "test_suffix.jpg".into()));
 
         // Test case 2: keep_structure = false
         let result = compute_output_full_path(
@@ -428,7 +491,7 @@ mod tests {
             "_suffix",
         )
         .unwrap();
-        assert_eq!(result, Path::new("/output/test_suffix.jpg"));
+        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.jpg".into()));
 
         // Test case 3: input file without extension
         let input_file_path = PathBuf::from("/base/folder/test");
@@ -440,7 +503,7 @@ mod tests {
             "_suffix",
         )
         .unwrap();
-        assert_eq!(result, Path::new("/output/test_suffix"));
+        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix".into()));
 
         // Test case 4: input file with different base directory
         let input_file_path = PathBuf::from("/different_base/folder/test.jpg");
@@ -452,6 +515,60 @@ mod tests {
             "_suffix",
         )
         .unwrap();
-        assert_eq!(result, Path::new("/output/test_suffix.jpg"));
+        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.jpg".into()));
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_compute_output_full_path() {
+        let output_directory = PathBuf::from(r"C:\output");
+        let base_directory = PathBuf::from(r"C:\base");
+
+        // Test case 1: keep_structure = true
+        let input_file_path = PathBuf::from(r"C:\base\folder\test.jpg");
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            true,
+            "_suffix",
+        )
+            .unwrap();
+        assert_eq!(result, (Path::new(r"C:\output\folder").to_path_buf(),  "test_suffix.jpg".into()));
+
+        // Test case 2: keep_structure = false
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            false,
+            "_suffix",
+        )
+            .unwrap();
+        assert_eq!(result, (Path::new(r"C:\output").to_path_buf(),  "test_suffix.jpg".into()));
+
+        // Test case 3: input file without extension
+        let input_file_path = PathBuf::from(r"C:\base\folder\test");
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            false,
+            "_suffix",
+        )
+            .unwrap();
+        assert_eq!(result, (Path::new(r"C:\output").to_path_buf(), "test_suffix".into()));
+
+        // Test case 4: input file with different base directory
+        let input_file_path = PathBuf::from(r"C:\different_base\folder\test.jpg");
+        let result = compute_output_full_path(
+            output_directory.clone(),
+            input_file_path.clone(),
+            base_directory.clone(),
+            false,
+            "_suffix",
+        )
+            .unwrap();
+        assert_eq!(result, (Path::new(r"C:\output").to_path_buf(), "test_suffix.jpg".into()));
     }
 }
