@@ -16,6 +16,9 @@ pub enum OverwritePolicy {
 pub struct CommandLineArgs {
     #[command(flatten)]
     pub compression: Compression,
+    
+    #[command(flatten)]
+    pub resize: Resize,
 
     #[command(flatten)]
     pub output_destination: OutputDestination,
@@ -85,6 +88,26 @@ pub struct Compression {
     /// set the expected maximum output size in bytes
     #[arg(long)]
     pub max_size: Option<u8>,
+}
+
+#[derive(Args, Debug)]
+#[group(required = false, multiple = true)]
+pub struct Resize {
+    /// width of the output image, if height is not set will preserve aspect ratio
+    #[arg(long, conflicts_with_all = &["long_edge", "short_edge"])]
+    pub width: Option<u32>,
+
+    /// height of the output image, if width is not set will preserve aspect ratio
+    #[arg(long, conflicts_with_all = &["long_edge", "short_edge"])]
+    pub height: Option<u32>,
+
+    /// sets the size of the longest edge of the image
+    #[arg(long, conflicts_with_all = &["width", "height", "short_edge"])]
+    pub long_edge: Option<u32>,
+
+    /// sets the size of the shortest edge of the image
+    #[arg(long, conflicts_with_all = &["width", "height", "long_edge"])]
+    pub short_edge: Option<u32>,
 }
 
 #[derive(Args, Debug)]

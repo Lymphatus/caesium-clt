@@ -199,9 +199,12 @@ version = "1.0.0-beta.0"
 dependencies = [
  "clap",
  "filetime",
+ "human_bytes",
  "image",
+ "imagesize",
  "indicatif",
  "infer",
+ "kamadak-exif 0.6.1",
  "libcaesium",
  "rayon",
  "tempfile",
@@ -528,6 +531,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "human_bytes"
+version = "0.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91f255a4535024abf7640cb288260811fc14794f62b063652ed349f9a6c2348e"
+
+[[package]]
 name = "image"
 version = "0.25.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -572,6 +581,12 @@ dependencies = [
  "rgb",
  "thread_local",
 ]
+
+[[package]]
+name = "imagesize"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edcd27d72f2f071c64249075f42e205ff93c9a4c5f6c6da53e79ed9f9832c285"
 
 [[package]]
 name = "img-parts"
@@ -684,6 +699,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "kamadak-exif"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1130d80c7374efad55a117d715a3af9368f0fa7a2c54573afc15a188cd984837"
+dependencies = [
+ "mutate_once",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -713,7 +737,7 @@ dependencies = [
  "imagequant",
  "img-parts",
  "infer",
- "kamadak-exif",
+ "kamadak-exif 0.5.5",
  "libc",
  "lodepng",
  "mozjpeg-sys",

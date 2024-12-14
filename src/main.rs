@@ -1,5 +1,5 @@
 use crate::options::{CommandLineArgs, OverwritePolicy};
-use crate::scan_files::scan_files;
+use crate::scan_files::{get_file_mime_type, scan_files};
 use caesium::compress_in_memory;
 use caesium::parameters::CSParameters;
 use clap::Parser;
@@ -7,16 +7,18 @@ use filetime::{set_file_times, FileTime};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use rayon::iter::IntoParallelRefIterator;
 use rayon::iter::ParallelIterator;
+use std::error::Error;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{BufReader, Read, Write};
 use std::num::NonZero;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use std::{fs, io};
+use human_bytes::human_bytes;
 
+mod logger;
 mod options;
 mod scan_files;
-mod logger;
 
 enum CompressionStatus {
     Success,
@@ -44,8 +46,11 @@ fn main() {
             .get(),
     );
     let verbose = if quiet { 0 } else { args.verbose };
-    let compression_parameters = build_compression_parameters(&args);
-    let (base_path, input_files) = scan_files(args.files, args.recursive, quiet);
+    let needs_resize = args.resize.width.is_some()
+        || args.resize.height.is_some()
+        || args.resize.long_edge.is_some()
+        || args.resize.short_edge.is_some();
+    let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet);
 
     rayon::ThreadPoolBuilder::new()
         .num_threads(threads_number)
@@ -68,14 +73,14 @@ fn main() {
                 message: String::new(),
             };
 
-            let original_file_size = match input_file.metadata() {
-                Ok(m) => m.len(),
+            let input_file_metadata = match input_file.metadata() {
+                Ok(m) => m,
                 Err(_) => {
                     compression_result.message = "Error reading file metadata".to_string();
                     return compression_result;
                 }
             };
-
+            let original_file_size = input_file_metadata.len();
             compression_result.original_size = original_file_size;
 
             let output_directory = if args.output_destination.same_folder_as_input {
@@ -115,16 +120,17 @@ fn main() {
                 return compression_result;
             };
 
-            let compressed_image = match compress_in_memory(
-                read_file_to_vec(input_file).unwrap(),
-                &compression_parameters,
-            ) {
-                Ok(v) => v,
-                Err(e) => {
-                    compression_result.message = format!("Error compressing file: {}", e);
-                    return compression_result;
-                }
-            };
+            let compression_parameters = build_compression_parameters(&args, input_file, needs_resize);
+
+            let compressed_image =
+                match compress_in_memory(read_file_to_vec(input_file).unwrap(), &compression_parameters) {
+                    //TODO: handle error
+                    Ok(v) => v,
+                    Err(e) => {
+                        compression_result.message = format!("Error compressing file: {}", e);
+                        return compression_result;
+                    }
+                };
             compression_result.output_path = output_full_path.display().to_string();
             let output_file_size = compressed_image.len() as u64;
 
@@ -133,8 +139,7 @@ fn main() {
                     OverwritePolicy::None => {
                         compression_result.status = CompressionStatus::Skipped;
                         compression_result.compressed_size = original_file_size;
-                        compression_result.message =
-                            "File already exists, skipped due overwrite policy".to_string();
+                        compression_result.message = "File already exists, skipped due overwrite policy".to_string();
                         return compression_result;
                     }
                     OverwritePolicy::Bigger => {
@@ -166,17 +171,9 @@ fn main() {
             };
 
             if args.keep_dates {
-                let output_file_metadata = match output_file.metadata() {
-                    Ok(m) => m,
-                    Err(_) => {
-                        compression_result.message =
-                            "Error reading output file metadata".to_string();
-                        return compression_result;
-                    }
-                };
                 let (last_modification_time, last_access_time) = (
-                    FileTime::from_last_modification_time(&output_file_metadata),
-                    FileTime::from_last_access_time(&output_file_metadata),
+                    FileTime::from_last_modification_time(&input_file_metadata),
+                    FileTime::from_last_access_time(&input_file_metadata),
                 );
                 match preserve_dates(&output_full_path, last_modification_time, last_access_time) {
                     Ok(_) => {}
@@ -192,8 +189,40 @@ fn main() {
             compression_result
         })
         .collect();
+    
+    write_recap_message(&compression_results, verbose);
+}
 
-    let recap_message = format!("Processed {} files", compression_results.len());
+fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
+    let mut total_original_size = 0;
+    let mut total_compressed_size = 0;
+    let total_files = compression_results.len();
+    let mut total_success = 0;
+    let mut total_skipped = 0;
+    let mut total_errors = 0;
+
+    for result in compression_results.iter() {
+        total_original_size += result.original_size;
+        total_compressed_size += result.compressed_size;
+        match result.status {
+            CompressionStatus::Skipped => total_skipped += 1,
+            CompressionStatus::Error => total_errors += 1,
+            _ => total_success += 1
+        }
+    }
+
+    let total_saved = total_original_size as f64 - total_compressed_size as f64;
+    let total_saved_percent = total_saved / total_original_size as f64 * 100.0;
+
+    if verbose > 0 {
+        println!("Total files: {}", total_files);
+        println!("Total success: {}", total_success);
+        println!("Total skipped: {}", total_skipped);
+        println!("Total errors: {}", total_errors);
+        println!("Total original size: {}", human_bytes(total_original_size as f64));
+        println!("Total compressed size: {}", human_bytes(total_compressed_size as f64));
+        println!("Total saved: {:.2} bytes ({:.2}%)", human_bytes(total_saved), total_saved_percent);
+    }
 }
 
 fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> usize {
@@ -204,7 +233,7 @@ fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> us
     }
 }
 
-fn build_compression_parameters(args: &CommandLineArgs) -> CSParameters {
+fn build_compression_parameters(args: &CommandLineArgs, input_file: &Path, needs_resize: bool) -> CSParameters {
     let mut parameters = CSParameters::new();
     let quality = args.compression.quality.unwrap_or(80) as u32;
 
@@ -218,7 +247,44 @@ fn build_compression_parameters(args: &CommandLineArgs) -> CSParameters {
     parameters.png.optimization_level = args.png_opt_level;
     parameters.png.force_zopfli = args.zopfli;
 
+    if needs_resize {
+        let mime_type = get_file_mime_type(input_file);
+        build_resize_parameters(args, &mut parameters, input_file, mime_type).unwrap();
+        //TODO
+    }
+
     parameters
+}
+
+fn build_resize_parameters(
+    args: &CommandLineArgs,
+    parameters: &mut CSParameters,
+    input_file_path: &Path,
+    mime_type: Option<String>,
+) -> Result<(), Box<dyn Error>> {
+    let (width, height) = get_real_resolution(input_file_path, mime_type, args.exif)?;
+
+    if args.resize.width.is_some() {
+        parameters.width = args.resize.width.unwrap_or(0);
+    } else if args.resize.height.is_some() {
+        parameters.height = args.resize.height.unwrap_or(0);
+    } else if args.resize.long_edge.is_some() {
+        let long_edge = args.resize.long_edge.unwrap_or(0);
+        if width > height {
+            parameters.width = long_edge;
+        } else {
+            parameters.height = long_edge;
+        }
+    } else if args.resize.short_edge.is_some() {
+        let short_edge = args.resize.short_edge.unwrap_or(0);
+        if width < height {
+            parameters.width = short_edge;
+        } else {
+            parameters.height = short_edge;
+        }
+    }
+
+    Ok(())
 }
 
 fn compute_output_full_path(
@@ -228,14 +294,8 @@ fn compute_output_full_path(
     keep_structure: bool,
     suffix: &str,
 ) -> Option<PathBuf> {
-    let extension = input_file_path
-        .extension()
-        .unwrap_or_default()
-        .to_os_string();
-    let base_name = input_file_path
-        .file_stem()
-        .unwrap_or_default()
-        .to_os_string();
+    let extension = input_file_path.extension().unwrap_or_default().to_os_string();
+    let base_name = input_file_path.file_stem().unwrap_or_default().to_os_string();
     let mut output_file_name = base_name;
     output_file_name.push(suffix);
     if !extension.is_empty() {
@@ -269,12 +329,34 @@ fn read_file_to_vec(file_path: &PathBuf) -> io::Result<Vec<u8>> {
     Ok(buffer)
 }
 
-fn preserve_dates(
-    output_file: &PathBuf,
-    input_atime: FileTime,
-    input_mtime: FileTime,
-) -> io::Result<()> {
+fn preserve_dates(output_file: &PathBuf, input_atime: FileTime, input_mtime: FileTime) -> io::Result<()> {
     set_file_times(output_file, input_atime, input_mtime)
+}
+
+fn get_real_resolution(
+    file: &Path,
+    mime_type: Option<String>,
+    keep_metadata: bool,
+) -> Result<(usize, usize), Box<dyn Error>> {
+    let resolution = imagesize::size(file)?;
+    let mut orientation = 1;
+    let mime = mime_type.unwrap_or("".to_string());
+    if mime == "image/jpeg" && keep_metadata {
+        let f = File::open(file)?;
+        if let Ok(e) = exif::Reader::new().read_from_container(&mut BufReader::new(&f)) {
+            let exif_field = match e.get_field(exif::Tag::Orientation, exif::In::PRIMARY) {
+                Some(f) => f,
+                None => return Ok((resolution.width, resolution.height)),
+            };
+            orientation = exif_field.value.get_uint(0).unwrap_or(1);
+        };
+    }
+    let (width, height) = match orientation {
+        5..=8 => (resolution.height, resolution.width),
+        _ => (resolution.width, resolution.height),
+    };
+
+    Ok((width, height))
 }
 
 fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
@@ -294,7 +376,7 @@ fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
     progress_bar
 }
 
-#[cfg(test)]
+#[cfg(test)] 
 mod tests {
     use super::*;
     use std::path::Path;

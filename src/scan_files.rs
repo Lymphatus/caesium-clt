@@ -6,15 +6,21 @@ use indicatif::ProgressStyle;
 use walkdir::WalkDir;
 
 fn is_filetype_supported(path: &Path) -> bool {
+    match get_file_mime_type(path) {
+        Some(mime_type) => {
+            matches!(mime_type.as_str(), "image/jpeg" | "image/png" | "image/webp" | "image/gif")
+        }
+        None => false,
+    }
+}
+
+pub fn get_file_mime_type(path: &Path) -> Option<String> {
     match infer::get_from_path(path) {
         Ok(v) => match v {
-            None => false,
-            Some(ft) => matches!(
-                ft.mime_type(),
-                "image/jpeg" | "image/png" | "image/gif" | "image/webp"
-            ),
+            None => None,
+            Some(ft) => Some(ft.mime_type().to_string()),
         },
-        Err(_) => false,
+        Err(_) => None,
     }
 }
 
@@ -22,7 +28,7 @@ fn is_valid(entry: &Path) -> bool {
     entry.exists() && entry.is_file() && is_filetype_supported(entry)
 }
 
-pub fn scan_files(args: Vec<String>, recursive: bool, quiet: bool) -> (PathBuf, Vec<PathBuf>) {
+pub fn scan_files(args: &Vec<String>, recursive: bool, quiet: bool) -> (PathBuf, Vec<PathBuf>) {
     if args.is_empty() {
         return (PathBuf::new(), vec![]);
     }
