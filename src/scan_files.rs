@@ -44,18 +44,18 @@ pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (PathBuf, Ve
             for entry in walk_dir.into_iter().filter_map(|e| e.ok()) {
                 let path = entry.into_path();
                 if is_valid(&path) {
-                    base_path = canonicalize_and_push(&path, base_path, &mut files);
+                    base_path = make_absolute_and_push(&path, base_path, &mut files);
                 }
             }
         } else if is_valid(&input) {
-            base_path = canonicalize_and_push(&input, base_path, &mut files);
+            base_path = make_absolute_and_push(&input, base_path, &mut files);
         }
     }
     
     (base_path, files)
 }
 
-fn canonicalize_and_push(path: &Path, mut base_path: PathBuf, files: &mut Vec<PathBuf>) -> PathBuf {
+fn make_absolute_and_push(path: &Path, mut base_path: PathBuf, files: &mut Vec<PathBuf>) -> PathBuf {
     if let Ok(ap) = absolute(path) {
         base_path = compute_base_folder(&base_path, &ap);
         files.push(ap);
@@ -185,22 +185,6 @@ mod tests {
         temp_file.write_all(bytes.as_slice()).unwrap();
         assert!(!is_valid(temp_file.path()));
     }
-    //
-    // #[test]
-    // fn test_scanfiles() {
-    //     let temp_dir = tempfile::tempdir().unwrap();
-    //     let file_path = temp_dir.path().join("test.jpg");
-    //     let mut file = File::create(&file_path).unwrap();
-    //     file.write_all(b"test").unwrap();
-    //
-    //     let args = vec![file_path.to_str().unwrap().to_string()];
-    //     let (base_path, files) = scanfiles(args, false);
-    //
-    //     assert_eq!(files.len(), 1);
-    //     assert_eq!(files[0], file_path);
-    //     assert_eq!(base_path, temp_dir.path().canonicalize().unwrap());
-    // }
-    //
 
     #[test]
     fn test_compute_base_folder_with_files() {

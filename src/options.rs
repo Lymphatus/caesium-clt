@@ -20,6 +20,18 @@ pub enum OutputFormat {
     Original,
 }
 
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+pub enum VerboseLevel {
+    /// Suppress all output
+    Quiet = 0,
+    /// Show only progress and final results
+    Progress = 1,
+    /// Show also skipped and error messages
+    WarningsAndErrors = 2,
+    /// Print all
+    All = 3
+}
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct CommandLineArgs {
@@ -69,7 +81,7 @@ pub struct CommandLineArgs {
     pub dry_run: bool,
 
     /// specify the number of parallel jobs (max is the number of processors available)
-    #[arg(long, default_value = "0")]
+    #[arg(long, default_value = "1")]
     pub threads: u32,
 
     /// overwrite policy
@@ -80,9 +92,9 @@ pub struct CommandLineArgs {
     #[arg(short = 'Q', long, group = "verbosity")]
     pub quiet: bool,
 
-    /// select how much output you want to see, 0 is equal to -Q, --quiet
-    #[arg(long, default_value = "1", group = "verbosity")]
-    pub verbose: u8,
+    /// select how much output you want to see
+    #[arg(long, value_enum, default_value = "progress", group = "verbosity")]
+    pub verbose: VerboseLevel,
 
     pub files: Vec<String>,
 }
