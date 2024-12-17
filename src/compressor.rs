@@ -105,7 +105,13 @@ pub fn perform_compression(
                 return compression_result;
             };
 
-            let mut compression_parameters = build_compression_parameters(args, input_file, needs_resize);
+            let mut compression_parameters = match build_compression_parameters(args, input_file, needs_resize) {
+                Ok(p) => p,
+                Err(e) => {
+                    compression_result.message = format!("Error building compression parameters: {}", e);
+                    return compression_result;
+                }
+            };
             let input_file_buffer = match read_file_to_vec(input_file) {
                 Ok(b) => b,
                 Err(_) => {
@@ -193,7 +199,7 @@ pub fn perform_compression(
         .collect()
 }
 
-fn build_compression_parameters(args: &CommandLineArgs, input_file: &Path, needs_resize: bool) -> CSParameters {
+fn build_compression_parameters(args: &CommandLineArgs, input_file: &Path, needs_resize: bool) -> Result<CSParameters, Box<dyn Error>> {
     let mut parameters = CSParameters::new();
     let quality = args.compression.quality.unwrap_or(80) as u32;
 
@@ -209,11 +215,10 @@ fn build_compression_parameters(args: &CommandLineArgs, input_file: &Path, needs
 
     if needs_resize {
         let mime_type = get_file_mime_type(input_file);
-        build_resize_parameters(args, &mut parameters, input_file, mime_type).unwrap();
-        //TODO
+        build_resize_parameters(args, &mut parameters, input_file, mime_type)?;
     }
 
-    parameters
+    Ok(parameters)
 }
 
 fn compute_output_full_path(

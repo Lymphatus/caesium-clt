@@ -116,7 +116,7 @@ fn setup_progress_bar(len: usize, verbose: VerboseLevel) -> ProgressBar {
     progress_bar.set_style(
         ProgressStyle::default_bar()
             .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len}\n{msg}")
-            .unwrap() //TODO: handle error
+            .unwrap_or_else(|_| ProgressStyle::default_bar())
             .progress_chars("#>-"),
     );
     progress_bar.enable_steady_tick(Duration::new(1, 0));
