@@ -1,19 +1,24 @@
-use crate::options::{CommandLineArgs, OutputFormat, OverwritePolicy};
 use crate::scan_files::get_file_mime_type;
-use crate::CompressionStatus;
 use caesium::parameters::CSParameters;
 use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
-use filetime::{set_file_times, FileTime};
 use indicatif::{ParallelProgressIterator, ProgressBar};
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelRefIterator;
 use std::error::Error;
 use std::ffi::OsString;
-use std::fs::File;
+use std::fs::{File, FileTimes, Metadata};
 use std::io::{BufReader, Read, Write};
 use std::path::{absolute, Path, PathBuf};
 use std::{fs, io};
+use crate::options::{CommandLineArgs, OutputFormat, OverwritePolicy};
 
+#[derive(Debug)]
+pub enum CompressionStatus {
+    Success,
+    Skipped,
+    Error,
+}
+#[derive(Debug)]
 pub struct CompressionResult {
     pub original_path: String,
     pub output_path: String,
@@ -99,6 +104,15 @@ pub fn perform_compression(
                 }
             }
             let output_full_path = output_directory.join(filename);
+            compression_result.output_path = output_full_path.display().to_string();
+            let output_exists = output_full_path.exists();
+
+            if args.overwrite == OverwritePolicy::Never {
+                compression_result.status = CompressionStatus::Skipped;
+                compression_result.compressed_size = original_file_size;
+                compression_result.message = "File already exists, skipped due overwrite policy".to_string();
+                return compression_result;
+            }
 
             if args.dry_run {
                 compression_result.status = CompressionStatus::Success;
@@ -143,23 +157,21 @@ pub fn perform_compression(
                     return compression_result;
                 }
             };
-            compression_result.output_path = output_full_path.display().to_string();
             let output_file_size = compressed_image.len() as u64;
 
-            if output_full_path.exists() {
-                match args.overwrite {
-                    OverwritePolicy::Never | OverwritePolicy::Bigger => {
-                        if (matches!(args.overwrite, OverwritePolicy::Bigger) && output_file_size >= original_file_size)
-                            || matches!(args.overwrite, OverwritePolicy::Never)
-                        {
-                            compression_result.status = CompressionStatus::Skipped;
-                            compression_result.compressed_size = original_file_size;
-                            compression_result.message =
-                                "File already exists, skipped due overwrite policy".to_string();
-                            return compression_result;
-                        }
+            if output_exists && args.overwrite == OverwritePolicy::Bigger {
+                let existing_file_metadata = match output_full_path.metadata() {
+                    Ok(m) => m,
+                    Err(_) => {
+                        compression_result.message = "Error reading existing file metadata".to_string();
+                        return compression_result;
                     }
-                    _ => {}
+                };
+                if existing_file_metadata.len() <= output_file_size {
+                    compression_result.status = CompressionStatus::Skipped;
+                    compression_result.compressed_size = original_file_size;
+                    compression_result.message = "File already exists, skipped due overwrite policy".to_string();
+                    return compression_result;
                 }
             }
 
@@ -179,17 +191,13 @@ pub fn perform_compression(
             };
 
             if args.keep_dates {
-                let (last_modification_time, last_access_time) = (
-                    FileTime::from_last_modification_time(&input_file_metadata),
-                    FileTime::from_last_access_time(&input_file_metadata),
-                );
-                match preserve_dates(&output_full_path, last_modification_time, last_access_time) {
+                match preserve_file_times(&output_file, &input_file_metadata) {
                     Ok(_) => {}
                     Err(_) => {
-                        compression_result.message = "Error preserving file dates".to_string();
+                        compression_result.message = "Error preserving file times".to_string();
                         return compression_result;
                     }
-                }
+                };
             }
 
             compression_result.status = CompressionStatus::Success;
@@ -199,7 +207,11 @@ pub fn perform_compression(
         .collect()
 }
 
-fn build_compression_parameters(args: &CommandLineArgs, input_file: &Path, needs_resize: bool) -> Result<CSParameters, Box<dyn Error>> {
+fn build_compression_parameters(
+    args: &CommandLineArgs,
+    input_file: &Path,
+    needs_resize: bool,
+) -> Result<CSParameters, Box<dyn Error>> {
     let mut parameters = CSParameters::new();
     let quality = args.compression.quality.unwrap_or(80) as u32;
 
@@ -319,10 +331,16 @@ fn get_real_resolution(
     Ok((width, height))
 }
 
-fn preserve_dates(output_file: &PathBuf, input_atime: FileTime, input_mtime: FileTime) -> io::Result<()> {
-    set_file_times(output_file, input_atime, input_mtime)
+fn preserve_file_times(output_file: &File, original_file_metadata: &Metadata) -> std::io::Result<()> {
+    let (last_modification_time, last_access_time) =
+        (original_file_metadata.modified()?, original_file_metadata.accessed()?);
+    output_file.set_times(
+        FileTimes::new()
+            .set_modified(last_modification_time)
+            .set_accessed(last_access_time),
+    )?;
+    Ok(())
 }
-
 fn map_supported_formats(format: OutputFormat) -> SupportedFileTypes {
     match format {
         OutputFormat::Jpeg => SupportedFileTypes::Jpeg,
@@ -344,6 +362,9 @@ fn read_file_to_vec(file_path: &PathBuf) -> io::Result<Vec<u8>> {
 mod tests {
     use super::*;
     use std::path::Path;
+    use std::time::UNIX_EPOCH;
+    use tempfile::tempdir;
+    use crate::options::{Compression, OutputDestination, Resize, VerboseLevel};
 
     #[cfg(not(target_os = "windows"))]
     #[test]
@@ -579,5 +600,137 @@ mod tests {
             result,
             (Path::new(r"C:\output").to_path_buf(), "test_suffix.tiff".into())
         );
+    }
+
+    #[test]
+    fn test_perform_compression() {
+        // Setup command line arguments
+        let input_files = vec![
+            absolute(PathBuf::from("samples/j0.JPG")).unwrap(),
+            absolute(PathBuf::from("samples/p0.png")).unwrap(),
+            absolute(PathBuf::from("samples/w0.webp")).unwrap(),
+            absolute(PathBuf::from("samples/t0.tif")).unwrap(),
+        ];
+
+        let mut args = setup_args();
+        let base_path = absolute(PathBuf::from("samples")).unwrap();
+        let progress_bar = ProgressBar::new(input_files.len() as u64);
+        let temp_dir = tempdir().unwrap().path().to_path_buf();
+        args.output_destination.output = Some(temp_dir.clone());
+
+        let mut results = perform_compression(&input_files, &args, &base_path, progress_bar.clone());
+        assert_eq!(results.len(), 4);
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
+        assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+        assert_eq!(PathBuf::from(&results[0].output_path), temp_dir.join("j0.JPG"));
+        assert_eq!(PathBuf::from(&results[1].output_path), temp_dir.join("p0.png"));
+        assert_eq!(PathBuf::from(&results[2].output_path), temp_dir.join("w0.webp"));
+        assert_eq!(PathBuf::from(&results[3].output_path), temp_dir.join("t0.tif"));
+
+        let input_files = vec![
+            absolute(PathBuf::from("samples/j0.JPG")).unwrap(),
+            absolute(PathBuf::from("samples/p0.png")).unwrap(),
+            absolute(PathBuf::from("samples/w0.webp")).unwrap(),
+            absolute(PathBuf::from("samples/t0.tif")).unwrap(),
+            absolute(PathBuf::from("samples/level_1_0/level_2_0/p2.png")).unwrap(),
+            absolute(PathBuf::from("samples/level_1_0/j1.jpg")).unwrap(),
+            absolute(PathBuf::from("samples/level_1_1/w1.webp")).unwrap(),
+        ];
+
+        let temp_dir = tempdir().unwrap().path().to_path_buf();
+        args.output_destination.output = Some(temp_dir.clone());
+        println!("{:?}", args.output_destination.output);
+        args.keep_structure = true;
+        results = perform_compression(&input_files, &args, &base_path, progress_bar.clone());
+        println!("{:?}", results);
+        assert_eq!(results.len(), 7);
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
+        assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+        assert_eq!(PathBuf::from(&results[0].output_path), temp_dir.join("j0.JPG"));
+        assert_eq!(PathBuf::from(&results[1].output_path), temp_dir.join("p0.png"));
+        assert_eq!(PathBuf::from(&results[2].output_path), temp_dir.join("w0.webp"));
+        assert_eq!(PathBuf::from(&results[3].output_path), temp_dir.join("t0.tif"));
+        assert_eq!(
+            PathBuf::from(&results[4].output_path),
+            temp_dir.join("level_1_0/level_2_0/p2.png")
+        );
+        assert_eq!(
+            PathBuf::from(&results[5].output_path),
+            temp_dir.join("level_1_0/j1.jpg")
+        );
+        assert_eq!(
+            PathBuf::from(&results[6].output_path),
+            temp_dir.join("level_1_1/w1.webp")
+        );
+
+        args.compression.quality = Some(100);
+        args.overwrite = OverwritePolicy::Never;
+        results = perform_compression(&input_files, &args, &base_path, progress_bar.clone());
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
+        assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+
+        args.compression.quality = Some(100);
+        args.overwrite = OverwritePolicy::Bigger;
+        results = perform_compression(&input_files, &args, &base_path, progress_bar.clone());
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
+        assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+
+        args.compression.quality = Some(100);
+        args.overwrite = OverwritePolicy::All;
+        results = perform_compression(&input_files, &args, &base_path, progress_bar.clone());
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
+        assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+
+        args.compression.quality = Some(80);
+        args.keep_dates = true;
+        results = perform_compression(&input_files, &args, &base_path, progress_bar.clone());
+
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
+        assert!(results.iter().all(|r| {
+            let original_metadata = fs::metadata(&r.original_path).unwrap();
+            let o_mtime = original_metadata.modified().unwrap().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            let o_ltime = original_metadata.accessed().unwrap().duration_since(UNIX_EPOCH).unwrap().as_secs();
+
+            let compressed_metadata = fs::metadata(&r.output_path).unwrap();
+            let c_mtime = compressed_metadata.modified().unwrap().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            let c_ltime = compressed_metadata.accessed().unwrap().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            println!("{:?} {:?}", o_mtime, c_mtime);
+            println!("{:?} {:?}", o_ltime, c_ltime);
+            o_mtime == c_mtime && (o_ltime + 10) >= c_ltime 
+        }));
+        assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+    }
+    fn setup_args() -> CommandLineArgs {
+        CommandLineArgs {
+            resize: Resize {
+                width: None,
+                height: None,
+                long_edge: None,
+                short_edge: None,
+            },
+            output_destination: OutputDestination {
+                same_folder_as_input: false,
+                output: None,
+            },
+            suffix: None,
+            format: OutputFormat::Original,
+            compression: Compression {
+                quality: Some(80),
+                lossless: false,
+                max_size: None,
+            },
+            exif: true,
+            png_opt_level: 3,
+            zopfli: false,
+            keep_structure: false,
+            dry_run: false,
+            threads: 1,
+            overwrite: OverwritePolicy::All,
+            quiet: false,
+            verbose: VerboseLevel::Quiet,
+            keep_dates: false,
+            recursive: false,
+            files: vec![],
+        }
     }
 }

@@ -1,4 +1,4 @@
-use crate::compressor::{perform_compression, CompressionResult};
+use crate::compressor::{perform_compression, CompressionResult, CompressionStatus};
 use crate::options::VerboseLevel::{All, Progress, Quiet};
 use crate::options::{CommandLineArgs, VerboseLevel};
 use crate::scan_files::scan_files;
@@ -11,12 +11,6 @@ use std::time::Duration;
 mod compressor;
 mod options;
 mod scan_files;
-#[derive(Debug)]
-enum CompressionStatus {
-    Success,
-    Skipped,
-    Error,
-}
 
 fn main() {
     let args = CommandLineArgs::parse();
@@ -86,7 +80,7 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: Verbo
 
     if verbose > Quiet {
         println!(
-            "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [{} | ({:.2}%])",
+            "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [Saved {} | ({:.2}%)]",
             total_files,
             total_success,
             total_skipped,
