@@ -1,4 +1,4 @@
-use crate::compressor::{perform_compression, CompressionResult, CompressionStatus};
+use crate::compressor::{start_compression, CompressionOptions, CompressionResult, CompressionStatus};
 use crate::options::VerboseLevel::{All, Progress, Quiet};
 use crate::options::{CommandLineArgs, VerboseLevel};
 use crate::scan_files::scan_files;
@@ -6,6 +6,7 @@ use clap::Parser;
 use human_bytes::human_bytes;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use std::num::NonZero;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 mod compressor;
@@ -32,7 +33,8 @@ fn main() {
     let total_files = input_files.len();
 
     let progress_bar = setup_progress_bar(total_files, verbose);
-    let compression_results = perform_compression(&input_files, &args, &base_path, progress_bar);
+    let compression_options = build_compression_options(&args, &base_path);
+    let compression_results = start_compression(&input_files, &compression_options, progress_bar, args.dry_run);
 
     write_recap_message(&compression_results, verbose);
 }
@@ -115,6 +117,28 @@ fn setup_progress_bar(len: usize, verbose: VerboseLevel) -> ProgressBar {
     );
     progress_bar.enable_steady_tick(Duration::new(1, 0));
     progress_bar
+}
+
+fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> CompressionOptions {
+    CompressionOptions {
+        quality: args.compression.quality,
+        output_folder: args.output_destination.output.clone(),
+        same_folder_as_input: args.output_destination.same_folder_as_input,
+        overwrite_policy: args.overwrite,
+        format: args.format,
+        suffix: args.suffix.clone(),
+        keep_structure: args.keep_structure,
+        width: args.resize.width,
+        height: args.resize.height,
+        long_edge: args.resize.long_edge,
+        short_edge: args.resize.short_edge,
+        max_size: args.compression.max_size,
+        keep_dates: args.keep_dates,
+        exif: args.exif,
+        png_opt_level: args.png_opt_level,
+        zopfli: args.zopfli,
+        base_path: PathBuf::from(base_path),
+    }
 }
 
 #[cfg(test)]

@@ -104,7 +104,7 @@ pub struct CommandLineArgs {
 pub struct Compression {
     /// sets output file quality between [0-100]
     #[arg(short, long)]
-    pub quality: Option<u8>,
+    pub quality: Option<u32>,
 
     /// perform lossless compression
     #[arg(long, default_value = "false")]
@@ -112,7 +112,7 @@ pub struct Compression {
 
     /// set the expected maximum output size in bytes
     #[arg(long)]
-    pub max_size: Option<u8>,
+    pub max_size: Option<usize>,
 }
 
 #[derive(Args, Debug)]
