@@ -1,8 +1,14 @@
 name: Code formatting
 
 on:
-  - push
-  - pull_request
+  push:
+    paths:
+      - 'src/**'
+      - '.github/**'
+    pull_request:
+      paths:
+        - 'src/**'
+        - '.github/**'
 
 jobs:
   fmt_check:

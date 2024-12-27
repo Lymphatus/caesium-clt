@@ -2,8 +2,8 @@
 
 [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/Lymphatus)
 [![Test](https://github.com/Lymphatus/caesium-clt/workflows/Test/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions?query=workflow%3ATest)
-[![Clippy](https://github.com/Lymphatus/caesium-clt/actions/workflows/clippy.yaml/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions/workflows/clippy.yaml)
-[![Code formatting](https://github.com/Lymphatus/caesium-clt/actions/workflows/fmt.yaml/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions/workflows/fmt.yaml)
+[![Clippy](https://github.com/Lymphatus/caesium-clt/actions/workflows/clippy.yml/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions/workflows/clippy.yml)
+[![Code formatting](https://github.com/Lymphatus/caesium-clt/actions/workflows/fmt.yml/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions/workflows/fmt.yml)
 
 v1.0.0-beta.0
 

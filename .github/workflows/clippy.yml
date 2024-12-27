@@ -1,7 +1,13 @@
 name: Clippy check
 on:
-  - push
-  - pull_request
+  push:
+    paths:
+      - 'src/**'
+      - '.github/**'
+    pull_request:
+      paths:
+        - 'src/**'
+        - '.github/**'
 
 env:
   RUSTFLAGS: "-Dwarnings"
