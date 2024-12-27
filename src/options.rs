@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use clap::{Args, Parser, ValueEnum};
+use std::path::PathBuf;
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum OverwritePolicy {
@@ -8,7 +8,7 @@ pub enum OverwritePolicy {
     /// Never overwrite
     Never,
     /// Overwrite only if the file to be overwritten is bigger
-    Bigger
+    Bigger,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
@@ -29,7 +29,7 @@ pub enum VerboseLevel {
     /// Show also skipped and error messages
     WarningsAndErrors = 2,
     /// Print all
-    All = 3
+    All = 3,
 }
 
 #[derive(Parser, Debug)]
@@ -37,7 +37,7 @@ pub enum VerboseLevel {
 pub struct CommandLineArgs {
     #[command(flatten)]
     pub compression: Compression,
-    
+
     #[command(flatten)]
     pub resize: Resize,
 
@@ -47,7 +47,7 @@ pub struct CommandLineArgs {
     /// convert to the selected output format, or keep the original
     #[arg(long, value_enum, default_value = "original")]
     pub format: OutputFormat,
-    
+
     /// select level for PNG optimization, between [0-6]
     #[arg(long, default_value = "3")]
     pub png_opt_level: u8,
@@ -55,7 +55,7 @@ pub struct CommandLineArgs {
     /// use zopfli when optimizing PNG files (it may take a very long time to complete)
     #[arg(long)]
     pub zopfli: bool,
-    
+
     /// keeps EXIF info during compression
     #[arg(short, long)]
     pub exif: bool,
@@ -81,7 +81,7 @@ pub struct CommandLineArgs {
     pub dry_run: bool,
 
     /// specify the number of parallel jobs (max is the number of processors available)
-    #[arg(long, default_value = "1")]
+    #[arg(long, default_value = "0")]
     pub threads: u32,
 
     /// overwrite policy
