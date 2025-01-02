@@ -32,6 +32,7 @@ pub struct CompressionResult {
 pub struct CompressionOptions {
     pub quality: Option<u32>,
     pub max_size: Option<usize>,
+    pub lossless: bool,
     pub exif: bool,
     pub png_opt_level: u8,
     pub zopfli: bool,
@@ -242,6 +243,8 @@ fn build_compression_parameters(
     parameters.png.quality = quality;
     parameters.webp.quality = quality;
     parameters.gif.quality = quality;
+
+    parameters.optimize = options.lossless;
 
     parameters.keep_metadata = options.exif;
 
@@ -703,6 +706,13 @@ mod tests {
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
+        options.quality = Some(100);
+        options.lossless = true;
+        options.overwrite_policy = OverwritePolicy::All;
+        results = start_compression(&input_files, &options, progress_bar.clone(), true);
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
+        assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+
         options.quality = Some(80);
         options.keep_dates = true;
         results = start_compression(&input_files, &options, progress_bar.clone(), false);
@@ -740,9 +750,11 @@ mod tests {
         }));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
     }
+
     fn setup_options() -> CompressionOptions {
         CompressionOptions {
             quality: Some(80),
+            lossless: false,
             output_folder: None,
             same_folder_as_input: false,
             overwrite_policy: OverwritePolicy::All,

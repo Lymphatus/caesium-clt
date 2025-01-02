@@ -15,7 +15,7 @@ homepage = "https://github.com/Lymphatus/caesium-clt"
 repository = "https://github.com/Lymphatus/caesium-clt"
 
 [dependencies]
-indicatif = {version= "0.17", features = ["rayon"]}
+indicatif = { version = "0.17", features = ["rayon"] }
 walkdir = "2.5"
 infer = "0.16"
 rayon = "1.10"

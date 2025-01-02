@@ -122,6 +122,7 @@ fn setup_progress_bar(len: usize, verbose: VerboseLevel) -> ProgressBar {
 fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> CompressionOptions {
     CompressionOptions {
         quality: args.compression.quality,
+        lossless: args.compression.lossless,
         output_folder: args.output_destination.output.clone(),
         same_folder_as_input: args.output_destination.same_folder_as_input,
         overwrite_policy: args.overwrite,
