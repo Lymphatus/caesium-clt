@@ -82,7 +82,7 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: Verbo
 
     if verbose > Quiet {
         println!(
-            "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [Saved {} | ({:.2}%)]",
+            "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [Saved {} ({:.2}%)]",
             total_files,
             total_success,
             total_skipped,
