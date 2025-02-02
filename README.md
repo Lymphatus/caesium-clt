@@ -58,7 +58,7 @@ ARGS:
 
 Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output```
 ```
-$ caesiumclt -q 0 -o ~/output/ ~/image.jpg
+$ caesiumclt --lossless -o ~/output/ ~/image.jpg
 ```
 
 Compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` with lossy compression and quality set to 80
@@ -68,15 +68,15 @@ $ caesiumclt -q 80 -o ~/output/ ~/image.jpg
 
 Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` and keeps EXIF metadata
 ```
-$ caesiumclt -q 0 -e -o ~/output/ ~/image.jpg
+$ caesiumclt --lossless -e -o ~/output/ ~/image.jpg
 ```
 
 Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output```
 ```
-$ caesiumclt -q 0 -R -o ~/output/ ~/Pictures
+$ caesiumclt --lossless -R -o ~/output/ ~/Pictures
 ```
 
 Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called ```output``` retaining the input folder structure
 ```
-$ caesiumclt -q 0 -RS -o ~/output/ ~/Pictures
+$ caesiumclt --lossless -RS -o ~/output/ ~/Pictures
 ```
