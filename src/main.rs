@@ -94,6 +94,7 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: Verbo
         );
     }
 }
+
 fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> usize {
     if requested_threads > 0 {
         std::cmp::min(available_threads, requested_threads as usize)

@@ -2,7 +2,7 @@ use crate::options::{OutputFormat, OverwritePolicy};
 use crate::scan_files::get_file_mime_type;
 use caesium::parameters::CSParameters;
 use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
-use indicatif::{ParallelProgressIterator, ProgressBar};
+use indicatif::ProgressBar;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelRefIterator;
 use std::error::Error;
@@ -58,8 +58,11 @@ pub fn start_compression(
 ) -> Vec<CompressionResult> {
     input_files
         .par_iter()
-        .progress_with(progress_bar)
-        .map(|input_file| perform_compression(input_file, options, dry_run))
+        .map(|input_file| {
+            let result = perform_compression(input_file, options, dry_run);
+            progress_bar.inc(1);
+            result
+        })
         .collect()
 }
 
@@ -133,7 +136,7 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
     compression_result.output_path = output_full_path.display().to_string();
     let output_exists = output_full_path.exists();
 
-    if options.overwrite_policy == OverwritePolicy::Never {
+    if options.overwrite_policy == OverwritePolicy::Never && output_exists {
         compression_result.status = CompressionStatus::Skipped;
         compression_result.compressed_size = original_file_size;
         compression_result.message = "File already exists, skipped due overwrite policy".to_string();
@@ -689,6 +692,7 @@ mod tests {
         );
 
         options.quality = Some(100);
+
         options.overwrite_policy = OverwritePolicy::Never;
         results = start_compression(&input_files, &options, progress_bar.clone(), false);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
@@ -707,6 +711,7 @@ mod tests {
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
         options.quality = Some(100);
+        options.png_opt_level = 6;
         options.lossless = true;
         options.overwrite_policy = OverwritePolicy::All;
         results = start_compression(&input_files, &options, progress_bar.clone(), true);
