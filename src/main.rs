@@ -1,6 +1,5 @@
 use crate::compressor::{start_compression, CompressionOptions, CompressionResult, CompressionStatus};
-use crate::options::VerboseLevel::{All, Progress, Quiet};
-use crate::options::{CommandLineArgs, VerboseLevel};
+use crate::options::CommandLineArgs;
 use crate::scan_files::scan_files;
 use clap::Parser;
 use human_bytes::human_bytes;
@@ -27,8 +26,8 @@ fn main() {
         .build_global()
         .unwrap_or_default();
 
-    let quiet = args.quiet || args.verbose == Quiet;
-    let verbose = if quiet { Quiet } else { args.verbose };
+    let quiet = args.quiet || args.verbose == 0;
+    let verbose = if quiet { 0 } else { args.verbose };
     let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet);
     let total_files = input_files.len();
 
@@ -39,7 +38,7 @@ fn main() {
     write_recap_message(&compression_results, verbose);
 }
 
-fn write_recap_message(compression_results: &[CompressionResult], verbose: VerboseLevel) {
+fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
     let mut total_original_size = 0;
     let mut total_compressed_size = 0;
     let total_files = compression_results.len();
@@ -56,8 +55,8 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: Verbo
             _ => total_success += 1,
         }
 
-        if verbose > Progress {
-            if verbose < All && matches!(result.status, CompressionStatus::Success) {
+        if verbose > 1 {
+            if verbose < 3 && matches!(result.status, CompressionStatus::Success) {
                 continue;
             }
             println!(
@@ -80,7 +79,7 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: Verbo
     let total_saved = total_original_size as f64 - total_compressed_size as f64;
     let total_saved_percent = total_saved / total_original_size as f64 * 100.0;
 
-    if verbose > Quiet {
+    if verbose > 0 {
         println!(
             "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [Saved {} ({:.2}%)]",
             total_files,
@@ -103,9 +102,9 @@ fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> us
     }
 }
 
-fn setup_progress_bar(len: usize, verbose: VerboseLevel) -> ProgressBar {
+fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
     let progress_bar = ProgressBar::new(len as u64);
-    if verbose == Quiet {
+    if verbose == 0 {
         progress_bar.set_draw_target(ProgressDrawTarget::hidden());
     } else {
         progress_bar.set_draw_target(ProgressDrawTarget::stdout());

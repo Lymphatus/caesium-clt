@@ -19,19 +19,6 @@ pub enum OutputFormat {
     Tiff,
     Original,
 }
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
-pub enum VerboseLevel {
-    /// Suppress all output
-    Quiet = 0,
-    /// Show only progress and final results
-    Progress = 1,
-    /// Show also skipped and error messages
-    WarningsAndErrors = 2,
-    /// Print all
-    All = 3,
-}
-
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct CommandLineArgs {
@@ -93,8 +80,8 @@ pub struct CommandLineArgs {
     pub quiet: bool,
 
     /// select how much output you want to see
-    #[arg(long, value_enum, default_value = "progress", group = "verbosity")]
-    pub verbose: VerboseLevel,
+    #[arg(long, default_value = "1", group = "verbosity", value_parser = verbose_validator)]
+    pub verbose: u8,
 
     pub files: Vec<String>,
 }
@@ -103,7 +90,7 @@ pub struct CommandLineArgs {
 #[group(required = true, multiple = false)]
 pub struct Compression {
     /// sets output file quality between [0-100]
-    #[arg(short, long)]
+    #[arg(short, long, value_parser = quality_validator)]
     pub quality: Option<u32>,
 
     /// perform lossless compression
@@ -145,4 +132,22 @@ pub struct OutputDestination {
     /// sets the output folder to be the same as the input folder, overwrites original files
     #[arg(long, default_value = "false", group = "output_destination")]
     pub same_folder_as_input: bool,
+}
+
+fn quality_validator(val: &str) -> Result<u32, String> {
+    let value: u32 = val.parse().map_err(|_| format!("`{}` is not a valid number", val))?;
+    if value > 100 {
+        Err(format!("Quality must be between 0 and 100, but found `{}`", value))
+    } else {
+        Ok(value)
+    }
+}
+
+fn verbose_validator(val: &str) -> Result<u8, String> {
+    let value: u8 = val.parse().map_err(|_| format!("`{}` is not a valid number", val))?;
+    if value > 3 {
+        Err(format!("Verbosity must be between 0 and 3, but found `{}`", value))
+    } else {
+        Ok(value)
+    }
 }
