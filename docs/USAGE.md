@@ -14,6 +14,17 @@
 
 ##### Advanced compression
 
+- `--jpeg-chroma-subsampling <JPEG_CHROMA_SUBSAMPLING>`  
+  Sets the chroma subsampling for JPEG files. Possible values are:
+    - `4:4:4`
+    - `4:2:2`
+    - `4:2:0`
+    - `4:1:1`
+    - `auto`
+
+- `--jpeg-baseline`  
+  Forces the output to be in baseline JPEG format instead of progressive.
+
 - `--png-opt-level <PNG_OPT_LEVEL>`  
   Sets the optimization level for PNG files. Higher values result in better compression but take longer to complete.
   Possible values are between 0 and 6. Default is 3.

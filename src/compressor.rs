@@ -48,6 +48,7 @@ pub struct CompressionOptions {
     pub keep_dates: bool,
     pub keep_structure: bool,
     pub jpeg_chroma_subsampling: ChromaSubsampling,
+    pub jpeg_baseline: bool,
 }
 
 pub fn start_compression(
@@ -252,6 +253,7 @@ fn build_compression_parameters(
     parameters.keep_metadata = options.exif;
 
     parameters.jpeg.chroma_subsampling = options.jpeg_chroma_subsampling;
+    parameters.jpeg.progressive = !options.jpeg_baseline;
 
     parameters.png.optimization_level = options.png_opt_level;
     parameters.png.force_zopfli = options.zopfli;
@@ -777,6 +779,7 @@ mod tests {
             exif: true,
             png_opt_level: 0,
             jpeg_chroma_subsampling: ChromaSubsampling::Auto,
+            jpeg_baseline: false,
             zopfli: false,
             base_path: PathBuf::new(),
         }

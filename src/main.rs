@@ -139,6 +139,7 @@ fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> Compre
         exif: args.exif,
         png_opt_level: args.png_opt_level,
         jpeg_chroma_subsampling: parse_jpeg_chroma_subsampling(args.jpeg_chroma_subsampling),
+        jpeg_baseline: args.jpeg_baseline,
         zopfli: args.zopfli,
         base_path: PathBuf::from(base_path),
     }

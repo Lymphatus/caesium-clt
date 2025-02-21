@@ -53,9 +53,13 @@ pub struct CommandLineArgs {
     #[arg(long, default_value = "3")]
     pub png_opt_level: u8,
 
-    /// select level for PNG optimization, between [0-6]
+    /// select the chroma subsampling for JPEG files
     #[arg(long, value_enum, default_value = "auto")]
     pub jpeg_chroma_subsampling: JpegChromaSubsampling,
+
+    /// output a baseline JPEG file, progressive (default) otherwise
+    #[arg(long)]
+    pub jpeg_baseline: bool,
 
     /// use zopfli when optimizing PNG files (it may take a very long time to complete)
     #[arg(long)]
