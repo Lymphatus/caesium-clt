@@ -203,7 +203,7 @@ dependencies = [
  "image",
  "imagesize",
  "indicatif",
- "infer 0.19.0",
+ "infer",
  "kamadak-exif",
  "libcaesium",
  "rayon",
@@ -622,15 +622,6 @@ dependencies = [
 
 [[package]]
 name = "infer"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc150e5ce2330295b8616ce0e3f53250e53af31759a9dbedad1621ba29151847"
-dependencies = [
- "cfb",
-]
-
-[[package]]
-name = "infer"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a588916bfdfd92e71cacef98a63d9b1f0d74d6599980d11894290e7ddefffcf7"
@@ -712,18 +703,19 @@ checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
 
 [[package]]
 name = "libcaesium"
-version = "0.17.2"
+version = "0.17.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "01758171300d6c9666e33e9dcac3fe06650884493d221aab06c6a93c671aa800"
+checksum = "3b0e4c5f85278cfdebc247bd6d09a3637272b79951e7305e69d7707b7b891837"
 dependencies = [
  "bytes",
  "gifsicle",
  "image",
  "imagequant",
  "img-parts",
- "infer 0.16.0",
+ "infer",
  "kamadak-exif",
  "libc",
+ "libwebp-sys",
  "lodepng",
  "mozjpeg-sys",
  "oxipng",
@@ -772,9 +764,9 @@ dependencies = [
 
 [[package]]
 name = "libwebp-sys"
-version = "0.9.6"
+version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54cd30df7c7165ce74a456e4ca9732c603e8dc5e60784558c1c6dc047f876733"
+checksum = "829b6b604f31ed6d2bccbac841fe0788de93dbd87e4eb1ba2c4adfe8c012a838"
 dependencies = [
  "cc",
  "glob",

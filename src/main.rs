@@ -1,6 +1,7 @@
 use crate::compressor::{start_compression, CompressionOptions, CompressionResult, CompressionStatus};
-use crate::options::CommandLineArgs;
+use crate::options::{CommandLineArgs, JpegChromaSubsampling};
 use crate::scan_files::scan_files;
+use caesium::parameters::ChromaSubsampling;
 use clap::Parser;
 use human_bytes::human_bytes;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
@@ -137,8 +138,19 @@ fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> Compre
         keep_dates: args.keep_dates,
         exif: args.exif,
         png_opt_level: args.png_opt_level,
+        jpeg_chroma_subsampling: parse_jpeg_chroma_subsampling(args.jpeg_chroma_subsampling),
         zopfli: args.zopfli,
         base_path: PathBuf::from(base_path),
+    }
+}
+
+fn parse_jpeg_chroma_subsampling(arg: JpegChromaSubsampling) -> ChromaSubsampling {
+    match arg {
+        JpegChromaSubsampling::ChromaSubsampling444 => ChromaSubsampling::CS444,
+        JpegChromaSubsampling::ChromaSubsampling422 => ChromaSubsampling::CS422,
+        JpegChromaSubsampling::ChromaSubsampling420 => ChromaSubsampling::CS420,
+        JpegChromaSubsampling::ChromaSubsampling411 => ChromaSubsampling::CS411,
+        _ => ChromaSubsampling::Auto,
     }
 }
 

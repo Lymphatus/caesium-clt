@@ -19,6 +19,20 @@ pub enum OutputFormat {
     Tiff,
     Original,
 }
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+pub enum JpegChromaSubsampling {
+    #[value(name = "4:4:4")]
+    ChromaSubsampling444,
+    #[value(name = "4:2:2")]
+    ChromaSubsampling422,
+    #[value(name = "4:2:0")]
+    ChromaSubsampling420,
+    #[value(name = "4:1:1")]
+    ChromaSubsampling411,
+    #[value(name = "auto")]
+    Auto,
+}
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct CommandLineArgs {
@@ -38,6 +52,10 @@ pub struct CommandLineArgs {
     /// select level for PNG optimization, between [0-6]
     #[arg(long, default_value = "3")]
     pub png_opt_level: u8,
+
+    /// select level for PNG optimization, between [0-6]
+    #[arg(long, value_enum, default_value = "auto")]
+    pub jpeg_chroma_subsampling: JpegChromaSubsampling,
 
     /// use zopfli when optimizing PNG files (it may take a very long time to complete)
     #[arg(long)]

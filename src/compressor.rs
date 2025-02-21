@@ -1,6 +1,6 @@
 use crate::options::{OutputFormat, OverwritePolicy};
 use crate::scan_files::get_file_mime_type;
-use caesium::parameters::CSParameters;
+use caesium::parameters::{CSParameters, ChromaSubsampling};
 use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
 use indicatif::ProgressBar;
 use rayon::iter::ParallelIterator;
@@ -28,7 +28,6 @@ pub struct CompressionResult {
     pub message: String,
 }
 
-#[derive(Debug)]
 pub struct CompressionOptions {
     pub quality: Option<u32>,
     pub max_size: Option<usize>,
@@ -48,6 +47,7 @@ pub struct CompressionOptions {
     pub format: OutputFormat,
     pub keep_dates: bool,
     pub keep_structure: bool,
+    pub jpeg_chroma_subsampling: ChromaSubsampling,
 }
 
 pub fn start_compression(
@@ -250,6 +250,8 @@ fn build_compression_parameters(
     parameters.optimize = options.lossless;
 
     parameters.keep_metadata = options.exif;
+
+    parameters.jpeg.chroma_subsampling = options.jpeg_chroma_subsampling;
 
     parameters.png.optimization_level = options.png_opt_level;
     parameters.png.force_zopfli = options.zopfli;
@@ -774,6 +776,7 @@ mod tests {
             keep_dates: false,
             exif: true,
             png_opt_level: 0,
+            jpeg_chroma_subsampling: ChromaSubsampling::Auto,
             zopfli: false,
             base_path: PathBuf::new(),
         }
