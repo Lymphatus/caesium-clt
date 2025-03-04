@@ -91,10 +91,10 @@
   Suppress all output. Overrides `--verbose`.
 - `--verbose <VERBOSE>`  
   Select how much output you want to see. Possible values are:
-    - `quiet`: Suppress all output
-    - `progress`: Show only progress and final results
-    - `warnings-and-errors`: Show also skipped and error messages
-    - `all`: Print all
+    - `0`: Suppress all output
+    - `1`: Show only progress and final results
+    - `2`: Show also skipped and error messages
+    - `3`: Print all
 - `-h, --help`  
   Print help. A summary can be seen with `-h`.
 - `-V, --version`  
