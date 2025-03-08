@@ -45,7 +45,6 @@ Based on [libcaesium](https://github.com/Lymphatus/libcaesium).
 | **JPEG** | ✅     | ✅        |
 | **PNG**  | ✅     | ✅        |
 | **WebP** | ✅     | ✅        |
-| **TIFF** | ❌     | ✅        |
 
 ## Getting started
 
