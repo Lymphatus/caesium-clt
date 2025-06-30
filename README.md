@@ -1,119 +1,114 @@
-# Caesium Command Line Tools [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/Lymphatus)
-
+# 🖼️ Caesium Command Line Tools [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/Lymphatus)
 
 [![Test](https://github.com/Lymphatus/caesium-clt/workflows/Test/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions?query=workflow%3ATest)
 [![Clippy](https://github.com/Lymphatus/caesium-clt/actions/workflows/clippy.yml/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions/workflows/clippy.yml)
 [![Code formatting](https://github.com/Lymphatus/caesium-clt/actions/workflows/fmt.yml/badge.svg)](https://github.com/Lymphatus/caesium-clt/actions/workflows/fmt.yml)
 
-**caesiumclt** is a command line tool for image compression written in Rust, supporting lossy, lossless, and maximum
-size compression.
-Based on [libcaesium](https://github.com/Lymphatus/libcaesium).
+> **Supercharge your image optimization workflow with lightning-fast compression**
+
+**caesiumclt** is a powerful command-line tool for image compression written in Rust that delivers exceptional results with minimal effort. Whether you need pixel-perfect lossless compression or aggressive size reduction, caesiumclt has you covered.
+
+Built on the robust [libcaesium](https://github.com/Lymphatus/libcaesium) engine, it combines high performance with flexibility to fit seamlessly into your workflow.
+
 <p align="center">
     <img alt="demo" src="https://github.com/user-attachments/assets/675d9a49-55cb-42d7-b435-de39b6917315">
 </p>
 
-## Table of Contents
+## ✨ Features
 
-- [Features](#features)
-- [Getting Started](#getting-started)
-    - [Binaries](#binaries)
-    - [Installation from Source](#installation-from-source)
-- [Usage](#usage)
-    - [Examples](#examples)
-- [Development](#development)
-    - [Requirements](#requirements)
-    - [Build](#build)
+- **Multiple Compression Modes**
+  - 🔍 Quality-based lossy compression
+  - 💎 Lossless compression - preserve image quality while reducing size
+  - 📏 Maximum size compression - target specific file sizes
 
-## Features
+- **Advanced Image Processing**
+  - 📐 Resize images with multiple options (width, height, long/short edge)
+  - 🔄 Convert between formats (JPEG, PNG, WebP)
+  - 🏷️ EXIF metadata preservation
 
-- Quality-based lossy compression
-- Lossless compression - the very same image is returned
-- Maximum size compression - the image is compressed to a specific size
-- Resize images
-- Convert to different formats
-- EXIF metadata preservation
-- Recursive directory compression
-- Folder structure preservation
-- File timestamp preservation
-- Custom suffix for output files
-- Fast and customizable multithreaded processing
+- **Workflow Optimization**
+  - 📁 Recursive directory compression
+  - 🌳 Folder structure preservation
+  - 🕒 File timestamp preservation
+  - 📝 Custom suffix for output files
+  - ⚡ Fast and customizable multithreaded processing
 
-### Supported formats
+### Supported Formats
 
 | Format   | Lossy | Lossless |
-|----------|-------|----------|
-| **JPEG** | ✅     | ✅        |
-| **PNG**  | ✅     | ✅        |
-| **WebP** | ✅     | ✅        |
+|----------|:-----:|:--------:|
+| **JPEG** |   ✅   |    ✅     |
+| **PNG**  |   ✅   |    ✅     |
+| **WebP** |   ✅   |    ✅     |
 
-## Getting started
+## 🚀 Getting Started
 
 ### Binaries
 
-You can download the latest binaries from the [releases page](https://github.com/Lymphatus/caesium-clt/releases).
-Supported platforms are:
+Download the latest binaries from the [releases page](https://github.com/Lymphatus/caesium-clt/releases).
 
+**Supported platforms:**
 - Windows (x86_64)
 - macOS (x86_64/aarch64)
 - Linux (x86_64/aarch64)
 
-### Installation from source
-
-If you have Rust installed, you can install the tool using Cargo:
-
-```bash
-cargo install --git https://github.com/Lymphatus/caesium-clt caesiumclt
-```
-
-If you instead want to build the tool refer to the [Development](#development) section.
-
-## Usage
-
-For a full list of all flags and options refer to the [full docs](docs/USAGE.md).
-
-### Examples
-
-Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output```
-
-```
-$ caesiumclt --lossless -o ~/output/ ~/image.jpg
-```
-
-Compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` with lossy compression
-and quality set to 80
-
-```
-$ caesiumclt -q 80 -o ~/output/ ~/image.jpg
-```
-
-Losslessly compress ```image1.jpg```, located in the ```home``` directory, into a folder called ```output``` and keeps
-EXIF metadata and original file date information
-
-```
-$ caesiumclt --lossless -e --keep-dates -o ~/output/ ~/image.jpg
-```
-
-Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called
-```output```
-
-```
-$ caesiumclt --lossless -R -o ~/output/ ~/Pictures
-```
-
-Losslessly compress ```Pictures``` folder and subfolders, located in the ```home``` directory, into a folder called
-```output``` retaining the input folder structure
-
-```
-$ caesiumclt --lossless -RS -o ~/output/ ~/Pictures
-```
-
-## Development
+## 🛠️ Development
 
 ### Requirements
 
 * [Rust](https://www.rust-lang.org/tools/install) >= 1.79.0
 
-### Build
+### Quick Start
 
-`cargo build`
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Lymphatus/caesium-clt.git
+   cd caesium-clt
+   ```
 
+2. **Build the project:**
+   ```bash
+   cargo build
+   ```
+
+3. **Build for release (optimized):**
+   ```bash
+   cargo build --release
+   ```
+
+4. **Run the tool directly:**
+   ```bash
+   cargo run -- [your-arguments-here]
+   ```
+
+5. **Run tests:**
+   ```bash
+   cargo test
+   ```
+
+## 📖 Usage
+
+For a complete list of all flags and options, refer to the [full documentation](docs/USAGE.md).
+
+### Examples
+
+**Lossless compression:**
+```bash
+# Compress a single image
+$ caesiumclt --lossless -o ~/output/ ~/image.jpg
+
+# Compress with metadata preservation
+$ caesiumclt --lossless -e --keep-dates -o ~/output/ ~/image.jpg
+
+# Compress a directory recursively
+$ caesiumclt --lossless -R -o ~/output/ ~/Pictures
+
+# Preserve folder structure
+$ caesiumclt --lossless -RS -o ~/output/ ~/Pictures
+```
+
+**Lossy compression:**
+```bash
+# Compress with quality setting
+$ caesiumclt -q 80 -o ~/output/ ~/image.jpg
+```
