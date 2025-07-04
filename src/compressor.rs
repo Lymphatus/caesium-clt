@@ -221,7 +221,7 @@ fn perform_image_compression(
     let mut compression_parameters = match build_compression_parameters(options, input_file, needs_resize) {
         Ok(p) => p,
         Err(e) => {
-            compression_result.message = format!("Error building compression parameters: {}", e);
+            compression_result.message = format!("Error building compression parameters: {e}");
             return None;
         }
     };
@@ -254,7 +254,7 @@ fn perform_image_compression(
     match compression_result_data {
         Ok(compressed_image) => Some(compressed_image),
         Err(e) => {
-            compression_result.message = format!("Error compressing file: {}", e);
+            compression_result.message = format!("Error compressing file: {e}");
             None
         }
     }

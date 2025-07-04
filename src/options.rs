@@ -245,9 +245,9 @@ mod tests {
         let bigger = OverwritePolicy::Bigger;
 
         // Verify they're different
-        assert_ne!(format!("{:?}", all), format!("{:?}", never));
-        assert_ne!(format!("{:?}", all), format!("{:?}", bigger));
-        assert_ne!(format!("{:?}", never), format!("{:?}", bigger));
+        assert_ne!(format!("{all:?}"), format!("{:?}", never));
+        assert_ne!(format!("{all:?}"), format!("{:?}", bigger));
+        assert_ne!(format!("{never:?}"), format!("{:?}", bigger));
     }
 
     #[test]
@@ -260,16 +260,16 @@ mod tests {
         let original = OutputFormat::Original;
 
         // Verify they're different
-        assert_ne!(format!("{:?}", jpeg), format!("{:?}", png));
-        assert_ne!(format!("{:?}", jpeg), format!("{:?}", webp));
-        assert_ne!(format!("{:?}", jpeg), format!("{:?}", tiff));
-        assert_ne!(format!("{:?}", jpeg), format!("{:?}", original));
-        assert_ne!(format!("{:?}", png), format!("{:?}", webp));
-        assert_ne!(format!("{:?}", png), format!("{:?}", tiff));
-        assert_ne!(format!("{:?}", png), format!("{:?}", original));
-        assert_ne!(format!("{:?}", webp), format!("{:?}", tiff));
-        assert_ne!(format!("{:?}", webp), format!("{:?}", original));
-        assert_ne!(format!("{:?}", tiff), format!("{:?}", original));
+        assert_ne!(format!("{jpeg:?}"), format!("{:?}", png));
+        assert_ne!(format!("{jpeg:?}"), format!("{:?}", webp));
+        assert_ne!(format!("{jpeg:?}"), format!("{:?}", tiff));
+        assert_ne!(format!("{jpeg:?}"), format!("{:?}", original));
+        assert_ne!(format!("{png:?}"), format!("{:?}", webp));
+        assert_ne!(format!("{png:?}"), format!("{:?}", tiff));
+        assert_ne!(format!("{png:?}"), format!("{:?}", original));
+        assert_ne!(format!("{webp:?}"), format!("{:?}", tiff));
+        assert_ne!(format!("{webp:?}"), format!("{:?}", original));
+        assert_ne!(format!("{tiff:?}"), format!("{:?}", original));
     }
 
     #[test]
@@ -282,15 +282,15 @@ mod tests {
         let auto = JpegChromaSubsampling::Auto;
 
         // Verify they're different
-        assert_ne!(format!("{:?}", cs444), format!("{:?}", cs422));
-        assert_ne!(format!("{:?}", cs444), format!("{:?}", cs420));
-        assert_ne!(format!("{:?}", cs444), format!("{:?}", cs411));
-        assert_ne!(format!("{:?}", cs444), format!("{:?}", auto));
-        assert_ne!(format!("{:?}", cs422), format!("{:?}", cs420));
-        assert_ne!(format!("{:?}", cs422), format!("{:?}", cs411));
-        assert_ne!(format!("{:?}", cs422), format!("{:?}", auto));
-        assert_ne!(format!("{:?}", cs420), format!("{:?}", cs411));
-        assert_ne!(format!("{:?}", cs420), format!("{:?}", auto));
-        assert_ne!(format!("{:?}", cs411), format!("{:?}", auto));
+        assert_ne!(format!("{cs444:?}"), format!("{:?}", cs422));
+        assert_ne!(format!("{cs444:?}"), format!("{:?}", cs420));
+        assert_ne!(format!("{cs444:?}"), format!("{:?}", cs411));
+        assert_ne!(format!("{cs444:?}"), format!("{:?}", auto));
+        assert_ne!(format!("{cs422:?}"), format!("{:?}", cs420));
+        assert_ne!(format!("{cs422:?}"), format!("{:?}", cs411));
+        assert_ne!(format!("{cs422:?}"), format!("{:?}", auto));
+        assert_ne!(format!("{cs420:?}"), format!("{:?}", cs411));
+        assert_ne!(format!("{cs420:?}"), format!("{:?}", auto));
+        assert_ne!(format!("{cs411:?}"), format!("{:?}", auto));
     }
 }
