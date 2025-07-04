@@ -51,10 +51,12 @@ pub struct CompressionOptions {
     pub jpeg_baseline: bool,
 }
 
+const MAX_FILE_SIZE: u64 = 500 * 1024 * 1024;
+
 pub fn start_compression(
-    input_files: &Vec<PathBuf>,
+    input_files: &[PathBuf],
     options: &CompressionOptions,
-    progress_bar: ProgressBar,
+    progress_bar: &ProgressBar,
     dry_run: bool,
 ) -> Vec<CompressionResult> {
     input_files
@@ -68,11 +70,7 @@ pub fn start_compression(
 }
 
 fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_run: bool) -> CompressionResult {
-    let needs_resize = options.width.is_some()
-        || options.height.is_some()
-        || options.long_edge.is_some()
-        || options.short_edge.is_some();
-
+    let needs_resize = is_resize_needed(options);
     let mut compression_result = CompressionResult {
         original_path: input_file.display().to_string(),
         output_path: String::new(),
@@ -82,88 +80,161 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
         message: String::new(),
     };
 
-    let input_file_metadata = match input_file.metadata() {
-        Ok(m) => m,
-        Err(_) => {
-            compression_result.message = "Error reading file metadata".to_string();
-            return compression_result;
-        }
+    let original_file_size = match get_file_size(input_file, &mut compression_result) {
+        Some(size) => size,
+        None => return compression_result,
     };
-    let original_file_size = input_file_metadata.len();
+
+    if original_file_size > MAX_FILE_SIZE {
+        compression_result.message = "File exceeds 500Mb, skipping.".to_string();
+        compression_result.status = CompressionStatus::Skipped;
+        return compression_result;
+    }
+
     compression_result.original_size = original_file_size;
 
-    let output_directory = if options.same_folder_as_input {
-        match input_file.parent() {
-            Some(p) => p,
-            None => {
-                compression_result.message = "Error getting parent directory".to_string();
-                return compression_result;
-            }
-        }
-    } else {
-        match options.output_folder.as_ref() {
-            Some(p) => p,
-            None => {
-                compression_result.message = "Error getting output directory".to_string();
-                return compression_result;
-            }
-        }
+    let output_full_path = match setup_output_path(input_file, options, &mut compression_result) {
+        Some(path) => path,
+        None => return compression_result,
     };
-
-    let (output_directory, filename) = match compute_output_full_path(
-        output_directory,
-        input_file,
-        &options.base_path,
-        options.keep_structure,
-        options.suffix.as_ref().unwrap_or(&String::new()).as_ref(),
-        options.format,
-    ) {
-        Some(p) => p,
-        None => {
-            compression_result.message = "Error computing output path".to_string();
-            return compression_result;
-        }
-    };
-    if !output_directory.exists() {
-        match fs::create_dir_all(&output_directory) {
-            Ok(_) => {}
-            Err(_) => {
-                compression_result.message = "Error creating output directory".to_string();
-                return compression_result;
-            }
-        }
-    }
-    let output_full_path = output_directory.join(filename);
     compression_result.output_path = output_full_path.display().to_string();
-    let output_exists = output_full_path.exists();
 
-    if options.overwrite_policy == OverwritePolicy::Never && output_exists {
-        compression_result.status = CompressionStatus::Skipped;
-        compression_result.compressed_size = original_file_size;
-        compression_result.message = "File already exists, skipped due overwrite policy".to_string();
+    if skip_due_to_overwrite_policy(options, &output_full_path, original_file_size, &mut compression_result) {
         return compression_result;
     }
 
     if dry_run {
         compression_result.status = CompressionStatus::Success;
         return compression_result;
+    }
+
+    let compressed_image = match perform_image_compression(input_file, options, needs_resize, &mut compression_result) {
+        Some(image) => image,
+        None => return compression_result,
     };
 
+    let output_file_size = compressed_image.len() as u64;
+
+    if skip_due_to_bigger_policy(
+        options,
+        &output_full_path,
+        output_file_size,
+        original_file_size,
+        &mut compression_result,
+    ) {
+        return compression_result;
+    }
+
+    if let Err(msg) = write_compressed_file(&output_full_path, &compressed_image, options, input_file) {
+        compression_result.message = msg;
+        return compression_result;
+    }
+
+    compression_result.status = CompressionStatus::Success;
+    compression_result.compressed_size = output_file_size;
+    compression_result
+}
+
+fn is_resize_needed(options: &CompressionOptions) -> bool {
+    options.width.is_some() || options.height.is_some() || options.long_edge.is_some() || options.short_edge.is_some()
+}
+
+fn get_file_size(input_file: &Path, compression_result: &mut CompressionResult) -> Option<u64> {
+    match input_file.metadata() {
+        Ok(metadata) => Some(metadata.len()),
+        Err(_) => {
+            compression_result.message = "Error reading file metadata".to_string();
+            None
+        }
+    }
+}
+
+fn setup_output_path(
+    input_file: &Path,
+    options: &CompressionOptions,
+    compression_result: &mut CompressionResult,
+) -> Option<PathBuf> {
+    let output_directory = determine_output_directory(input_file, options, compression_result)?;
+    let (output_directory, filename) = compute_output_full_path(
+        output_directory,
+        input_file,
+        &options.base_path,
+        options.keep_structure,
+        options.suffix.as_ref().unwrap_or(&String::new()).as_ref(),
+        options.format,
+    )?;
+
+    if !output_directory.exists() && fs::create_dir_all(&output_directory).is_err() {
+        compression_result.message = "Error creating output directory".to_string();
+        return None;
+    }
+
+    Some(output_directory.join(filename))
+}
+
+fn determine_output_directory<'a>(
+    input_file: &'a Path,
+    options: &'a CompressionOptions,
+    compression_result: &mut CompressionResult,
+) -> Option<&'a Path> {
+    if options.same_folder_as_input {
+        match input_file.parent() {
+            Some(p) => Some(p),
+            None => {
+                compression_result.message = "Error getting parent directory".to_string();
+                None
+            }
+        }
+    } else {
+        match options.output_folder.as_ref() {
+            Some(p) => Some(p),
+            None => {
+                compression_result.message = "Error getting output directory".to_string();
+                None
+            }
+        }
+    }
+}
+
+fn skip_due_to_overwrite_policy(
+    options: &CompressionOptions,
+    output_path: &Path,
+    original_size: u64,
+    compression_result: &mut CompressionResult,
+) -> bool {
+    if options.overwrite_policy == OverwritePolicy::Never && output_path.exists() {
+        compression_result.status = CompressionStatus::Skipped;
+        compression_result.compressed_size = original_size;
+        compression_result.message = "File already exists, skipped due overwrite policy".to_string();
+        return true;
+    }
+
+    false
+}
+
+fn perform_image_compression(
+    input_file: &PathBuf,
+    options: &CompressionOptions,
+    needs_resize: bool,
+    compression_result: &mut CompressionResult,
+) -> Option<Vec<u8>> {
     let mut compression_parameters = match build_compression_parameters(options, input_file, needs_resize) {
         Ok(p) => p,
         Err(e) => {
             compression_result.message = format!("Error building compression parameters: {}", e);
-            return compression_result;
+            return None;
         }
     };
+
     let input_file_buffer = match read_file_to_vec(input_file) {
         Ok(b) => b,
         Err(_) => {
             compression_result.message = "Error reading input file".to_string();
-            return compression_result;
+            return None;
         }
     };
-    let compression = if options.max_size.is_some() {
+
+    let compression_result_data = if options.max_size.is_some() {
         compress_to_size_in_memory(
             input_file_buffer,
             &mut compression_parameters,
@@ -180,59 +251,63 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
         compress_in_memory(input_file_buffer, &compression_parameters)
     };
 
-    let compressed_image = match compression {
-        Ok(v) => v,
+    match compression_result_data {
+        Ok(compressed_image) => Some(compressed_image),
         Err(e) => {
             compression_result.message = format!("Error compressing file: {}", e);
-            return compression_result;
+            None
         }
-    };
-    let output_file_size = compressed_image.len() as u64;
+    }
+}
 
-    if output_exists && options.overwrite_policy == OverwritePolicy::Bigger {
-        let existing_file_metadata = match output_full_path.metadata() {
-            Ok(m) => m,
+fn skip_due_to_bigger_policy(
+    options: &CompressionOptions,
+    output_path: &Path,
+    output_size: u64,
+    original_size: u64,
+    compression_result: &mut CompressionResult,
+) -> bool {
+    if output_path.exists() && options.overwrite_policy == OverwritePolicy::Bigger {
+        match output_path.metadata() {
+            Ok(existing_metadata) => {
+                if existing_metadata.len() <= output_size {
+                    compression_result.status = CompressionStatus::Skipped;
+                    compression_result.compressed_size = original_size;
+                    compression_result.message = "File already exists, skipped due overwrite policy".to_string();
+                    return true;
+                }
+            }
             Err(_) => {
                 compression_result.message = "Error reading existing file metadata".to_string();
-                return compression_result;
+                return false;
             }
-        };
-        if existing_file_metadata.len() <= output_file_size {
-            compression_result.status = CompressionStatus::Skipped;
-            compression_result.compressed_size = original_file_size;
-            compression_result.message = "File already exists, skipped due overwrite policy".to_string();
-            return compression_result;
         }
     }
 
-    let mut output_file = match File::create(&output_full_path) {
-        Ok(f) => f,
-        Err(_) => {
-            compression_result.message = "Error creating output file".to_string();
-            return compression_result;
-        }
-    };
-    match output_file.write_all(&compressed_image) {
-        Ok(_) => {}
-        Err(_) => {
-            compression_result.message = "Error writing output file".to_string();
-            return compression_result;
-        }
-    };
+    false
+}
+
+fn write_compressed_file(
+    output_path: &PathBuf,
+    compressed_image: &[u8],
+    options: &CompressionOptions,
+    input_file: &Path,
+) -> Result<(), String> {
+    let mut output_file = File::create(output_path).map_err(|_| "Error creating output file".to_string())?;
+
+    output_file
+        .write_all(compressed_image)
+        .map_err(|_| "Error writing output file".to_string())?;
 
     if options.keep_dates {
-        match preserve_file_times(&output_file, &input_file_metadata) {
-            Ok(_) => {}
-            Err(_) => {
-                compression_result.message = "Error preserving file times".to_string();
-                return compression_result;
-            }
-        };
+        let input_metadata = input_file
+            .metadata()
+            .map_err(|_| "Error reading input file metadata for date preservation".to_string())?;
+
+        preserve_file_times(&output_file, &input_metadata).map_err(|_| "Error preserving file times".to_string())?;
     }
 
-    compression_result.status = CompressionStatus::Success;
-    compression_result.compressed_size = output_file_size;
-    compression_result
+    Ok(())
 }
 
 fn build_compression_parameters(
@@ -637,7 +712,6 @@ mod tests {
 
     #[test]
     fn test_perform_compression() {
-        // Setup command line arguments
         let input_files = vec![
             absolute(PathBuf::from("samples/j0.JPG")).unwrap(),
             absolute(PathBuf::from("samples/p0.png")).unwrap(),
@@ -652,7 +726,7 @@ mod tests {
         let temp_dir = tempdir().unwrap().path().to_path_buf();
         options.output_folder = Some(temp_dir.clone());
 
-        let mut results = start_compression(&input_files, &options, progress_bar.clone(), false);
+        let mut results = start_compression(&input_files, &options, &progress_bar, false);
         assert_eq!(results.len(), 4);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
@@ -674,7 +748,7 @@ mod tests {
         let temp_dir = tempdir().unwrap().path().to_path_buf();
         options.output_folder = Some(temp_dir.clone());
         options.keep_structure = true;
-        results = start_compression(&input_files, &options, progress_bar.clone(), false);
+        results = start_compression(&input_files, &options, &progress_bar, false);
         assert_eq!(results.len(), 7);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
@@ -698,19 +772,19 @@ mod tests {
         options.quality = Some(100);
 
         options.overwrite_policy = OverwritePolicy::Never;
-        results = start_compression(&input_files, &options, progress_bar.clone(), false);
+        results = start_compression(&input_files, &options, &progress_bar, false);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
         options.quality = Some(100);
         options.overwrite_policy = OverwritePolicy::Bigger;
-        results = start_compression(&input_files, &options, progress_bar.clone(), false);
+        results = start_compression(&input_files, &options, &progress_bar, false);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
         options.quality = Some(100);
         options.overwrite_policy = OverwritePolicy::All;
-        results = start_compression(&input_files, &options, progress_bar.clone(), true);
+        results = start_compression(&input_files, &options, &progress_bar, true);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
@@ -718,13 +792,13 @@ mod tests {
         options.png_opt_level = 6;
         options.lossless = true;
         options.overwrite_policy = OverwritePolicy::All;
-        results = start_compression(&input_files, &options, progress_bar.clone(), true);
+        results = start_compression(&input_files, &options, &progress_bar, true);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
         options.quality = Some(80);
         options.keep_dates = true;
-        results = start_compression(&input_files, &options, progress_bar.clone(), false);
+        results = start_compression(&input_files, &options, &progress_bar, false);
 
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| {

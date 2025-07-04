@@ -75,7 +75,6 @@
     - `jpeg`
     - `png`
     - `webp`
-    - `tiff`
     - `original` (default, no changes)
 
 ##### Other

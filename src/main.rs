@@ -13,15 +13,24 @@ mod compressor;
 mod options;
 mod scan_files;
 
+const PROGRESS_UPDATE_INTERVAL: Duration = Duration::from_secs(1);
+const FALLBACK_THREAD_COUNT: usize = 1;
+
 fn main() {
     let args = CommandLineArgs::parse();
+
+    if args.files.is_empty() {
+        eprintln!("No files to compress");
+        return;
+    }
 
     let threads_number = get_parallelism_count(
         args.threads,
         std::thread::available_parallelism()
-            .unwrap_or(NonZero::new(1).unwrap())
+            .unwrap_or_else(|_| NonZero::new(FALLBACK_THREAD_COUNT).expect("1 is never zero"))
             .get(),
     );
+
     rayon::ThreadPoolBuilder::new()
         .num_threads(threads_number)
         .build_global()
@@ -34,32 +43,48 @@ fn main() {
 
     let progress_bar = setup_progress_bar(total_files, verbose);
     let compression_options = build_compression_options(&args, &base_path);
-    let compression_results = start_compression(&input_files, &compression_options, progress_bar, args.dry_run);
-
+    let compression_results = start_compression(&input_files, &compression_options, &progress_bar, args.dry_run);
+    progress_bar.finish();
     write_recap_message(&compression_results, verbose);
 }
 
 fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
-    let mut total_original_size = 0;
-    let mut total_compressed_size = 0;
-    let total_files = compression_results.len();
-    let mut total_success = 0;
-    let mut total_skipped = 0;
-    let mut total_errors = 0;
+    if compression_results.is_empty() {
+        return;
+    }
 
-    for result in compression_results.iter() {
-        total_original_size += result.original_size;
-        total_compressed_size += result.compressed_size;
-        match result.status {
-            CompressionStatus::Skipped => total_skipped += 1,
-            CompressionStatus::Error => total_errors += 1,
-            _ => total_success += 1,
-        }
+    let stats = compression_results.iter().fold(
+        (0u64, 0u64, 0usize, 0usize, 0usize), // (original_size, compressed_size, success, skipped, errors)
+        |(orig, comp, success, skipped, errors), result| {
+            let (new_success, new_skipped, new_errors) = match result.status {
+                CompressionStatus::Success => (success + 1, skipped, errors),
+                CompressionStatus::Skipped => (success, skipped + 1, errors),
+                CompressionStatus::Error => (success, skipped, errors + 1),
+            };
+            (
+                orig + result.original_size,
+                comp + result.compressed_size,
+                new_success,
+                new_skipped,
+                new_errors,
+            )
+        },
+    );
 
-        if verbose > 1 {
+    let (total_original_size, total_compressed_size, total_success, total_skipped, total_errors) = stats;
+
+    if verbose > 1 {
+        for result in compression_results {
             if verbose < 3 && matches!(result.status, CompressionStatus::Success) {
                 continue;
             }
+
+            let savings_percent = if result.original_size > 0 {
+                ((result.compressed_size as f64 - result.original_size as f64) / result.original_size as f64) * 100.0
+            } else {
+                0.0
+            };
+
             println!(
                 "[{:?}] {} -> {}\n{} -> {} [{:.2}%]",
                 result.status,
@@ -67,7 +92,7 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
                 result.output_path,
                 human_bytes(result.original_size as f64),
                 human_bytes(result.compressed_size as f64),
-                (result.compressed_size as f64 - result.original_size as f64) * 100.0 / result.original_size as f64
+                savings_percent
             );
 
             if !result.message.is_empty() {
@@ -77,29 +102,32 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
         }
     }
 
-    let total_saved = total_original_size as f64 - total_compressed_size as f64;
-    let total_saved_percent = total_saved / total_original_size as f64 * 100.0;
-
     if verbose > 0 {
+        let total_saved = total_original_size.saturating_sub(total_compressed_size) as f64;
+        let total_saved_percent = if total_original_size > 0 {
+            (total_saved / total_original_size as f64) * 100.0
+        } else {
+            0.0
+        };
+
         println!(
             "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [Saved {} ({:.2}%)]",
-            total_files,
+            compression_results.len(),
             total_success,
             total_skipped,
             total_errors,
             human_bytes(total_original_size as f64),
             human_bytes(total_compressed_size as f64),
             human_bytes(total_saved),
-            total_saved_percent * -1.0
+            total_saved_percent
         );
     }
 }
 
 fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> usize {
-    if requested_threads > 0 {
-        std::cmp::min(available_threads, requested_threads as usize)
-    } else {
-        available_threads
+    match requested_threads {
+        0 => available_threads,
+        n => (n as usize).min(available_threads),
     }
 }
 
@@ -107,16 +135,18 @@ fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
     let progress_bar = ProgressBar::new(len as u64);
     if verbose == 0 {
         progress_bar.set_draw_target(ProgressDrawTarget::hidden());
-    } else {
-        progress_bar.set_draw_target(ProgressDrawTarget::stdout());
+        return progress_bar;
     }
+
+    progress_bar.set_draw_target(ProgressDrawTarget::stdout());
+
     progress_bar.set_style(
         ProgressStyle::default_bar()
             .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len}\n{msg}")
-            .unwrap_or_else(|_| ProgressStyle::default_bar())
+            .unwrap_or(ProgressStyle::default_bar())
             .progress_chars("#>-"),
     );
-    progress_bar.enable_steady_tick(Duration::new(1, 0));
+    progress_bar.enable_steady_tick(PROGRESS_UPDATE_INTERVAL);
     progress_bar
 }
 
@@ -178,5 +208,18 @@ mod tests {
 
         let result = get_parallelism_count(0, 0);
         assert_eq!(result, 0);
+    }
+
+    #[test]
+    fn test_setup_progress_bar() {
+        // Test with verbose = 0 (hidden)
+        let progress_bar = setup_progress_bar(10, 0);
+        assert!(progress_bar.is_hidden());
+        assert_eq!(progress_bar.length(), Some(10));
+
+        // Test with verbose > 0 (visible)
+        // let progress_bar = setup_progress_bar(20, 1);
+        // assert_eq!(progress_bar.is_hidden(), false);
+        // assert_eq!(progress_bar.length(), Some(20));
     }
 }

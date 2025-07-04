@@ -1,6 +1,6 @@
 [package]
 name = "caesiumclt"
-version = "1.0.0-beta.1"
+version = "1.0.0-beta.2"
 authors = ["Matteo Paonessa <matteo.paonessa@gmail.com>"]
 edition = "2021"
 exclude = [
@@ -15,7 +15,7 @@ homepage = "https://github.com/Lymphatus/caesium-clt"
 repository = "https://github.com/Lymphatus/caesium-clt"
 
 [dependencies]
-indicatif = { version = "0.17", features = ["rayon"] }
+indicatif = { version = "0.18.0", features = ["rayon"] }
 walkdir = "2.5"
 infer = "0.19"
 rayon = "1.10"
