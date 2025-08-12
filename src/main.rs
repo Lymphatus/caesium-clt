@@ -188,6 +188,10 @@ fn parse_jpeg_chroma_subsampling(arg: JpegChromaSubsampling) -> ChromaSubsamplin
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::options::{
+        Compression, JpegChromaSubsampling, OutputDestination, OutputFormat, OverwritePolicy, Resize,
+    };
+    use std::path::PathBuf;
 
     #[test]
     fn test_get_parallelism_count() {
@@ -219,7 +223,198 @@ mod tests {
 
         // Test with verbose > 0 (visible)
         // let progress_bar = setup_progress_bar(20, 1);
-        // assert_eq!(progress_bar.is_hidden(), false);
+        // assert!(!progress_bar.is_hidden());
         // assert_eq!(progress_bar.length(), Some(20));
+
+        // Test with different lengths
+        let progress_bar = setup_progress_bar(0, 1);
+        assert_eq!(progress_bar.length(), Some(0));
+    }
+
+    #[test]
+    fn test_parse_jpeg_chroma_subsampling() {
+        assert!(parse_jpeg_chroma_subsampling(JpegChromaSubsampling::ChromaSubsampling444) == ChromaSubsampling::CS444);
+        assert!(parse_jpeg_chroma_subsampling(JpegChromaSubsampling::ChromaSubsampling422) == ChromaSubsampling::CS422);
+        assert!(parse_jpeg_chroma_subsampling(JpegChromaSubsampling::ChromaSubsampling420) == ChromaSubsampling::CS420);
+        assert!(parse_jpeg_chroma_subsampling(JpegChromaSubsampling::ChromaSubsampling411) == ChromaSubsampling::CS411);
+        assert!(parse_jpeg_chroma_subsampling(JpegChromaSubsampling::Auto) == ChromaSubsampling::Auto);
+    }
+
+    #[test]
+    fn test_build_compression_options() {
+        let args = create_test_args();
+        let base_path = Path::new("/test/base");
+
+        let options = build_compression_options(&args, base_path);
+
+        // Test that all fields are correctly mapped
+        assert_eq!(options.quality, Some(80));
+        assert!(!options.lossless);
+        assert_eq!(options.max_size, Some(1024));
+        assert_eq!(options.output_folder, Some(PathBuf::from("/output")));
+        assert!(!options.same_folder_as_input);
+        assert_eq!(options.overwrite_policy, OverwritePolicy::All);
+        assert_eq!(options.format, OutputFormat::Jpeg);
+        assert_eq!(options.suffix, Some("_compressed".to_string()));
+        assert!(options.keep_structure);
+        assert_eq!(options.width, Some(800));
+        assert_eq!(options.height, Some(600));
+        assert_eq!(options.long_edge, None);
+        assert_eq!(options.short_edge, None);
+        assert!(options.keep_dates);
+        assert!(options.exif);
+        assert_eq!(options.png_opt_level, 5);
+        assert!(options.jpeg_chroma_subsampling == ChromaSubsampling::CS420);
+        assert!(options.jpeg_baseline);
+        assert!(options.zopfli);
+        assert_eq!(options.base_path, PathBuf::from(base_path));
+    }
+
+    #[test]
+    fn test_write_recap_message_empty_results() {
+        // Test with empty results - should return early without printing
+        let results: Vec<CompressionResult> = vec![];
+
+        // This test mainly ensures the function doesn't panic with empty input
+        write_recap_message(&results, 1);
+        write_recap_message(&results, 0);
+        write_recap_message(&results, 3);
+    }
+
+    #[test]
+    fn test_write_recap_message_statistics_calculation() {
+        let results = vec![
+            CompressionResult {
+                original_path: "test1.jpg".to_string(),
+                output_path: "out1.jpg".to_string(),
+                original_size: 1000,
+                compressed_size: 800,
+                status: CompressionStatus::Success,
+                message: "".to_string(),
+            },
+            CompressionResult {
+                original_path: "test2.jpg".to_string(),
+                output_path: "out2.jpg".to_string(),
+                original_size: 2000,
+                compressed_size: 1500,
+                status: CompressionStatus::Skipped,
+                message: "File skipped".to_string(),
+            },
+            CompressionResult {
+                original_path: "test3.jpg".to_string(),
+                output_path: "out3.jpg".to_string(),
+                original_size: 500,
+                compressed_size: 0,
+                status: CompressionStatus::Error,
+                message: "Compression failed".to_string(),
+            },
+        ];
+
+        // Test with verbose = 0 (should not print detailed results)
+        write_recap_message(&results, 0);
+
+        // Test with verbose = 1 (should print summary only)
+        write_recap_message(&results, 1);
+
+        // Test with verbose = 2 (should print some details)
+        write_recap_message(&results, 2);
+
+        // Test with verbose = 3 (should print all details)
+        write_recap_message(&results, 3);
+    }
+
+    #[test]
+    fn test_write_recap_message_zero_division_handling() {
+        let results = vec![CompressionResult {
+            original_path: "test.jpg".to_string(),
+            output_path: "out.jpg".to_string(),
+            original_size: 0, // Test zero division case
+            compressed_size: 0,
+            status: CompressionStatus::Success,
+            message: "".to_string(),
+        }];
+
+        // Should not panic with zero original size
+        write_recap_message(&results, 3);
+    }
+
+    // Helper function to create test CommandLineArgs
+    fn create_test_args() -> CommandLineArgs {
+        CommandLineArgs {
+            compression: Compression {
+                quality: Some(80),
+                lossless: false,
+                max_size: Some(1024),
+            },
+            resize: Resize {
+                width: Some(800),
+                height: Some(600),
+                long_edge: None,
+                short_edge: None,
+            },
+            output_destination: OutputDestination {
+                output: Some(PathBuf::from("/output")),
+                same_folder_as_input: false,
+            },
+            format: OutputFormat::Jpeg,
+            png_opt_level: 5,
+            jpeg_chroma_subsampling: JpegChromaSubsampling::ChromaSubsampling420,
+            jpeg_baseline: true,
+            zopfli: true,
+            exif: true,
+            keep_dates: true,
+            suffix: Some("_compressed".to_string()),
+            recursive: true,
+            keep_structure: true,
+            dry_run: false,
+            threads: 4,
+            overwrite: OverwritePolicy::All,
+            quiet: false,
+            verbose: 2,
+            files: vec!["test1.jpg".to_string(), "test2.png".to_string()],
+        }
+    }
+
+    #[test]
+    fn test_build_compression_options_with_defaults() {
+        let mut args = create_test_args();
+
+        // Test with some None/default values
+        args.compression.quality = None;
+        args.compression.max_size = None;
+        args.suffix = None;
+        args.output_destination.output = None;
+        args.output_destination.same_folder_as_input = true;
+        args.resize.width = None;
+        args.resize.height = None;
+        args.resize.long_edge = Some(1200);
+        args.resize.short_edge = None;
+
+        let base_path = Path::new("/different/base");
+        let options = build_compression_options(&args, base_path);
+
+        assert_eq!(options.quality, None);
+        assert_eq!(options.max_size, None);
+        assert_eq!(options.suffix, None);
+        assert_eq!(options.output_folder, None);
+        assert!(options.same_folder_as_input);
+        assert_eq!(options.width, None);
+        assert_eq!(options.height, None);
+        assert_eq!(options.long_edge, Some(1200));
+        assert_eq!(options.short_edge, None);
+        assert_eq!(options.base_path, PathBuf::from(base_path));
+    }
+
+    #[test]
+    fn test_build_compression_options_edge_cases() {
+        let mut args = create_test_args();
+        args.format = OutputFormat::Original;
+        args.jpeg_chroma_subsampling = JpegChromaSubsampling::Auto;
+
+        let options = build_compression_options(&args, Path::new(""));
+
+        assert_eq!(options.format, OutputFormat::Original);
+        assert!(options.jpeg_chroma_subsampling == ChromaSubsampling::Auto);
+        assert_eq!(options.base_path, PathBuf::from(""));
     }
 }
