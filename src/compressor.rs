@@ -9,6 +9,7 @@ use std::error::Error;
 use std::ffi::OsString;
 use std::fs::{File, FileTimes, Metadata};
 use std::io::{BufReader, Read, Write};
+#[cfg(target_os = "windows")]
 use std::os::windows::fs::FileTimesExt;
 use std::path::{absolute, Path, PathBuf};
 use std::{fs, io};
@@ -441,17 +442,20 @@ fn get_real_resolution(
 }
 
 fn preserve_file_times(output_file: &File, original_file_metadata: &Metadata) -> io::Result<()> {
-    let (last_modification_time, last_access_time, creation_time) = (
-        original_file_metadata.modified()?,
-        original_file_metadata.accessed()?,
-        original_file_metadata.created()?,
-    );
-    output_file.set_times(
-        FileTimes::new()
-            .set_created(creation_time)
-            .set_modified(last_modification_time)
-            .set_accessed(last_access_time),
-    )?;
+    let (last_modification_time, last_access_time) =
+        (original_file_metadata.modified()?, original_file_metadata.accessed()?);
+    let file_times = FileTimes::new();
+    #[cfg(target_os = "windows")]
+    {
+        let creation_time = original_file_metadata.created()?;
+
+        file_times.set_created(creation_time);
+    }
+
+    file_times
+        .set_modified(last_modification_time)
+        .set_accessed(last_access_time);
+    output_file.set_times(file_times)?;
     Ok(())
 }
 fn map_supported_formats(format: OutputFormat) -> SupportedFileTypes {
