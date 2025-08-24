@@ -67,6 +67,10 @@ pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (PathBuf, Ve
 }
 
 fn compute_base_path(path: &Path, base_path: &Path) -> Option<PathBuf> {
+    if !path.exists() {
+        return None;
+    }
+
     if let Ok(ap) = absolute(path) {
         let bp = compute_base_folder(base_path, &ap)?;
         return Some(bp);

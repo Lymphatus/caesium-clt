@@ -7,6 +7,7 @@ use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelRefIterator;
 use std::error::Error;
 use std::ffi::OsString;
+use std::fmt::Display;
 use std::fs::{File, FileTimes, Metadata};
 use std::io::{BufReader, Read, Write};
 #[cfg(target_os = "windows")]
@@ -19,6 +20,16 @@ pub enum CompressionStatus {
     Success,
     Skipped,
     Error,
+}
+
+impl Display for CompressionStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CompressionStatus::Success => write!(f, "Success"),
+            CompressionStatus::Skipped => write!(f, "Skipped"),
+            CompressionStatus::Error => write!(f, "Error"),
+        }
+    }
 }
 #[derive(Debug)]
 pub struct CompressionResult {
@@ -359,7 +370,11 @@ fn compute_output_full_path(
     }
 
     if keep_structure {
-        let parent = match absolute(input_file_path.parent()?) {
+        let parent = input_file_path.parent()?;
+        if !parent.exists() {
+            return None;
+        }
+        let parent = match absolute(parent) {
             Ok(p) => p,
             Err(_) => return None,
         };
@@ -479,18 +494,23 @@ fn read_file_to_vec(file_path: &PathBuf) -> io::Result<Vec<u8>> {
 mod tests {
     use super::*;
     use indicatif::ProgressDrawTarget;
-    use std::path::Path;
     use std::time::UNIX_EPOCH;
     use tempfile::tempdir;
 
-    #[cfg(not(target_os = "windows"))]
     #[test]
     fn test_compute_output_full_path() {
-        let output_directory = PathBuf::from("/output");
-        let base_directory = PathBuf::from("/base");
+        // Create temporary directories for testing
+        let temp_dir = tempdir().unwrap();
+        let output_directory = temp_dir.path().join("output");
+        let base_directory = temp_dir.path().join("base");
+        let input_folder = base_directory.join("folder");
+
+        // Create the necessary directory structure
+        fs::create_dir_all(&output_directory).unwrap();
+        fs::create_dir_all(&input_folder).unwrap();
 
         // Test case 1: keep_structure = true
-        let input_file_path = PathBuf::from("/base/folder/test.jpg");
+        let input_file_path = input_folder.join("test.jpg");
         let result = compute_output_full_path(
             &output_directory,
             &input_file_path,
@@ -500,10 +520,7 @@ mod tests {
             OutputFormat::Original,
         )
         .unwrap();
-        assert_eq!(
-            result,
-            (Path::new("/output/folder").to_path_buf(), "test_suffix.jpg".into())
-        );
+        assert_eq!(result, (output_directory.join("folder"), "test_suffix.jpg".into()));
 
         // Test case 2: keep_structure = false
         let result = compute_output_full_path(
@@ -515,10 +532,10 @@ mod tests {
             OutputFormat::Original,
         )
         .unwrap();
-        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.jpg".into()));
+        assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
 
         // Test case 3: input file without extension
-        let input_file_path = PathBuf::from("/base/folder/test");
+        let input_file_path = input_folder.join("test");
         let result = compute_output_full_path(
             &output_directory,
             &input_file_path,
@@ -528,10 +545,13 @@ mod tests {
             OutputFormat::Original,
         )
         .unwrap();
-        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix".into()));
+        assert_eq!(result, (output_directory.clone(), "test_suffix".into()));
 
         // Test case 4: input file with different base directory
-        let input_file_path = PathBuf::from("/different_base/folder/test.jpg");
+        let different_base = temp_dir.path().join("different_base");
+        let different_folder = different_base.join("folder");
+        fs::create_dir_all(&different_folder).unwrap();
+        let input_file_path = different_folder.join("test.jpg");
         let result = compute_output_full_path(
             &output_directory,
             &input_file_path,
@@ -541,7 +561,7 @@ mod tests {
             OutputFormat::Original,
         )
         .unwrap();
-        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.jpg".into()));
+        assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
 
         // Test case 5: input file with OutputFormat::Jpeg
         let result = compute_output_full_path(
@@ -553,7 +573,7 @@ mod tests {
             OutputFormat::Jpeg,
         )
         .unwrap();
-        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.jpg".into()));
+        assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
 
         // Test case 6: input file with OutputFormat::Png
         let result = compute_output_full_path(
@@ -565,7 +585,7 @@ mod tests {
             OutputFormat::Png,
         )
         .unwrap();
-        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.png".into()));
+        assert_eq!(result, (output_directory.clone(), "test_suffix.png".into()));
 
         // Test case 7: input file with OutputFormat::Webp
         let result = compute_output_full_path(
@@ -577,7 +597,7 @@ mod tests {
             OutputFormat::Webp,
         )
         .unwrap();
-        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.webp".into()));
+        assert_eq!(result, (output_directory.clone(), "test_suffix.webp".into()));
 
         // Test case 8: input file with OutputFormat::Tiff
         let result = compute_output_full_path(
@@ -589,134 +609,7 @@ mod tests {
             OutputFormat::Tiff,
         )
         .unwrap();
-        assert_eq!(result, (Path::new("/output").to_path_buf(), "test_suffix.tiff".into()));
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn test_compute_output_full_path() {
-        let output_directory = PathBuf::from(r"C:\output");
-        let base_directory = PathBuf::from(r"C:\base");
-
-        // Test case 1: keep_structure = true
-        let input_file_path = PathBuf::from(r"C:\base\folder\test.jpg");
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            true,
-            "_suffix",
-            OutputFormat::Original,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            (Path::new(r"C:\output\folder").to_path_buf(), "test_suffix.jpg".into())
-        );
-
-        // Test case 2: keep_structure = false
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            false,
-            "_suffix",
-            OutputFormat::Original,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            (Path::new(r"C:\output").to_path_buf(), "test_suffix.jpg".into())
-        );
-
-        // Test case 3: input file without extension
-        let input_file_path = PathBuf::from(r"C:\base\folder\test");
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            false,
-            "_suffix",
-            OutputFormat::Original,
-        )
-        .unwrap();
-        assert_eq!(result, (Path::new(r"C:\output").to_path_buf(), "test_suffix".into()));
-
-        // Test case 4: input file with different base directory
-        let input_file_path = PathBuf::from(r"C:\different_base\folder\test.jpg");
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            false,
-            "_suffix",
-            OutputFormat::Original,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            (Path::new(r"C:\output").to_path_buf(), "test_suffix.jpg".into())
-        );
-
-        // Test case 5: input file with OutputFormat::Jpeg
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            false,
-            "_suffix",
-            OutputFormat::Jpeg,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            (Path::new(r"C:\output").to_path_buf(), "test_suffix.jpg".into())
-        );
-
-        // Test case 6: input file with OutputFormat::Png
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            false,
-            "_suffix",
-            OutputFormat::Png,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            (Path::new(r"C:\output").to_path_buf(), "test_suffix.png".into())
-        );
-
-        // Test case 7: input file with OutputFormat::Webp
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            false,
-            "_suffix",
-            OutputFormat::Webp,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            (Path::new(r"C:\output").to_path_buf(), "test_suffix.webp".into())
-        );
-
-        // Test case 8: input file with OutputFormat::Tiff
-        let result = compute_output_full_path(
-            &output_directory,
-            &input_file_path,
-            &base_directory,
-            false,
-            "_suffix",
-            OutputFormat::Tiff,
-        )
-        .unwrap();
-        assert_eq!(
-            result,
-            (Path::new(r"C:\output").to_path_buf(), "test_suffix.tiff".into())
-        );
+        assert_eq!(result, (output_directory.clone(), "test_suffix.tiff".into()));
     }
 
     #[test]

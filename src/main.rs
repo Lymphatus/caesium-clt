@@ -1,9 +1,10 @@
 use crate::compressor::{start_compression, CompressionOptions, CompressionResult, CompressionStatus};
 use crate::options::{CommandLineArgs, JpegChromaSubsampling};
 use crate::scan_files::scan_files;
+use bytesize::ByteSize;
 use caesium::parameters::ChromaSubsampling;
 use clap::Parser;
-use human_bytes::human_bytes;
+use colored::Colorize;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use std::num::NonZero;
 use std::path::{Path, PathBuf};
@@ -79,47 +80,77 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
                 continue;
             }
 
-            let savings_percent = if result.original_size > 0 {
-                ((result.compressed_size as f64 - result.original_size as f64) / result.original_size as f64) * 100.0
+            let savings_size = result.original_size as i64 - result.compressed_size as i64;
+            let savings_percent = (savings_size as f64 / result.original_size as f64) * 100.0;
+
+            let savings_size_abs = savings_size.unsigned_abs();
+            let (formatted_savings_size, formatted_savings_percentage) = if savings_size >= 0 {
+                (
+                    format!("-{}", ByteSize::b(savings_size_abs)).green(),
+                    format!("-{savings_percent:.2}%").green(),
+                )
             } else {
-                0.0
+                (
+                    format!("+{}", ByteSize::b(savings_size_abs)).red(),
+                    format!("+{:.2}%", -savings_percent).red(),
+                )
             };
 
+            let status_message = match result.status {
+                CompressionStatus::Success => "Success".green(),
+                CompressionStatus::Skipped => "Skipped".yellow(),
+                CompressionStatus::Error => "Error".red(),
+            };
             println!(
-                "[{:?}] {} -> {}\n{} -> {} [{:.2}%]",
-                result.status,
+                "[{}] {} -> {}\n{} -> {} [{} | {}]",
+                status_message,
                 result.original_path,
                 result.output_path,
-                human_bytes(result.original_size as f64),
-                human_bytes(result.compressed_size as f64),
-                savings_percent
+                ByteSize::b(result.original_size),
+                ByteSize::b(result.compressed_size),
+                formatted_savings_size,
+                formatted_savings_percentage
             );
 
             if !result.message.is_empty() {
-                println!("{}", result.message);
+                let message = match result.status {
+                    CompressionStatus::Success => result.message.green(),
+                    CompressionStatus::Skipped => result.message.yellow(),
+                    CompressionStatus::Error => result.message.red(),
+                };
+                println!("{message}");
             }
             println!();
         }
     }
 
     if verbose > 0 {
-        let total_saved = total_original_size.saturating_sub(total_compressed_size) as f64;
-        let total_saved_percent = if total_original_size > 0 {
-            (total_saved / total_original_size as f64) * 100.0
+        let total_saved = total_original_size as i64 - total_compressed_size as i64;
+        let total_saved_percent = (total_saved as f64 / total_original_size as f64) * 100.0;
+
+        let total_saved_abs = total_saved.unsigned_abs();
+        let (formatted_total_saved_size, formatted_total_saved_percentage) = if total_saved >= 0 {
+            (
+                format!("-{}", ByteSize::b(total_saved_abs)).green(),
+                format!("-{total_saved_percent:.2}%").green(),
+            )
         } else {
-            0.0
+            (
+                format!("+{}", ByteSize::b(total_saved_abs)).red(),
+                format!("+{:.2}%", -total_saved_percent).red(),
+            )
         };
 
         println!(
-            "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [Saved {} ({:.2}%)]",
+            "Compressed {} files ({} success, {} skipped, {} errors)\n{} -> {} [{} | {}]",
             compression_results.len(),
-            total_success,
-            total_skipped,
-            total_errors,
-            human_bytes(total_original_size as f64),
-            human_bytes(total_compressed_size as f64),
-            human_bytes(total_saved),
-            total_saved_percent
+            total_success.to_string().green(),
+            total_skipped.to_string().yellow(),
+            total_errors.to_string().red(),
+            ByteSize::b(total_original_size),
+            ByteSize::b(total_compressed_size),
+            formatted_total_saved_size,
+            formatted_total_saved_percentage
         );
     }
 }
@@ -276,8 +307,9 @@ mod tests {
         let results: Vec<CompressionResult> = vec![];
 
         // This test mainly ensures the function doesn't panic with empty input
-        write_recap_message(&results, 1);
         write_recap_message(&results, 0);
+        write_recap_message(&results, 1);
+        write_recap_message(&results, 2);
         write_recap_message(&results, 3);
     }
 
@@ -334,7 +366,7 @@ mod tests {
             message: "".to_string(),
         }];
 
-        // Should not panic with zero original size
+        // Should not panic with zero original sizes
         write_recap_message(&results, 3);
     }
 
