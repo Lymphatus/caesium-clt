@@ -105,6 +105,7 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
 
     if dry_run {
         compression_result.status = CompressionStatus::Success;
+        compression_result.compressed_size = original_file_size;
         return compression_result;
     }
 
@@ -234,21 +235,16 @@ fn perform_image_compression(
         }
     };
 
-    let compression_result_data = if options.max_size.is_some() {
-        compress_to_size_in_memory(
-            input_file_buffer,
-            &mut compression_parameters,
-            options.max_size.unwrap(),
-            true,
-        )
-    } else if options.format != OutputFormat::Original {
-        convert_in_memory(
+    let compression_result_data = match (options.max_size, options.format) {
+        (Some(max_size), _) => {
+            compress_to_size_in_memory(input_file_buffer, &mut compression_parameters, max_size, true)
+        }
+        (None, format) if format != OutputFormat::Original => convert_in_memory(
             input_file_buffer,
             &compression_parameters,
-            map_supported_formats(options.format),
-        )
-    } else {
-        compress_in_memory(input_file_buffer, &compression_parameters)
+            map_supported_formats(format),
+        ),
+        _ => compress_in_memory(input_file_buffer, &compression_parameters),
     };
 
     match compression_result_data {

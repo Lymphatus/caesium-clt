@@ -1,8 +1,13 @@
 [package]
 name = "caesiumclt"
-version = "1.0.0-beta.2"
+version = "1.0.0"
 authors = ["Matteo Paonessa <matteo.paonessa@gmail.com>"]
 edition = "2021"
+categories = ["multimedia::images"]
+keywords = [
+    "compression",
+    "console"
+]
 exclude = [
     "tests/*",
     ".github/*",
@@ -10,15 +15,16 @@ exclude = [
     "samples/*"
 ]
 readme = "README.md"
-description = "A lossy/lossless image compression tool"
+description = "A fast and efficient lossy and/or lossless image compression tool"
 homepage = "https://github.com/Lymphatus/caesium-clt"
 repository = "https://github.com/Lymphatus/caesium-clt"
+license = "Apache-2.0"
 
 [dependencies]
 indicatif = { version = "0.18.0", features = ["rayon"] }
 walkdir = "2.5"
 infer = "0.19"
-rayon = "1.10"
+rayon = "1.11"
 human_bytes = { version = "0.4", default-features = false }
 kamadak-exif = "0.6"
 imagesize = "0.14"
@@ -26,5 +32,5 @@ libcaesium = "0.17.3"
 clap = { version = "4.5", features = ["derive"] }
 
 [dev-dependencies]
-tempfile = "3.14"
+tempfile = "3.21"
 image = "0.25"
