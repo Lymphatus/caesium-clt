@@ -444,18 +444,27 @@ fn get_real_resolution(
 fn preserve_file_times(output_file: &File, original_file_metadata: &Metadata) -> io::Result<()> {
     let (last_modification_time, last_access_time) =
         (original_file_metadata.modified()?, original_file_metadata.accessed()?);
-    let file_times = FileTimes::new();
     #[cfg(target_os = "windows")]
     {
         let creation_time = original_file_metadata.created()?;
 
-        file_times.set_created(creation_time);
+        output_file.set_times(
+            FileTimes::new()
+                .set_modified(last_modification_time)
+                .set_accessed(last_access_time)
+                .set_created(creation_time),
+        );
     }
 
-    file_times
-        .set_modified(last_modification_time)
-        .set_accessed(last_access_time);
-    output_file.set_times(file_times)?;
+    #[cfg(not(target_os = "windows"))]
+    {
+        output_file.set_times(
+            FileTimes::new()
+                .set_modified(last_modification_time)
+                .set_accessed(last_access_time),
+        )?;
+    }
+
     Ok(())
 }
 fn map_supported_formats(format: OutputFormat) -> SupportedFileTypes {
