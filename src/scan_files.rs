@@ -1,5 +1,4 @@
-use std::fs::canonicalize;
-use std::path::{Path, PathBuf};
+use std::path::{absolute, Path, PathBuf};
 use std::time::Duration;
 
 use indicatif::ProgressStyle;
@@ -68,7 +67,7 @@ pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (PathBuf, Ve
 }
 
 fn compute_base_path(path: &Path, base_path: &Path) -> Option<PathBuf> {
-    if let Ok(ap) = canonicalize(path) {
+    if let Ok(ap) = absolute(path) {
         let bp = compute_base_folder(base_path, &ap)?;
         return Some(bp);
     }

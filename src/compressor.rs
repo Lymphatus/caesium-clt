@@ -102,7 +102,10 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
 
     let output_full_path = match setup_output_path(input_file, options, &mut compression_result) {
         Some(path) => path,
-        None => return compression_result,
+        None => {
+            compression_result.message = "Error setting up output path".to_string();
+            return compression_result;
+        }
     };
     compression_result.output_path = output_full_path.display().to_string();
 
