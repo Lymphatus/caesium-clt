@@ -82,10 +82,15 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
         message: String::new(),
     };
 
-    let original_file_size = match get_file_size(input_file, &mut compression_result) {
-        Some(size) => size,
-        None => return compression_result,
+    let input_file_metadata = match input_file.metadata() {
+        Ok(metadata) => metadata,
+        Err(_) => {
+            compression_result.message = "Error reading file metadata".to_string();
+            return compression_result;
+        }
     };
+
+    let original_file_size = input_file_metadata.len();
 
     if original_file_size > MAX_FILE_SIZE {
         compression_result.message = "File exceeds 500Mb, skipping.".to_string();
@@ -128,7 +133,7 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
         return compression_result;
     }
 
-    if let Err(msg) = write_compressed_file(&output_full_path, &compressed_image, options, input_file) {
+    if let Err(msg) = write_compressed_file(&output_full_path, &compressed_image, options, &input_file_metadata) {
         compression_result.message = msg;
         return compression_result;
     }
@@ -140,16 +145,6 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
 
 fn is_resize_needed(options: &CompressionOptions) -> bool {
     options.width.is_some() || options.height.is_some() || options.long_edge.is_some() || options.short_edge.is_some()
-}
-
-fn get_file_size(input_file: &Path, compression_result: &mut CompressionResult) -> Option<u64> {
-    match input_file.metadata() {
-        Ok(metadata) => Some(metadata.len()),
-        Err(_) => {
-            compression_result.message = "Error reading file metadata".to_string();
-            None
-        }
-    }
 }
 
 fn setup_output_path(
@@ -289,7 +284,7 @@ fn write_compressed_file(
     output_path: &PathBuf,
     compressed_image: &[u8],
     options: &CompressionOptions,
-    input_file: &Path,
+    input_file_metadata: &Metadata,
 ) -> Result<(), String> {
     let mut output_file = File::create(output_path).map_err(|_| "Error creating output file".to_string())?;
 
@@ -298,11 +293,8 @@ fn write_compressed_file(
         .map_err(|_| "Error writing output file".to_string())?;
 
     if options.keep_dates {
-        let input_metadata = input_file
-            .metadata()
-            .map_err(|_| "Error reading input file metadata for date preservation".to_string())?;
-
-        preserve_file_times(&output_file, &input_metadata).map_err(|_| "Error preserving file times".to_string())?;
+        preserve_file_times(&output_file, input_file_metadata)
+            .map_err(|_| "Error preserving file times".to_string())?;
     }
 
     Ok(())
@@ -449,7 +441,7 @@ fn preserve_file_times(output_file: &File, original_file_metadata: &Metadata) ->
                 .set_modified(last_modification_time)
                 .set_accessed(last_access_time)
                 .set_created(creation_time),
-        );
+        )?;
     }
 
     #[cfg(not(target_os = "windows"))]
