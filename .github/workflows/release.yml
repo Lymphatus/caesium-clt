@@ -81,6 +81,10 @@ jobs:
             mv "target/${{ matrix.target }}/release/$binary_name" "$dirname"
           fi
 
+          # Include license and readme in the archive
+          if [ -f LICENSE.md ]; then cp LICENSE.md "$dirname/"; fi
+          if [ -f README.md ]; then cp README.md "$dirname/"; fi
+
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             7z a "$dirname.zip" "$dirname"
             echo "ASSET=$dirname.zip" >> $GITHUB_ENV
