@@ -327,7 +327,9 @@ fn build_compression_parameters(
     parameters.webp.quality = quality;
     parameters.gif.quality = quality;
 
-    parameters.optimize = options.lossless;
+    parameters.jpeg.optimize = options.lossless;
+    parameters.png.optimize = options.lossless;
+    parameters.webp.lossless = options.lossless;
 
     parameters.keep_metadata = options.exif;
 
@@ -519,7 +521,7 @@ mod tests {
             "_suffix",
             OutputFormat::Original,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.join("folder"), "test_suffix.jpg".into()));
 
         // Test case 2: keep_structure = false
@@ -531,7 +533,7 @@ mod tests {
             "_suffix",
             OutputFormat::Original,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
 
         // Test case 3: input file without extension
@@ -544,7 +546,7 @@ mod tests {
             "_suffix",
             OutputFormat::Original,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix".into()));
 
         // Test case 4: input file with different base directory
@@ -560,7 +562,7 @@ mod tests {
             "_suffix",
             OutputFormat::Original,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
 
         // Test case 5: input file with OutputFormat::Jpeg
@@ -572,7 +574,7 @@ mod tests {
             "_suffix",
             OutputFormat::Jpeg,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
 
         // Test case 6: input file with OutputFormat::Png
@@ -584,7 +586,7 @@ mod tests {
             "_suffix",
             OutputFormat::Png,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.png".into()));
 
         // Test case 7: input file with OutputFormat::Webp
@@ -596,7 +598,7 @@ mod tests {
             "_suffix",
             OutputFormat::Webp,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.webp".into()));
 
         // Test case 8: input file with OutputFormat::Tiff
@@ -608,7 +610,7 @@ mod tests {
             "_suffix",
             OutputFormat::Tiff,
         )
-        .unwrap();
+            .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.tiff".into()));
     }
 

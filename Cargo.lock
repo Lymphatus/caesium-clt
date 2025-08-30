@@ -205,7 +205,7 @@ checksum = "a3c8f83209414aacf0eeae3cf730b18d6981697fba62f200fcfb92b9f082acba"
 
 [[package]]
 name = "caesiumclt"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "bytesize",
  "clap",
@@ -750,9 +750,9 @@ checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
 
 [[package]]
 name = "libcaesium"
-version = "0.17.4"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "916d2bafa88e06de998ea73ce38e391e3297ab151a51fc1322cb7c00425a9b5e"
+checksum = "0be301808f7af69e3297c3ba4205557b40a215c6472d661760d82e67d388f571"
 dependencies = [
  "bytes",
  "gifsicle",
@@ -1609,9 +1609,9 @@ dependencies = [
 
 [[package]]
 name = "webp"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f53152f51fb5af0c08484c33d16cca96175881d1f3dec068c23b31a158c2d99"
+checksum = "c071456adef4aca59bf6a583c46b90ff5eb0b4f758fc347cea81290288f37ce1"
 dependencies = [
  "image",
  "libwebp-sys",
