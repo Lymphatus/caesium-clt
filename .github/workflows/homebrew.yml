@@ -1,4 +1,4 @@
-name: Homebrew release
+name: Homebrew core bump
 
 on:
   release:
@@ -30,23 +30,16 @@ jobs:
           set -euxo pipefail
           FORMULA="caesiumclt"
 
-          # Keep Homebrew up to date and ensure core is tapped
+          # Ensure Homebrew is up-to-date and core is tapped
           brew update-reset
           brew tap homebrew/core
 
-          # Create PR to homebrew-core updating url/sha256 for the new tag.
-          # bump-formula-pr will compute the sha256 automatically for the given URL
-          # and open a PR from your fork to Homebrew/homebrew-core.
+          # Open PR to Homebrew/homebrew-core updating url/sha256 for the new tag.
+          # bump-formula-pr will compute the sha256 automatically for the provided URL.
           brew bump-formula-pr \
             --no-browse \
             --strict \
-            --message="${FORMULA} ${{
-              steps.meta.outputs.version
-            }}" \
+            --message="${FORMULA} ${{ steps.meta.outputs.version }}" \
             --url="${{ steps.meta.outputs.url }}" \
-            --fork-org="${{ github.actor }}" \
+            --fork-org="${{ github.repository_owner }}" \
             "${FORMULA}"
-
-      - name: Note on skipped prerelease
-        if: ${{ failure() && contains(github.event.release.tag_name, '-') }}
-        run: echo "Skipped prerelease tag ${{ github.event.release.tag_name }} (homebrew-core accepts only stable)."

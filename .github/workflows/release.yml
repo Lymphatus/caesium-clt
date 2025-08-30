@@ -93,20 +93,23 @@ jobs:
             echo "ASSET=$dirname.tar.gz" >> $GITHUB_ENV
           fi
 
-      # https://github.com/softprops/action-gh-release?tab=readme-ov-file#-customizing
+      # Create/update the GitHub Release with a user PAT (so release event triggers)
+      # https://github.com/softprops/action-gh-release
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           files: |
             ${{ env.ASSET }}
           # body_path: ''
-          body: "|Arch|Filename|\n
-|:--: |:--:|\n
-|MacOS ARM| caesiumclt-v*-aarch64-apple-darwin.tar.gz|\n
-|MacOS x86_64| caesiumclt-v*-x86_64-apple-darwin.tar.gz|\n
-|Linux ARM| caesiumclt-v*-aarch64-unknown-linux-musl.tar.gz|\n
-|Linux x86_64| caesiumclt-v*-x86_64-unknown-linux-musl.tar.gz|\n
-|Windows x86_64| caesiumclt-v*-x86_64-pc-windows-msvc.zip|\n"
+          body: "|Arch|Filename|
+          |:--: |:--:|
+          |MacOS ARM| caesiumclt-v*-aarch64-apple-darwin.tar.gz|
+          |MacOS x86_64| caesiumclt-v*-x86_64-apple-darwin.tar.gz|
+          |Linux ARM| caesiumclt-v*-aarch64-unknown-linux-musl.tar.gz|
+          |Linux x86_64| caesiumclt-v*-x86_64-unknown-linux-musl.tar.gz|
+          |Windows x86_64| caesiumclt-v*-x86_64-pc-windows-msvc.zip|
+          "
 
       - name: Upload Artifact 🚀
         uses: actions/upload-artifact@v4
@@ -117,7 +120,7 @@ jobs:
       - name: Upload binaries to release ☕
         uses: svenstaro/upload-release-action@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.RELEASE_TOKEN }}
           file: ${{ env.ASSET }}
           asset_name: ${{ env.ASSET }}
           tag: ${{ github.ref }}
