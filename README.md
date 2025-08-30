@@ -12,7 +12,7 @@ Built on the robust [libcaesium](https://github.com/Lymphatus/libcaesium) engine
 flexibility to fit seamlessly into your workflow.
 
 <p align="center">
-    <img alt="demo" src="https://github.com/user-attachments/assets/675d9a49-55cb-42d7-b435-de39b6917315">
+    <img alt="demo" src="https://github.com/user-attachments/assets/dcf0b52c-6fad-4c7c-8b60-27e40d393264">
 </p>
 
 ## ✨ Features
