@@ -54,6 +54,16 @@ Download the latest binaries from the [release page](https://github.com/Lymphatu
 - macOS (x86_64/aarch64)
 - Linux (x86_64/aarch64)
 
+### Installation
+#### Cargo
+```bash
+cargo install caesiumclt
+```
+#### Homebrew
+```bash
+brew install caesiumclt
+```
+
 ## 🛠️ Development
 
 ### Requirements
