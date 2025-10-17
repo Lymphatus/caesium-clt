@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use indicatif::ProgressStyle;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressIterator};
-use rayon::prelude::IntoParallelRefIterator;
 use walkdir::WalkDir;
 
 fn read_first_bytes(path: &Path, count: usize) -> Option<Vec<u8>> {
