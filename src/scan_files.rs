@@ -3,24 +3,39 @@ use std::time::Duration;
 
 use indicatif::ProgressStyle;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressIterator};
+use rayon::prelude::IntoParallelRefIterator;
 use walkdir::WalkDir;
 
-fn is_filetype_supported(path: &Path) -> bool {
-    match get_file_mime_type(path) {
-        Some(mime_type) => {
-            matches!(
-                mime_type.as_str(),
-                "image/jpeg" | "image/png" | "image/webp" | "image/gif"
-            )
-        }
-        None => false,
+fn read_first_bytes(path: &Path, count: usize) -> Option<Vec<u8>> {
+    use std::fs::File;
+    use std::io::Read;
+
+    let mut file = File::open(path).ok()?;
+    let mut buffer = vec![0; count];
+    match file.read_exact(&mut buffer) {
+        Ok(_) => Some(buffer),
+        Err(_) => None,
     }
 }
 
+fn is_filetype_supported(path: &Path) -> bool {
+    let buffer = match read_first_bytes(path, 16) {
+        Some(b) => b,
+        None => return false,
+    };
+
+    infer::image::is_jpeg(&buffer)
+        || infer::image::is_png(&buffer)
+        || infer::image::is_webp(&buffer)
+        || infer::image::is_gif(&buffer)
+}
+
 pub fn get_file_mime_type(path: &Path) -> Option<String> {
-    match infer::get_from_path(path) {
-        Ok(v) => v.map(|ft| ft.mime_type().to_string()),
-        Err(_) => None,
+    let buffer = read_first_bytes(path, 16)?;
+
+    match infer::get(&buffer) {
+        Some(v) => Option::from(v.mime_type().to_string()),
+        None => None,
     }
 }
 
