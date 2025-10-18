@@ -111,7 +111,7 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
 
     compression_result.original_size = original_file_size;
 
-    let output_full_path = match setup_output_path(input_file, options, &mut compression_result) {
+    let output_full_path = match setup_output_path(input_file, options, &mut compression_result, dry_run) {
         Some(path) => path,
         None => {
             compression_result.message = "Error setting up output path".to_string();
@@ -165,6 +165,7 @@ fn setup_output_path(
     input_file: &Path,
     options: &CompressionOptions,
     compression_result: &mut CompressionResult,
+    dry_run: bool,
 ) -> Option<PathBuf> {
     let output_directory = determine_output_directory(input_file, options, compression_result)?;
     let (output_directory, filename) = compute_output_full_path(
@@ -176,6 +177,10 @@ fn setup_output_path(
         options.format,
         options.same_folder_as_input || output_directory == options.base_path,
     )?;
+
+    if dry_run {
+        return Some(output_directory.join(filename));
+    }
 
     if !output_directory.exists() && fs::create_dir_all(&output_directory).is_err() {
         compression_result.message = "Error creating output directory".to_string();
