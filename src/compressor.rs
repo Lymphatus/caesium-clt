@@ -174,6 +174,7 @@ fn setup_output_path(
         options.keep_structure,
         options.suffix.as_ref().unwrap_or(&String::new()).as_ref(),
         options.format,
+        options.same_folder_as_input || output_directory == options.base_path,
     )?;
 
     if !output_directory.exists() && fs::create_dir_all(&output_directory).is_err() {
@@ -354,6 +355,7 @@ fn compute_output_full_path(
     keep_structure: bool,
     suffix: &str,
     format: OutputFormat,
+    same_folder_as_input: bool,
 ) -> Option<(PathBuf, OsString)> {
     let extension = match format {
         OutputFormat::Jpeg => "jpg".into(),
@@ -381,6 +383,9 @@ fn compute_output_full_path(
             Err(_) => return None,
         };
 
+        if same_folder_as_input {
+            return Some((parent.clone(), output_file_name));
+        }
         let output_path_prefix = match parent.strip_prefix(base_directory) {
             Ok(p) => p,
             Err(_) => return None,
@@ -520,6 +525,7 @@ mod tests {
             true,
             "_suffix",
             OutputFormat::Original,
+            false,
         )
         .unwrap();
         assert_eq!(result, (output_directory.join("folder"), "test_suffix.jpg".into()));
@@ -532,6 +538,7 @@ mod tests {
             false,
             "_suffix",
             OutputFormat::Original,
+            false,
         )
         .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
@@ -545,6 +552,7 @@ mod tests {
             false,
             "_suffix",
             OutputFormat::Original,
+            false,
         )
         .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix".into()));
@@ -561,6 +569,7 @@ mod tests {
             false,
             "_suffix",
             OutputFormat::Original,
+            false,
         )
         .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
@@ -573,6 +582,7 @@ mod tests {
             false,
             "_suffix",
             OutputFormat::Jpeg,
+            false,
         )
         .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.jpg".into()));
@@ -585,6 +595,7 @@ mod tests {
             false,
             "_suffix",
             OutputFormat::Png,
+            false,
         )
         .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.png".into()));
@@ -597,6 +608,7 @@ mod tests {
             false,
             "_suffix",
             OutputFormat::Webp,
+            false,
         )
         .unwrap();
         assert_eq!(result, (output_directory.clone(), "test_suffix.webp".into()));
@@ -609,9 +621,27 @@ mod tests {
             false,
             "_suffix",
             OutputFormat::Tiff,
+            false,
         )
         .unwrap();
+
         assert_eq!(result, (output_directory.clone(), "test_suffix.tiff".into()));
+
+        // Test case 9: same_folder_as_input with subfolder
+        let subfolder = input_folder.join("subfolder");
+        fs::create_dir_all(&subfolder).unwrap();
+        let input_file_path = subfolder.join("test.jpg");
+        let result = compute_output_full_path(
+            &output_directory,
+            &input_file_path,
+            &base_directory,
+            true,
+            "_suffix",
+            OutputFormat::Original,
+            true,
+        )
+        .unwrap();
+        assert_eq!(result, (subfolder, "test_suffix.jpg".into()));
     }
 
     #[test]
