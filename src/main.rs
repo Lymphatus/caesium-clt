@@ -203,6 +203,7 @@ fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> Compre
         jpeg_baseline: args.jpeg_baseline,
         zopfli: args.zopfli,
         base_path: PathBuf::from(base_path),
+        no_upscale: args.resize.no_upscale,
     }
 }
 
@@ -383,6 +384,7 @@ mod tests {
                 height: Some(600),
                 long_edge: None,
                 short_edge: None,
+                no_upscale: false,
             },
             output_destination: OutputDestination {
                 output: Some(PathBuf::from("/output")),
@@ -421,6 +423,7 @@ mod tests {
         args.resize.height = None;
         args.resize.long_edge = Some(1200);
         args.resize.short_edge = None;
+        args.resize.no_upscale = true;
 
         let base_path = Path::new("/different/base");
         let options = build_compression_options(&args, base_path);
@@ -435,6 +438,7 @@ mod tests {
         assert_eq!(options.long_edge, Some(1200));
         assert_eq!(options.short_edge, None);
         assert_eq!(options.base_path, PathBuf::from(base_path));
+        assert!(options.no_upscale);
     }
 
     #[test]

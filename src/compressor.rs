@@ -62,6 +62,7 @@ pub struct CompressionOptions {
     pub keep_structure: bool,
     pub jpeg_chroma_subsampling: ChromaSubsampling,
     pub jpeg_baseline: bool,
+    pub no_upscale: bool,
 }
 
 const MAX_FILE_SIZE: u64 = 500 * 1024 * 1024;
@@ -83,7 +84,6 @@ pub fn start_compression(
 }
 
 fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_run: bool) -> CompressionResult {
-    let needs_resize = is_resize_needed(options);
     let mut compression_result = CompressionResult {
         original_path: input_file.display().to_string(),
         output_path: String::new(),
@@ -130,7 +130,7 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
         return compression_result;
     }
 
-    let compressed_image = match perform_image_compression(input_file, options, needs_resize, &mut compression_result) {
+    let compressed_image = match perform_image_compression(input_file, options, &mut compression_result) {
         Some(image) => image,
         None => return compression_result,
     };
@@ -233,10 +233,9 @@ fn skip_due_to_overwrite_policy(
 fn perform_image_compression(
     input_file: &PathBuf,
     options: &CompressionOptions,
-    needs_resize: bool,
     compression_result: &mut CompressionResult,
 ) -> Option<Vec<u8>> {
-    let mut compression_parameters = match build_compression_parameters(options, input_file, needs_resize) {
+    let mut compression_parameters = match build_compression_parameters(options, input_file) {
         Ok(p) => p,
         Err(e) => {
             compression_result.message = format!("Error building compression parameters: {e}");
@@ -323,7 +322,6 @@ fn write_compressed_file(
 fn build_compression_parameters(
     options: &CompressionOptions,
     input_file: &Path,
-    needs_resize: bool,
 ) -> Result<CSParameters, Box<dyn Error>> {
     let mut parameters = CSParameters::new();
     let quality = options.quality.unwrap_or(80);
@@ -345,6 +343,7 @@ fn build_compression_parameters(
     parameters.png.optimization_level = options.png_opt_level;
     parameters.png.force_zopfli = options.zopfli;
 
+    let needs_resize = is_resize_needed(options);
     if needs_resize {
         let mime_type = get_file_mime_type(input_file);
         build_resize_parameters(options, &mut parameters, input_file, mime_type)?;
@@ -428,6 +427,11 @@ fn build_resize_parameters(
         } else {
             parameters.height = short_edge;
         }
+    }
+
+    if options.no_upscale && (parameters.width >= width as u32 || parameters.height >= height as u32) {
+        parameters.width = 0;
+        parameters.height = 0;
     }
 
     Ok(())
@@ -773,6 +777,41 @@ mod tests {
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
     }
 
+    #[test]
+    fn test_no_upscale_prevents_resize() {
+        // Use an existing sample image and determine its real resolution
+        let input_path = absolute(PathBuf::from("samples/p0.png")).unwrap();
+        let (w, h) = get_real_resolution(&input_path, get_file_mime_type(&input_path), true).unwrap();
+
+        let mut options = setup_options();
+        options.no_upscale = true;
+        options.width = Some((w + 100) as u32);
+        let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.width, 0);
+        assert_eq!(params.height, 0);
+
+        let mut options = setup_options();
+        options.no_upscale = true;
+        options.height = Some((h + 100) as u32);
+        let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.width, 0);
+        assert_eq!(params.height, 0);
+
+        let mut options = setup_options();
+        options.no_upscale = true;
+        options.long_edge = Some((w.max(h) + 100) as u32);
+        let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.width, 0);
+        assert_eq!(params.height, 0);
+
+        let mut options = setup_options();
+        options.no_upscale = true;
+        options.short_edge = Some((w.min(h) + 100) as u32);
+        let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.width, 0);
+        assert_eq!(params.height, 0);
+    }
+
     fn setup_options() -> CompressionOptions {
         CompressionOptions {
             quality: Some(80),
@@ -795,6 +834,7 @@ mod tests {
             jpeg_baseline: false,
             zopfli: false,
             base_path: PathBuf::new(),
+            no_upscale: false,
         }
     }
 }

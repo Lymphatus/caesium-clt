@@ -144,6 +144,9 @@ pub struct Resize {
     /// Size in pixels for the shortest edge of the image
     #[arg(long, conflicts_with_all = &["width", "height", "long_edge"])]
     pub short_edge: Option<u32>,
+
+    #[arg(long)]
+    pub no_upscale: bool,
 }
 
 #[derive(Args, Debug)]
