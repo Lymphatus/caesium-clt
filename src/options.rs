@@ -261,6 +261,7 @@ mod tests {
         let png = OutputFormat::Png;
         let webp = OutputFormat::Webp;
         let tiff = OutputFormat::Tiff;
+        let gif = OutputFormat::Gif;
         let original = OutputFormat::Original;
 
         // Verify they're different
@@ -274,6 +275,7 @@ mod tests {
         assert_ne!(format!("{webp:?}"), format!("{:?}", tiff));
         assert_ne!(format!("{webp:?}"), format!("{:?}", original));
         assert_ne!(format!("{tiff:?}"), format!("{:?}", original));
+        assert_ne!(format!("{gif:?}"), format!("{:?}", original));
     }
 
     #[test]

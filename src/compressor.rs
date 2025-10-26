@@ -329,7 +329,13 @@ fn build_compression_parameters(
     parameters.jpeg.quality = quality;
     parameters.png.quality = quality;
     parameters.webp.quality = quality;
-    parameters.gif.quality = quality;
+    parameters.gif.quality = if options.lossless {
+        100
+    } else if quality == 0 {
+        1
+    } else {
+        quality
+    };
 
     parameters.jpeg.optimize = options.lossless;
     parameters.png.optimize = options.lossless;
@@ -831,6 +837,32 @@ mod tests {
         let params = build_compression_parameters(&options, &input_path).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 0);
+    }
+
+    #[test]
+    fn test_gif_quality_lossless_and_zero() {
+        let input_path = absolute(PathBuf::from("samples/level_1_0/level_2_0/level_3_0/g1.gif")).unwrap();
+
+        // Test case 1: lossless = true should set gif.quality to 100
+        let mut options = setup_options();
+        options.lossless = true;
+        options.quality = Some(80);
+        let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.gif.quality, 100);
+
+        // Test case 2: quality = 0 should set gif.quality to 1
+        let mut options = setup_options();
+        options.lossless = false;
+        options.quality = Some(0);
+        let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.gif.quality, 1);
+
+        // Test case 3: normal quality should pass through unchanged
+        let mut options = setup_options();
+        options.lossless = false;
+        options.quality = Some(75);
+        let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.gif.quality, 75);
     }
 
     fn setup_options() -> CompressionOptions {
