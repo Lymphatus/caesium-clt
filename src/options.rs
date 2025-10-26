@@ -15,6 +15,7 @@ pub enum OverwritePolicy {
 pub enum OutputFormat {
     Jpeg,
     Png,
+    Gif,
     Webp,
     Tiff,
     Original,

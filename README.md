@@ -41,6 +41,7 @@ flexibility to fit seamlessly into your workflow.
 | **JPEG** |   ✅   |    ✅     |
 | **PNG**  |   ✅   |    ✅     |
 | **WebP** |   ✅   |    ✅     |
+| **GIF**  |   ✅   |    ❌     |
 
 ## 🚀 Getting Started
 
@@ -55,11 +56,15 @@ Download the latest binaries from the [release page](https://github.com/Lymphatu
 - Linux (x86_64/aarch64)
 
 ### Installation
+
 #### Cargo
+
 ```bash
 cargo install caesiumclt
 ```
+
 #### Homebrew
+
 ```bash
 brew install caesiumclt
 ```

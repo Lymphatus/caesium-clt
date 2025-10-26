@@ -366,6 +366,7 @@ fn compute_output_full_path(
         OutputFormat::Png => "png".into(),
         OutputFormat::Webp => "webp".into(),
         OutputFormat::Tiff => "tiff".into(),
+        OutputFormat::Gif => "gif".into(),
         OutputFormat::Original => input_file_path.extension().unwrap_or_default().to_os_string(),
     };
 
@@ -493,6 +494,7 @@ fn map_supported_formats(format: OutputFormat) -> SupportedFileTypes {
     match format {
         OutputFormat::Jpeg => SupportedFileTypes::Jpeg,
         OutputFormat::Png => SupportedFileTypes::Png,
+        OutputFormat::Gif => SupportedFileTypes::Gif,
         OutputFormat::Webp => SupportedFileTypes::WebP,
         OutputFormat::Tiff => SupportedFileTypes::Tiff,
         _ => SupportedFileTypes::Unkn,
@@ -636,7 +638,21 @@ mod tests {
 
         assert_eq!(result, (output_directory.clone(), "test_suffix.tiff".into()));
 
-        // Test case 9: same_folder_as_input with subfolder
+        // Test case 8: input file with OutputFormat::Gif
+        let result = compute_output_full_path(
+            &output_directory,
+            &input_file_path,
+            &base_directory,
+            false,
+            "_suffix",
+            OutputFormat::Gif,
+            false,
+        )
+        .unwrap();
+
+        assert_eq!(result, (output_directory.clone(), "test_suffix.gif".into()));
+
+        // Test case 10: same_folder_as_input with subfolder
         let subfolder = input_folder.join("subfolder");
         fs::create_dir_all(&subfolder).unwrap();
         let input_file_path = subfolder.join("test.jpg");
@@ -684,6 +700,7 @@ mod tests {
             absolute(PathBuf::from("samples/w0.webp")).unwrap(),
             absolute(PathBuf::from("samples/t0.tif")).unwrap(),
             absolute(PathBuf::from("samples/level_1_0/level_2_0/p2.png")).unwrap(),
+            absolute(PathBuf::from("samples/level_1_0/level_2_0/level_3_0/g1.gif")).unwrap(),
             absolute(PathBuf::from("samples/level_1_0/j1.jpg")).unwrap(),
             absolute(PathBuf::from("samples/level_1_1/w1.webp")).unwrap(),
         ];
@@ -692,7 +709,7 @@ mod tests {
         options.output_folder = Some(temp_dir.clone());
         options.keep_structure = true;
         results = start_compression(&input_files, &options, &progress_bar, false);
-        assert_eq!(results.len(), 7);
+        assert_eq!(results.len(), 8);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
         assert_eq!(PathBuf::from(&results[0].output_path), temp_dir.join("j0.JPG"));
@@ -705,10 +722,14 @@ mod tests {
         );
         assert_eq!(
             PathBuf::from(&results[5].output_path),
-            temp_dir.join("level_1_0/j1.jpg")
+            temp_dir.join("level_1_0/level_2_0/level_3_0/g1.gif")
         );
         assert_eq!(
             PathBuf::from(&results[6].output_path),
+            temp_dir.join("level_1_0/j1.jpg")
+        );
+        assert_eq!(
+            PathBuf::from(&results[7].output_path),
             temp_dir.join("level_1_1/w1.webp")
         );
 
