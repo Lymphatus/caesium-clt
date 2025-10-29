@@ -4,13 +4,11 @@ on:
   push:
     paths-ignore:
       - 'docs/**'
-      - 'CHANGELOG.md'
       - 'LICENSE.md'
       - 'README.md'
     pull_request:
       paths-ignore:
         - 'docs/**'
-        - 'CHANGELOG.md'
         - 'LICENSE.md'
         - 'README.md'
 

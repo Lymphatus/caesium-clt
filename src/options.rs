@@ -1,3 +1,4 @@
+use bytesize::ByteSize;
 use clap::{Args, Parser, ValueEnum};
 use std::path::PathBuf;
 
@@ -122,8 +123,8 @@ pub struct Compression {
     #[arg(long)]
     pub lossless: bool,
 
-    /// Target maximum file size in bytes
-    #[arg(long)]
+    /// Target maximum file size in bytes or human-readable format (e.g., 100KB, 0.5MB)
+    #[arg(long, value_parser = max_size_validator)]
     pub max_size: Option<usize>,
 }
 
@@ -190,6 +191,13 @@ where
     } else {
         Ok(value)
     }
+}
+
+/// Validates and parses max_size values (supports both raw bytes and human-readable formats)
+fn max_size_validator(val: &str) -> Result<usize, String> {
+    val.parse::<ByteSize>()
+        .map(|bs| bs.as_u64() as usize)
+        .map_err(|e| format!("Invalid size format: {e}"))
 }
 
 #[cfg(test)]
@@ -298,5 +306,25 @@ mod tests {
         assert_ne!(format!("{cs420:?}"), format!("{:?}", cs411));
         assert_ne!(format!("{cs420:?}"), format!("{:?}", auto));
         assert_ne!(format!("{cs411:?}"), format!("{:?}", auto));
+    }
+
+    #[test]
+    fn test_max_size_validator() {
+        // Test raw byte numbers
+        assert_eq!(max_size_validator("10000").unwrap(), 10000);
+        assert_eq!(max_size_validator("1000000").unwrap(), 1000000);
+
+        // Test human-readable formats
+        assert_eq!(max_size_validator("1KB").unwrap(), 1000);
+        assert_eq!(max_size_validator("1KiB").unwrap(), 1024);
+        assert_eq!(max_size_validator("1MB").unwrap(), 1_000_000);
+        assert_eq!(max_size_validator("1MiB").unwrap(), 1_048_576);
+        assert_eq!(max_size_validator("0.3GB").unwrap(), 300_000_000);
+        assert_eq!(max_size_validator("0.5GiB").unwrap(), 536_870_912);
+
+        // Test invalid formats
+        assert!(max_size_validator("invalid").is_err());
+        assert!(max_size_validator("1XB").is_err());
+        assert!(max_size_validator("").is_err());
     }
 }

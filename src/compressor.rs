@@ -252,6 +252,14 @@ fn perform_image_compression(
     };
 
     let compression_result_data = match (options.max_size, options.format) {
+        (Some(max_size), format) if format != OutputFormat::Original => {
+            let converted_image = convert_in_memory(
+                input_file_buffer,
+                &compression_parameters,
+                map_supported_formats(format),
+            ).ok()?;
+            compress_to_size_in_memory(converted_image, &mut compression_parameters, max_size, true)
+        }
         (Some(max_size), _) => {
             compress_to_size_in_memory(input_file_buffer, &mut compression_parameters, max_size, true)
         }
