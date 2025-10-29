@@ -258,7 +258,7 @@ fn perform_image_compression(
                 &compression_parameters,
                 map_supported_formats(format),
             )
-                .ok()?;
+            .ok()?;
             compress_to_size_in_memory(converted_image, &mut compression_parameters, max_size, true)
         }
         (Some(max_size), _) => {
