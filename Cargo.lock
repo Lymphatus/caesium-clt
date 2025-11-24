@@ -199,7 +199,7 @@ checksum = "f5c434ae3cf0089ca203e9019ebe529c47ff45cefe8af7c85ecb734ef541822f"
 
 [[package]]
 name = "caesiumclt"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "bytesize",
  "clap",

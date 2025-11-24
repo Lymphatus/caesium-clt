@@ -425,9 +425,8 @@ fn build_resize_parameters(
 ) -> Result<(), Box<dyn Error>> {
     let (width, height) = get_real_resolution(input_file_path, mime_type, options.exif)?;
 
-    if options.width.is_some() {
+    if options.width.is_some() || options.height.is_some() {
         parameters.width = options.width.unwrap_or(0);
-    } else if options.height.is_some() {
         parameters.height = options.height.unwrap_or(0);
     } else if options.long_edge.is_some() {
         let long_edge = options.long_edge.unwrap_or(0);
@@ -844,6 +843,56 @@ mod tests {
         options.no_upscale = true;
         options.short_edge = Some((w.min(h) + 100) as u32);
         let params = build_compression_parameters(&options, &input_path).unwrap();
+        assert_eq!(params.width, 0);
+        assert_eq!(params.height, 0);
+    }
+
+    #[test]
+    fn test_build_resize_parameters() {
+        let input_path = absolute(PathBuf::from("samples/j0.JPG")).unwrap();
+        let mime_type = get_file_mime_type(&input_path);
+
+        let mut options = setup_options();
+        options.width = Some(100);
+        options.height = Some(100);
+        let mut params = CSParameters::new();
+        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        assert_eq!(params.width, 100);
+        assert_eq!(params.height, 100);
+
+        let mut options = setup_options();
+        options.width = Some(100);
+        let mut params = CSParameters::new();
+        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        assert_eq!(params.width, 100);
+        assert_eq!(params.height, 0);
+
+        let mut options = setup_options();
+        options.height = Some(100);
+        let mut params = CSParameters::new();
+        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        assert_eq!(params.width, 0);
+        assert_eq!(params.height, 100);
+
+        let mut options = setup_options();
+        options.long_edge = Some(100);
+        let mut params = CSParameters::new();
+        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        assert_eq!(params.width, 0);
+        assert_eq!(params.height, 100);
+
+        let mut options = setup_options();
+        options.short_edge = Some(50);
+        let mut params = CSParameters::new();
+        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        assert_eq!(params.width, 50);
+        assert_eq!(params.height, 0);
+
+        let mut options = setup_options();
+        options.no_upscale = true;
+        options.width = Some(20000);
+        let mut params = CSParameters::new();
+        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 0);
     }
