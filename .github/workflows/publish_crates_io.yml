@@ -1,0 +1,35 @@
+name: Publish to crates.io
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify tag matches Cargo.toml version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          VERSION="$(
+          sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([^"]+)".*$/\1/p' Cargo.toml \
+          | head -n1 \
+          | tr -d "\r"
+          )"
+          
+          if [ "$TAG" != "$VERSION" ]; then
+          echo "Tag $TAG does not match Cargo.toml version $VERSION"
+          exit 1
+          fi
+
+      - name: Login into crates.io
+        run: cargo login ${{ secrets.CRATES_IO }}
+      - name: Build binaries in "release" mode
+        run: cargo build -r
+      - name: "Package for crates.io"
+        run: cargo package
+      - name: "Publish to crates.io"
+        run: cargo publish
