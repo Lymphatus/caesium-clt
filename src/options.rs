@@ -76,6 +76,10 @@ pub struct CommandLineArgs {
     #[arg(long)]
     pub keep_dates: bool,
 
+    /// Strips ICC profile info on JPG files, ignoring the -e flag
+    #[arg(long)]
+    pub strip_icc: bool,
+
     /// Add suffix to output filenames
     #[arg(long)]
     pub suffix: Option<String>,

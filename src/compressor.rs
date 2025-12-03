@@ -63,6 +63,7 @@ pub struct CompressionOptions {
     pub jpeg_chroma_subsampling: ChromaSubsampling,
     pub jpeg_baseline: bool,
     pub no_upscale: bool,
+    pub strip_icc: bool,
 }
 
 const MAX_FILE_SIZE: u64 = 500 * 1024 * 1024;
@@ -345,6 +346,7 @@ fn build_compression_parameters(
     } else {
         quality
     };
+    parameters.jpeg.preserve_icc = !options.strip_icc;
 
     parameters.jpeg.optimize = options.lossless;
     parameters.png.optimize = options.lossless;
@@ -951,6 +953,7 @@ mod tests {
             zopfli: false,
             base_path: PathBuf::new(),
             no_upscale: false,
+            strip_icc: false,
         }
     }
 }

@@ -38,6 +38,8 @@
   Keeps EXIF metadata info during compression, if present. This can slightly increase the output file size.
 - `--keep-dates`  
   Keeps the original last modified and last accessed date information, if possible.
+- `--strip-icc`  
+  Strips all ICC profile information on JPG, regardless of `-e` flag.
 
 ##### Resizing
 

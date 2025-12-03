@@ -76,7 +76,7 @@ pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (Option<Path
         }
     }
 
-    (base_path, files) //TODO
+    (base_path, files)
 }
 
 fn compute_base_path(path: &Path, base_path: Option<PathBuf>) -> Option<PathBuf> {
@@ -101,7 +101,7 @@ fn compute_base_folder(bf: Option<PathBuf>, new_path: &Path) -> Option<PathBuf> 
         return Some(new_path.parent()?.to_path_buf());
     }
 
-    let base_folder = bf.unwrap(); //TODO
+    let base_folder = bf.unwrap();
     if base_folder.parent().is_none() {
         return Some(base_folder.to_path_buf());
     }
@@ -310,13 +310,13 @@ mod tests {
         // Test with a valid path
         let path = Path::new(".");
         let base_path = PathBuf::new();
-        let result = compute_base_path(path, Some(PathBuf::from(base_path)));
+        let result = compute_base_path(path, Some(base_path));
         assert!(result.is_some());
 
         // Test with an invalid path
         let path = Path::new("/non/existent/path");
         let base_path = PathBuf::new();
-        let result = compute_base_path(path, Some(PathBuf::from(base_path)));
+        let result = compute_base_path(path, Some(base_path));
         assert!(result.is_none());
     }
 

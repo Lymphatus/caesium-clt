@@ -209,6 +209,7 @@ fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> Compre
         zopfli: args.zopfli,
         base_path: PathBuf::from(base_path),
         no_upscale: args.resize.no_upscale,
+        strip_icc: args.strip_icc,
     }
 }
 
@@ -411,6 +412,7 @@ mod tests {
             quiet: false,
             verbose: 2,
             files: vec!["test1.jpg".to_string(), "test2.png".to_string()],
+            strip_icc: false,
         }
     }
 
