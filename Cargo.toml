@@ -27,7 +27,7 @@ infer = "0.19"
 rayon = "1.11"
 kamadak-exif = "0.6"
 imagesize = "0.14"
-libcaesium = "0.19"
+libcaesium = "0.20"
 clap = { version = "4.5", features = ["derive"] }
 colored = "3.0"
 bytesize = "2.0"

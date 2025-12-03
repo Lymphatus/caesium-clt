@@ -42,13 +42,12 @@ fn is_valid(entry: &Path) -> bool {
     entry.exists() && entry.is_file() && is_filetype_supported(entry)
 }
 
-pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (PathBuf, Vec<PathBuf>) {
+pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (Option<PathBuf>, Vec<PathBuf>) {
     if args.is_empty() {
-        return (PathBuf::new(), vec![]);
+        return (None, vec![]);
     }
     let mut files: Vec<PathBuf> = vec![];
-    let mut base_path = PathBuf::new();
-
+    let mut base_path: Option<PathBuf> = None;
     let progress_bar = init_progress_bar(quiet);
 
     for path in args.iter().progress_with(progress_bar) {
@@ -61,26 +60,26 @@ pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (PathBuf, Ve
             for entry in walk_dir.into_iter().filter_map(|e| e.ok()) {
                 let path = entry.into_path();
                 if is_valid(&path) {
-                    base_path = match compute_base_path(&path, &base_path) {
-                        Some(p) => p,
+                    base_path = match compute_base_path(&path, base_path.clone()) {
+                        Some(p) => Some(p),
                         None => continue,
                     };
                     files.push(path);
                 }
             }
         } else if is_valid(&input) {
-            base_path = match compute_base_path(&input, &base_path) {
-                Some(p) => p,
+            base_path = match compute_base_path(&input, base_path.clone()) {
+                Some(p) => Some(p),
                 None => continue,
             };
             files.push(input);
         }
     }
 
-    (base_path, files)
+    (base_path, files) //TODO
 }
 
-fn compute_base_path(path: &Path, base_path: &Path) -> Option<PathBuf> {
+fn compute_base_path(path: &Path, base_path: Option<PathBuf>) -> Option<PathBuf> {
     if !path.exists() {
         return None;
     }
@@ -93,11 +92,16 @@ fn compute_base_path(path: &Path, base_path: &Path) -> Option<PathBuf> {
     None
 }
 
-fn compute_base_folder(base_folder: &Path, new_path: &Path) -> Option<PathBuf> {
-    if base_folder.as_os_str().is_empty() && new_path.parent().is_some() {
+fn compute_base_folder(bf: Option<PathBuf>, new_path: &Path) -> Option<PathBuf> {
+    if bf.is_none() && new_path.parent().is_none() {
+        return None;
+    }
+
+    if bf.is_none() && new_path.parent().is_some() {
         return Some(new_path.parent()?.to_path_buf());
     }
 
+    let base_folder = bf.unwrap(); //TODO
     if base_folder.parent().is_none() {
         return Some(base_folder.to_path_buf());
     }
@@ -105,7 +109,7 @@ fn compute_base_folder(base_folder: &Path, new_path: &Path) -> Option<PathBuf> {
     let mut folder = PathBuf::new();
     let mut new_path_folder = new_path.to_path_buf();
     if new_path.is_file() {
-        new_path_folder = new_path.parent().unwrap_or(&*PathBuf::from("/")).to_path_buf();
+        new_path_folder = new_path.parent().unwrap_or(&*PathBuf::new()).to_path_buf();
     }
     for (i, component) in base_folder.iter().enumerate() {
         if let Some(new_path_component) = new_path_folder.iter().nth(i) {
@@ -218,38 +222,49 @@ mod tests {
         let base_folder = Path::new("/base/folder");
         let new_path = Path::new("/base/folder/subfolder/file.jpg");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/base/folder"));
 
         let base_folder = Path::new("/base/folder/subfolder/another/folder");
         let new_path = Path::new("/base/folder/subfolder/file.jpg");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/base/folder/subfolder"));
 
         let base_folder = Path::new("/base/folder/subfolder/another/folder");
         let new_path = Path::new("/file.jpg");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/"));
 
         let base_folder = Path::new("/");
         let new_path = Path::new("/base/folder/subfolder/file.jpg");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/"));
 
         let base_folder = Path::new("/");
         let new_path = Path::new("/file.jpg");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/"));
 
-        let base_folder = PathBuf::new();
         let new_path = Path::new("/temp/file.jpg");
 
-        let result = compute_base_folder(&base_folder, new_path).expect("Failed to compute base folder");
+        let result = compute_base_folder(None, new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/temp"));
+
+        let base_folder = Path::new("C:\\Pictures\\image.png");
+        let new_path = Path::new("D:\\temp\\file.jpg");
+
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
+        assert_eq!(result, PathBuf::new());
     }
 
     #[test]
@@ -257,31 +272,36 @@ mod tests {
         let base_folder = Path::new("/base/folder");
         let new_path = Path::new("/base/folder/subfolder");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/base/folder"));
 
         let base_folder = Path::new("/base/folder/subfolder/another/folder");
         let new_path = Path::new("/base/folder/subfolder");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/base/folder/subfolder"));
 
         let base_folder = Path::new("/base/folder/subfolder/another/folder");
         let new_path = Path::new("/");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/"));
 
         let base_folder = Path::new("/");
         let new_path = Path::new("/base/folder/subfolder");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/"));
 
         let base_folder = Path::new("/");
         let new_path = Path::new("/");
 
-        let result = compute_base_folder(base_folder, new_path).expect("Failed to compute base folder");
+        let result =
+            compute_base_folder(Some(PathBuf::from(base_folder)), new_path).expect("Failed to compute base folder");
         assert_eq!(result, Path::new("/"));
     }
 
@@ -290,13 +310,13 @@ mod tests {
         // Test with a valid path
         let path = Path::new(".");
         let base_path = PathBuf::new();
-        let result = compute_base_path(path, &base_path);
+        let result = compute_base_path(path, Some(PathBuf::from(base_path)));
         assert!(result.is_some());
 
         // Test with an invalid path
         let path = Path::new("/non/existent/path");
         let base_path = PathBuf::new();
-        let result = compute_base_path(path, &base_path);
+        let result = compute_base_path(path, Some(PathBuf::from(base_path)));
         assert!(result.is_none());
     }
 
@@ -354,25 +374,25 @@ mod tests {
         // Test with recursive = false, quiet = true
         let args = vec![temp_path.to_string_lossy().to_string()];
         let (base_path, files) = scan_files(&args, false, true);
-        assert!(!base_path.as_os_str().is_empty());
+        assert!(!base_path.unwrap().as_os_str().is_empty());
         assert_eq!(files.len(), 2); // Should find 2 image files
 
         // Test with empty args
         let args: Vec<String> = vec![];
         let (base_path, files) = scan_files(&args, false, true);
-        assert!(base_path.as_os_str().is_empty());
+        assert!(base_path.is_none());
         assert_eq!(files.len(), 0);
 
         // Test with a non-existent path
         let args = vec!["/non/existent/path".to_string()];
         let (base_path, files) = scan_files(&args, false, true);
-        assert!(base_path.as_os_str().is_empty());
+        assert!(base_path.is_none());
         assert_eq!(files.len(), 0);
 
         // Test with a file path directly
         let args = vec![jpeg_path.to_string_lossy().to_string()];
         let (base_path, files) = scan_files(&args, false, true);
-        assert!(!base_path.as_os_str().is_empty());
+        assert!(!base_path.unwrap().as_os_str().is_empty());
         assert_eq!(files.len(), 1);
     }
 

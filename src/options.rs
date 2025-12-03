@@ -147,6 +147,7 @@ pub struct Resize {
     #[arg(long, conflicts_with_all = &["width", "height", "long_edge"])]
     pub short_edge: Option<u32>,
 
+    /// Prevents upscaling of the image when resizing
     #[arg(long)]
     pub no_upscale: bool,
 }

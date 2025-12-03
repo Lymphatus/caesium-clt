@@ -406,9 +406,14 @@ fn compute_output_full_path(
         if same_folder_as_input {
             return Some((parent.clone(), output_file_name));
         }
-        let output_path_prefix = match parent.strip_prefix(base_directory) {
-            Ok(p) => p,
-            Err(_) => return None,
+        let output_path_prefix = if !base_directory.clone().into_os_string().is_empty() {
+            match parent.strip_prefix(base_directory) {
+                Ok(p) => p.to_path_buf(),
+                Err(_) => return None,
+            }
+        } else {
+            let prefix = parent.display().to_string().replace(":", "");
+            PathBuf::from(prefix)
         };
         let full_output_directory = output_directory.join(output_path_prefix);
         Some((full_output_directory, output_file_name))

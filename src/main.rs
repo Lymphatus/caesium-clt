@@ -8,6 +8,7 @@ use colored::Colorize;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
 use std::num::NonZero;
 use std::path::{Path, PathBuf};
+use std::process::exit;
 use std::time::Duration;
 
 mod compressor;
@@ -40,10 +41,14 @@ fn main() {
     let quiet = args.quiet || args.verbose == 0;
     let verbose = if quiet { 0 } else { args.verbose };
     let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet);
+    if base_path.is_none() {
+        eprintln!("Unable to compute the base path for the files.");
+        exit(-1);
+    }
     let total_files = input_files.len();
 
     let progress_bar = setup_progress_bar(total_files, verbose);
-    let compression_options = build_compression_options(&args, &base_path);
+    let compression_options = build_compression_options(&args, &base_path.unwrap());
     let compression_results = start_compression(&input_files, &compression_options, &progress_bar, args.dry_run);
     progress_bar.finish();
     write_recap_message(&compression_results, verbose);

@@ -802,9 +802,9 @@ checksum = "2874a2af47a2325c2001a6e6fad9b16a53b802102b528163885171cf92b15976"
 
 [[package]]
 name = "libcaesium"
-version = "0.19.0"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db5068ed86a0f03f612f32da2f1856f4e2614fec0dab83920dbdd7d99129db45"
+checksum = "64103ec3aaf0b3ce4ea53c028ef30bfe92ec6283876b82ac5ab205d3404c3d42"
 dependencies = [
  "bytes",
  "gif",

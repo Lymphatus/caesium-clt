@@ -53,6 +53,8 @@
 - `--short-edge <SHORT_EDGE>`  
   Sets the size of the shortest edge of the image. It is aware of rotation metadata. Can't be used with `--width` or
   `--height` or `--long-edge`.
+- `--no-upscale
+  Prevent upscaling the image when resizing
 
 ##### Destination
 
