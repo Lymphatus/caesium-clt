@@ -2,6 +2,14 @@ use bytesize::ByteSize;
 use clap::{Args, Parser, ValueEnum};
 use std::path::PathBuf;
 
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub enum MinSavingsThreshold {
+    /// Percentage-based threshold (0.0-100.0)
+    Percentage(f64),
+    /// Byte-based threshold (absolute size)
+    Bytes(u64),
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum OverwritePolicy {
     /// Always overwrite existing files
@@ -104,6 +112,11 @@ pub struct CommandLineArgs {
     #[arg(short = 'O', long, value_enum, default_value = "all")]
     pub overwrite: OverwritePolicy,
 
+    /// Minimum compression savings required to write an output file.
+    /// Use percentage (e.g., '10%', '1.5%'), absolute size (e.g., '100KB', '1MB'), or plain number as bytes
+    #[arg(long, value_parser = min_savings_validator)]
+    pub min_savings: Option<MinSavingsThreshold>,
+
     /// Suppress all output
     #[arg(short = 'Q', long, group = "verbosity")]
     pub quiet: bool,
@@ -203,6 +216,36 @@ fn max_size_validator(val: &str) -> Result<usize, String> {
     val.parse::<ByteSize>()
         .map(|bs| bs.as_u64() as usize)
         .map_err(|e| format!("Invalid size format: {e}"))
+}
+
+/// Validates and parses min_savings values
+/// Supports: "10%" or "1.5%" for percentage, "100KB" for bytes, or plain numbers as bytes
+fn min_savings_validator(val: &str) -> Result<MinSavingsThreshold, String> {
+    let trimmed = val.trim();
+
+    if trimmed.is_empty() {
+        return Err("Value cannot be empty. Use percentage (e.g., '10%'), size with unit (e.g., '100KB', '1MB'), or plain number as bytes".to_string());
+    }
+
+    // Check for percentage format
+    if let Some(percent_str) = trimmed.strip_suffix('%') {
+        let percent = percent_str
+            .trim()
+            .parse::<f64>()
+            .map_err(|_| format!("Invalid percentage value: '{percent_str}'"))?;
+
+        if !(0.0..=100.0).contains(&percent) {
+            return Err(format!("Percentage must be between 0 and 100, got {percent}"));
+        }
+
+        return Ok(MinSavingsThreshold::Percentage(percent));
+    }
+
+    trimmed.parse::<ByteSize>()
+        .map(|bs| MinSavingsThreshold::Bytes(bs.as_u64()))
+        .map_err(|_| format!(
+            "Invalid size format: '{val}'. Use percentage (e.g., '10%'), size with unit (e.g., '100KB', '1MB'), or plain number as bytes",
+        ))
 }
 
 #[cfg(test)]
@@ -331,5 +374,71 @@ mod tests {
         assert!(max_size_validator("invalid").is_err());
         assert!(max_size_validator("1XB").is_err());
         assert!(max_size_validator("").is_err());
+    }
+
+    #[test]
+    fn test_min_savings_validator() {
+        // Test percentage format (integer)
+        assert!(matches!(
+            min_savings_validator("10%"),
+            Ok(MinSavingsThreshold::Percentage(p)) if (p - 10.0).abs() < f64::EPSILON
+        ));
+        assert!(matches!(
+            min_savings_validator("0%"),
+            Ok(MinSavingsThreshold::Percentage(p)) if p.abs() < f64::EPSILON
+        ));
+        assert!(matches!(
+            min_savings_validator("100%"),
+            Ok(MinSavingsThreshold::Percentage(p)) if (p - 100.0).abs() < f64::EPSILON
+        ));
+
+        // Test percentage format (decimal)
+        assert!(matches!(
+            min_savings_validator("1.5%"),
+            Ok(MinSavingsThreshold::Percentage(p)) if (p - 1.5).abs() < f64::EPSILON
+        ));
+        assert!(matches!(
+            min_savings_validator("0.1%"),
+            Ok(MinSavingsThreshold::Percentage(p)) if (p - 0.1).abs() < f64::EPSILON
+        ));
+        assert!(matches!(
+            min_savings_validator("99.9%"),
+            Ok(MinSavingsThreshold::Percentage(p)) if (p - 99.9).abs() < f64::EPSILON
+        ));
+
+        // Test invalid percentages
+        assert!(min_savings_validator("101%").is_err());
+        assert!(min_savings_validator("-1%").is_err());
+
+        // Test byte formats with units
+        assert!(matches!(
+            min_savings_validator("100KB"),
+            Ok(MinSavingsThreshold::Bytes(100_000))
+        ));
+        assert!(matches!(
+            min_savings_validator("1MB"),
+            Ok(MinSavingsThreshold::Bytes(1_000_000))
+        ));
+        assert!(matches!(
+            min_savings_validator("1MiB"),
+            Ok(MinSavingsThreshold::Bytes(1_048_576))
+        ));
+        assert!(matches!(min_savings_validator("1B"), Ok(MinSavingsThreshold::Bytes(1))));
+
+        // Test plain number as bytes (no unit)
+        assert!(matches!(
+            min_savings_validator("100"),
+            Ok(MinSavingsThreshold::Bytes(100))
+        ));
+        assert!(matches!(
+            min_savings_validator("1000000"),
+            Ok(MinSavingsThreshold::Bytes(1_000_000))
+        ));
+
+        // Test invalid formats
+        assert!(min_savings_validator("invalid").is_err());
+        assert!(min_savings_validator("").is_err());
+        // assert!(min_savings_validator("1B").is_err());
+        assert!(min_savings_validator("1 bytes").is_err());
     }
 }

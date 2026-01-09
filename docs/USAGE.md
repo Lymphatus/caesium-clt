@@ -74,6 +74,13 @@
     - `all`: Always overwrite
     - `never`: Never overwrite
     - `bigger`: Overwrite only if the file to be overwritten is bigger
+- `--min-savings <MIN_SAVINGS>`  
+  Skip writing the output file if the compression savings are below the specified threshold.
+  This is useful to prevent repeated re-compression from degrading image quality.  
+  Supported formats:
+    - Percentage (supports decimals): `10%`, `1.5%`, `0.1%`
+    - Size with unit: `100KB`, `1MB`, `500KiB`
+    - Plain number (interpreted as bytes): `1000`, `50000`
 - `--format <FORMAT>`  
   Converts the original image to the selected format. Possible values are:
     - `jpeg`

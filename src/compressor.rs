@@ -1,4 +1,4 @@
-use crate::options::{OutputFormat, OverwritePolicy};
+use crate::options::{MinSavingsThreshold, OutputFormat, OverwritePolicy};
 use crate::scan_files::get_file_mime_type;
 use caesium::parameters::{CSParameters, ChromaSubsampling};
 use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
@@ -64,6 +64,7 @@ pub struct CompressionOptions {
     pub jpeg_baseline: bool,
     pub no_upscale: bool,
     pub strip_icc: bool,
+    pub min_savings: Option<MinSavingsThreshold>,
 }
 
 const MAX_FILE_SIZE: u64 = 500 * 1024 * 1024;
@@ -137,6 +138,15 @@ fn perform_compression(input_file: &PathBuf, options: &CompressionOptions, dry_r
     };
 
     let output_file_size = compressed_image.len() as u64;
+
+    if skip_due_to_insufficient_savings(
+        options.min_savings,
+        original_file_size,
+        output_file_size,
+        &mut compression_result,
+    ) {
+        return compression_result;
+    }
 
     if skip_due_to_bigger_policy(
         options,
@@ -278,6 +288,53 @@ fn perform_image_compression(
         Err(e) => {
             compression_result.message = format!("Error compressing file: {e}");
             None
+        }
+    }
+}
+
+fn skip_due_to_insufficient_savings(
+    min_savings: Option<MinSavingsThreshold>,
+    original_size: u64,
+    compressed_size: u64,
+    compression_result: &mut CompressionResult,
+) -> bool {
+    let Some(threshold) = min_savings else {
+        return false;
+    };
+
+    if original_size == 0 {
+        return false;
+    }
+
+    let actual_savings = original_size.saturating_sub(compressed_size);
+
+    match threshold {
+        MinSavingsThreshold::Percentage(percent) => {
+            let savings_percent = (actual_savings as f64 / original_size as f64) * 100.0;
+
+            if savings_percent <= percent {
+                compression_result.status = CompressionStatus::Skipped;
+                compression_result.compressed_size = original_size;
+                compression_result.message =
+                    format!("Insufficient savings: {savings_percent:.2}% < {percent:.2}%, skipped",);
+                true
+            } else {
+                false
+            }
+        }
+        MinSavingsThreshold::Bytes(min_bytes) => {
+            if actual_savings <= min_bytes {
+                compression_result.status = CompressionStatus::Skipped;
+                compression_result.compressed_size = original_size;
+                compression_result.message = format!(
+                    "Insufficient savings: {} < {}, skipped",
+                    bytesize::ByteSize::b(actual_savings),
+                    bytesize::ByteSize::b(min_bytes)
+                );
+                true
+            } else {
+                false
+            }
         }
     }
 }
@@ -930,6 +987,75 @@ mod tests {
         assert_eq!(params.gif.quality, 75);
     }
 
+    #[test]
+    fn test_min_savings_skips_files() {
+        let input_files = vec![absolute(PathBuf::from("samples/j0.JPG")).unwrap()];
+
+        let progress_bar = ProgressBar::new(input_files.len() as u64);
+        progress_bar.set_draw_target(ProgressDrawTarget::hidden());
+
+        // Test with very high percentage threshold - should skip files
+        let temp_dir = tempdir().unwrap().path().to_path_buf();
+        let mut options = setup_options();
+        options.base_path = absolute(PathBuf::from("samples")).unwrap();
+        options.output_folder = Some(temp_dir.clone());
+        options.quality = Some(95); // High quality = small savings
+        options.min_savings = Some(MinSavingsThreshold::Percentage(99.0)); // Require 99% savings (unrealistic)
+
+        let results = start_compression(&input_files, &options, &progress_bar, false);
+        assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
+        assert!(results.iter().all(|r| r.message.contains("Insufficient savings")));
+        // Files should NOT be written when skipped
+        assert!(results.iter().all(|r| !fs::exists(&r.output_path).unwrap_or(true)));
+
+        // Test with very high byte threshold - should skip files
+        let temp_dir2 = tempdir().unwrap().path().to_path_buf();
+        let mut options2 = setup_options();
+        options2.base_path = absolute(PathBuf::from("samples")).unwrap();
+        options2.output_folder = Some(temp_dir2.clone());
+        options2.quality = Some(95);
+        options2.min_savings = Some(MinSavingsThreshold::Bytes(100_000_000)); // Require 100MB savings (unrealistic)
+
+        let results2 = start_compression(&input_files, &options2, &progress_bar, false);
+        assert!(results2.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
+        assert!(results2.iter().all(|r| r.message.contains("Insufficient savings")));
+
+        // Test with low threshold - should succeed
+        let temp_dir3 = tempdir().unwrap().path().to_path_buf();
+        let mut options3 = setup_options();
+        options3.base_path = absolute(PathBuf::from("samples")).unwrap();
+        options3.output_folder = Some(temp_dir3.clone());
+        options3.quality = Some(50); // Lower quality = more savings
+        options3.min_savings = Some(MinSavingsThreshold::Percentage(0.1)); // Very low threshold
+
+        let results3 = start_compression(&input_files, &options3, &progress_bar, false);
+        assert!(results3.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
+        assert!(results3.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
+
+        // Test with decimal percentage threshold
+        let temp_dir4 = tempdir().unwrap().path().to_path_buf();
+        let mut options4 = setup_options();
+        options4.base_path = absolute(PathBuf::from("samples")).unwrap();
+        options4.output_folder = Some(temp_dir4.clone());
+        options4.quality = Some(95);
+        options4.min_savings = Some(MinSavingsThreshold::Percentage(50.5)); // 50.5% threshold
+
+        let results4 = start_compression(&input_files, &options4, &progress_bar, false);
+        // With high quality (95), savings should be less than 50.5%, so files should be skipped
+        assert!(results4.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
+
+        // Test with no min_savings - should always succeed
+        let temp_dir5 = tempdir().unwrap().path().to_path_buf();
+        let mut options5 = setup_options();
+        options5.base_path = absolute(PathBuf::from("samples")).unwrap();
+        options5.output_folder = Some(temp_dir5.clone());
+        options5.quality = Some(95);
+        options5.min_savings = None;
+
+        let results5 = start_compression(&input_files, &options5, &progress_bar, false);
+        assert!(results5.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
+    }
+
     fn setup_options() -> CompressionOptions {
         CompressionOptions {
             quality: Some(80),
@@ -954,6 +1080,7 @@ mod tests {
             base_path: PathBuf::new(),
             no_upscale: false,
             strip_icc: false,
+            min_savings: None,
         }
     }
 }

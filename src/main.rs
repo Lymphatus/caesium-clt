@@ -210,6 +210,7 @@ fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> Compre
         base_path: PathBuf::from(base_path),
         no_upscale: args.resize.no_upscale,
         strip_icc: args.strip_icc,
+        min_savings: args.min_savings,
     }
 }
 
@@ -409,6 +410,7 @@ mod tests {
             dry_run: false,
             threads: 4,
             overwrite: OverwritePolicy::All,
+            min_savings: None,
             quiet: false,
             verbose: 2,
             files: vec!["test1.jpg".to_string(), "test2.png".to_string()],
