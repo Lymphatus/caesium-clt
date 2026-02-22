@@ -1,0 +1,14 @@
+name: Publish to WinGet
+on:
+  release:
+    types: [published]
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: vedantmgoyal9/winget-releaser@main
+        with:
+          identifier: SaeraSoft.CaesiumCLT
+          max-versions-to-keep: 10
+          installers-regex: '\.zip$'
+          token: ${{ secrets.WINGET_TOKEN }}

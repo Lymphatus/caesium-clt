@@ -2,15 +2,17 @@ name: Test
 
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
-      - 'LICENSE.md'
-      - 'README.md'
-    pull_request:
-      paths-ignore:
-        - 'docs/**'
-        - 'LICENSE.md'
-        - 'README.md'
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/test.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/test.yml'
 
 env:
   CARGO_TERM_COLOR: always
