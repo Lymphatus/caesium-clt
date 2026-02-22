@@ -101,15 +101,14 @@ jobs:
           token: ${{ secrets.RELEASE_TOKEN }}
           files: |
             ${{ env.ASSET }}
-          # body_path: ''
-          body: "|Arch|Filename|
-          |:--: |:--:|
-          |MacOS ARM| caesiumclt-v*-aarch64-apple-darwin.tar.gz|
-          |MacOS x86_64| caesiumclt-v*-x86_64-apple-darwin.tar.gz|
-          |Linux ARM| caesiumclt-v*-aarch64-unknown-linux-musl.tar.gz|
-          |Linux x86_64| caesiumclt-v*-x86_64-unknown-linux-musl.tar.gz|
-          |Windows x86_64| caesiumclt-v*-x86_64-pc-windows-msvc.zip|
-          "
+          body: |
+            |Arch|Filename|
+            |:--: |:--:|
+            |MacOS ARM| caesiumclt-v*-aarch64-apple-darwin.tar.gz|
+            |MacOS x86_64| caesiumclt-v*-x86_64-apple-darwin.tar.gz|
+            |Linux ARM| caesiumclt-v*-aarch64-unknown-linux-musl.tar.gz|
+            |Linux x86_64| caesiumclt-v*-x86_64-unknown-linux-musl.tar.gz|
+            |Windows x86_64| caesiumclt-v*-x86_64-pc-windows-msvc.zip|
 
       - name: Upload Artifact 🚀
         uses: actions/upload-artifact@v4

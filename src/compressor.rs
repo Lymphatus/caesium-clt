@@ -2,7 +2,7 @@ use crate::options::{MinSavingsThreshold, OutputFormat, OverwritePolicy};
 // use crate::scan_files::get_file_mime_type;
 use caesium::parameters::{CSParameters, ChromaSubsampling};
 use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
-use indicatif::ProgressBar;
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelRefIterator;
 use std::error::Error;
@@ -72,13 +72,26 @@ const MAX_FILE_SIZE: u64 = 500 * 1024 * 1024;
 pub fn start_compression(
     input_files: &[PathBuf],
     options: &CompressionOptions,
+    multi_progress: &MultiProgress,
     progress_bar: &ProgressBar,
     dry_run: bool,
 ) -> Vec<CompressionResult> {
     input_files
         .par_iter()
         .map(|input_file| {
+            let spinner = multi_progress.add(ProgressBar::new_spinner());
+            spinner.set_style(
+                ProgressStyle::default_spinner()
+                    .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+                    .template("{spinner:.cyan} {msg}")
+                    .unwrap_or(ProgressStyle::default_spinner()),
+            );
+            spinner.set_message(format!("{}", input_file.display()));
+            spinner.enable_steady_tick(std::time::Duration::from_millis(100));
+
             let result = perform_compression(input_file, options, dry_run);
+
+            spinner.finish_and_clear();
             progress_bar.inc(1);
             result
         })
@@ -761,12 +774,13 @@ mod tests {
 
         let mut options = setup_options();
         options.base_path = absolute(PathBuf::from("samples")).unwrap();
-        let progress_bar = ProgressBar::new(input_files.len() as u64);
-        progress_bar.set_draw_target(ProgressDrawTarget::hidden());
+        let multi_progress = indicatif::MultiProgress::new();
+        multi_progress.set_draw_target(ProgressDrawTarget::hidden());
+        let progress_bar = multi_progress.add(ProgressBar::new(input_files.len() as u64));
         let temp_dir = tempdir().unwrap().path().to_path_buf();
         options.output_folder = Some(temp_dir.clone());
 
-        let mut results = start_compression(&input_files, &options, &progress_bar, false);
+        let mut results = start_compression(&input_files, &options, &multi_progress, &progress_bar, false);
         assert_eq!(results.len(), 4);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
@@ -789,7 +803,7 @@ mod tests {
         let temp_dir = tempdir().unwrap().path().to_path_buf();
         options.output_folder = Some(temp_dir.clone());
         options.keep_structure = true;
-        results = start_compression(&input_files, &options, &progress_bar, false);
+        results = start_compression(&input_files, &options, &multi_progress, &progress_bar, false);
         assert_eq!(results.len(), 8);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
@@ -817,19 +831,19 @@ mod tests {
         options.quality = Some(100);
 
         options.overwrite_policy = OverwritePolicy::Never;
-        results = start_compression(&input_files, &options, &progress_bar, false);
+        results = start_compression(&input_files, &options, &multi_progress, &progress_bar, false);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
         options.quality = Some(100);
         options.overwrite_policy = OverwritePolicy::Bigger;
-        results = start_compression(&input_files, &options, &progress_bar, false);
+        results = start_compression(&input_files, &options, &multi_progress, &progress_bar, false);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
         options.quality = Some(100);
         options.overwrite_policy = OverwritePolicy::All;
-        results = start_compression(&input_files, &options, &progress_bar, true);
+        results = start_compression(&input_files, &options, &multi_progress, &progress_bar, true);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
@@ -837,13 +851,13 @@ mod tests {
         options.png_opt_level = 6;
         options.lossless = true;
         options.overwrite_policy = OverwritePolicy::All;
-        results = start_compression(&input_files, &options, &progress_bar, true);
+        results = start_compression(&input_files, &options, &multi_progress, &progress_bar, true);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
         options.quality = Some(80);
         options.keep_dates = true;
-        results = start_compression(&input_files, &options, &progress_bar, false);
+        results = start_compression(&input_files, &options, &multi_progress, &progress_bar, false);
 
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results.iter().all(|r| {
@@ -997,8 +1011,9 @@ mod tests {
     fn test_min_savings_skips_files() {
         let input_files = vec![absolute(PathBuf::from("samples/j0.JPG")).unwrap()];
 
-        let progress_bar = ProgressBar::new(input_files.len() as u64);
-        progress_bar.set_draw_target(ProgressDrawTarget::hidden());
+        let multi_progress = indicatif::MultiProgress::new();
+        multi_progress.set_draw_target(ProgressDrawTarget::hidden());
+        let progress_bar = multi_progress.add(ProgressBar::new(input_files.len() as u64));
 
         // Test with very high percentage threshold - should skip files
         let temp_dir = tempdir().unwrap().path().to_path_buf();
@@ -1008,7 +1023,7 @@ mod tests {
         options.quality = Some(95); // High quality = small savings
         options.min_savings = Some(MinSavingsThreshold::Percentage(99.0)); // Require 99% savings (unrealistic)
 
-        let results = start_compression(&input_files, &options, &progress_bar, false);
+        let results = start_compression(&input_files, &options, &multi_progress, &progress_bar, false);
         assert!(results.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
         assert!(results.iter().all(|r| r.message.contains("Insufficient savings")));
         // Files should NOT be written when skipped
@@ -1022,7 +1037,7 @@ mod tests {
         options2.quality = Some(95);
         options2.min_savings = Some(MinSavingsThreshold::Bytes(100_000_000)); // Require 100MB savings (unrealistic)
 
-        let results2 = start_compression(&input_files, &options2, &progress_bar, false);
+        let results2 = start_compression(&input_files, &options2, &multi_progress, &progress_bar, false);
         assert!(results2.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
         assert!(results2.iter().all(|r| r.message.contains("Insufficient savings")));
 
@@ -1034,7 +1049,7 @@ mod tests {
         options3.quality = Some(50); // Lower quality = more savings
         options3.min_savings = Some(MinSavingsThreshold::Percentage(0.1)); // Very low threshold
 
-        let results3 = start_compression(&input_files, &options3, &progress_bar, false);
+        let results3 = start_compression(&input_files, &options3, &multi_progress, &progress_bar, false);
         assert!(results3.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
         assert!(results3.iter().all(|r| fs::exists(&r.output_path).unwrap_or(false)));
 
@@ -1046,7 +1061,7 @@ mod tests {
         options4.quality = Some(95);
         options4.min_savings = Some(MinSavingsThreshold::Percentage(50.5)); // 50.5% threshold
 
-        let results4 = start_compression(&input_files, &options4, &progress_bar, false);
+        let results4 = start_compression(&input_files, &options4, &multi_progress, &progress_bar, false);
         // With high quality (95), savings should be less than 50.5%, so files should be skipped
         assert!(results4.iter().all(|r| matches!(r.status, CompressionStatus::Skipped)));
 
@@ -1058,7 +1073,7 @@ mod tests {
         options5.quality = Some(95);
         options5.min_savings = None;
 
-        let results5 = start_compression(&input_files, &options5, &progress_bar, false);
+        let results5 = start_compression(&input_files, &options5, &multi_progress, &progress_bar, false);
         assert!(results5.iter().all(|r| matches!(r.status, CompressionStatus::Success)));
     }
 

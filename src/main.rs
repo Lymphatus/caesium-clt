@@ -5,7 +5,7 @@ use bytesize::ByteSize;
 use caesium::parameters::ChromaSubsampling;
 use clap::Parser;
 use colored::Colorize;
-use indicatif::{ProgressBar, ProgressDrawTarget, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
 use std::num::NonZero;
 use std::path::{Path, PathBuf};
 use std::process::exit;
@@ -47,9 +47,15 @@ fn main() {
     }
     let total_files = input_files.len();
 
-    let progress_bar = setup_progress_bar(total_files, verbose);
+    let (multi_progress, progress_bar) = setup_progress_bar(total_files, verbose);
     let compression_options = build_compression_options(&args, &base_path.unwrap());
-    let compression_results = start_compression(&input_files, &compression_options, &progress_bar, args.dry_run);
+    let compression_results = start_compression(
+        &input_files,
+        &compression_options,
+        &multi_progress,
+        &progress_bar,
+        args.dry_run,
+    );
     progress_bar.finish();
     write_recap_message(&compression_results, verbose);
 }
@@ -167,14 +173,14 @@ fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> us
     }
 }
 
-fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
-    let progress_bar = ProgressBar::new(len as u64);
-    if verbose == 0 {
-        progress_bar.set_draw_target(ProgressDrawTarget::hidden());
-        return progress_bar;
-    }
+fn setup_progress_bar(len: usize, verbose: u8) -> (MultiProgress, ProgressBar) {
+    let multi_progress = MultiProgress::new();
+    let progress_bar = multi_progress.add(ProgressBar::new(len as u64));
 
-    progress_bar.set_draw_target(ProgressDrawTarget::stdout());
+    if verbose == 0 {
+        multi_progress.set_draw_target(ProgressDrawTarget::hidden());
+        return (multi_progress, progress_bar);
+    }
 
     progress_bar.set_style(
         ProgressStyle::default_bar()
@@ -183,7 +189,7 @@ fn setup_progress_bar(len: usize, verbose: u8) -> ProgressBar {
             .progress_chars("#>-"),
     );
     progress_bar.enable_steady_tick(PROGRESS_UPDATE_INTERVAL);
-    progress_bar
+    (multi_progress, progress_bar)
 }
 
 fn build_compression_options(args: &CommandLineArgs, base_path: &Path) -> CompressionOptions {
@@ -256,17 +262,12 @@ mod tests {
     #[test]
     fn test_setup_progress_bar() {
         // Test with verbose = 0 (hidden)
-        let progress_bar = setup_progress_bar(10, 0);
+        let (_multi, progress_bar) = setup_progress_bar(10, 0);
         assert!(progress_bar.is_hidden());
         assert_eq!(progress_bar.length(), Some(10));
 
-        // Test with verbose > 0 (visible)
-        // let progress_bar = setup_progress_bar(20, 1);
-        // assert!(!progress_bar.is_hidden());
-        // assert_eq!(progress_bar.length(), Some(20));
-
         // Test with different lengths
-        let progress_bar = setup_progress_bar(0, 1);
+        let (_multi, progress_bar) = setup_progress_bar(0, 1);
         assert_eq!(progress_bar.length(), Some(0));
     }
 
