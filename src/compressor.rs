@@ -1,5 +1,5 @@
 use crate::options::{MinSavingsThreshold, OutputFormat, OverwritePolicy};
-use crate::scan_files::get_file_mime_type;
+// use crate::scan_files::get_file_mime_type;
 use caesium::parameters::{CSParameters, ChromaSubsampling};
 use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
 use indicatif::ProgressBar;
@@ -9,7 +9,7 @@ use std::error::Error;
 use std::ffi::OsString;
 use std::fmt::Display;
 use std::fs::{File, FileTimes, Metadata};
-use std::io::{BufReader, Read, Write};
+use std::io::{Read, Write};
 #[cfg(target_os = "windows")]
 use std::os::windows::fs::FileTimesExt;
 use std::path::{absolute, Path, PathBuf};
@@ -241,23 +241,30 @@ fn skip_due_to_overwrite_policy(
     false
 }
 
+fn get_file_mime_type_from_buffer(buffer: &[u8]) -> Option<String> {
+    match infer::get(buffer) {
+        Some(v) => Option::from(v.mime_type().to_string()),
+        None => None,
+    }
+}
+
 fn perform_image_compression(
     input_file: &PathBuf,
     options: &CompressionOptions,
     compression_result: &mut CompressionResult,
 ) -> Option<Vec<u8>> {
-    let mut compression_parameters = match build_compression_parameters(options, input_file) {
-        Ok(p) => p,
-        Err(e) => {
-            compression_result.message = format!("Error building compression parameters: {e}");
-            return None;
-        }
-    };
-
     let input_file_buffer = match read_file_to_vec(input_file) {
         Ok(b) => b,
         Err(_) => {
             compression_result.message = "Error reading input file".to_string();
+            return None;
+        }
+    };
+
+    let mut compression_parameters = match build_compression_parameters(options, &input_file_buffer) {
+        Ok(p) => p,
+        Err(e) => {
+            compression_result.message = format!("Error building compression parameters: {e}");
             return None;
         }
     };
@@ -386,10 +393,7 @@ fn write_compressed_file(
     Ok(())
 }
 
-fn build_compression_parameters(
-    options: &CompressionOptions,
-    input_file: &Path,
-) -> Result<CSParameters, Box<dyn Error>> {
+fn build_compression_parameters(options: &CompressionOptions, buffer: &[u8]) -> Result<CSParameters, Box<dyn Error>> {
     let mut parameters = CSParameters::new();
     let quality = options.quality.unwrap_or(80);
 
@@ -419,8 +423,8 @@ fn build_compression_parameters(
 
     let needs_resize = is_resize_needed(options);
     if needs_resize {
-        let mime_type = get_file_mime_type(input_file);
-        build_resize_parameters(options, &mut parameters, input_file, mime_type)?;
+        let mime_type = get_file_mime_type_from_buffer(buffer);
+        build_resize_parameters(options, &mut parameters, buffer, mime_type)?;
     }
 
     Ok(parameters)
@@ -484,10 +488,10 @@ fn compute_output_full_path(
 fn build_resize_parameters(
     options: &CompressionOptions,
     parameters: &mut CSParameters,
-    input_file_path: &Path,
+    buffer: &[u8],
     mime_type: Option<String>,
 ) -> Result<(), Box<dyn Error>> {
-    let (width, height) = get_real_resolution(input_file_path, mime_type, options.exif)?;
+    let (width, height) = get_real_resolution(buffer, mime_type, options.exif)?;
 
     if options.width.is_some() || options.height.is_some() {
         parameters.width = options.width.unwrap_or(0);
@@ -517,16 +521,15 @@ fn build_resize_parameters(
 }
 
 fn get_real_resolution(
-    file: &Path,
+    buffer: &[u8],
     mime_type: Option<String>,
     keep_metadata: bool,
 ) -> Result<(usize, usize), Box<dyn Error>> {
-    let resolution = imagesize::size(file)?;
+    let resolution = imagesize::blob_size(buffer)?;
     let mut orientation = 1;
     let mime = mime_type.unwrap_or("".to_string());
     if mime == "image/jpeg" && keep_metadata {
-        let f = File::open(file)?;
-        if let Ok(e) = exif::Reader::new().read_from_container(&mut BufReader::new(&f)) {
+        if let Ok(e) = exif::Reader::new().read_from_container(&mut std::io::Cursor::new(buffer)) {
             let exif_field = match e.get_field(exif::Tag::Orientation, exif::In::PRIMARY) {
                 Some(f) => f,
                 None => return Ok((resolution.width, resolution.height)),
@@ -880,33 +883,34 @@ mod tests {
     fn test_no_upscale_prevents_resize() {
         // Use an existing sample image and determine its real resolution
         let input_path = absolute(PathBuf::from("samples/p0.png")).unwrap();
-        let (w, h) = get_real_resolution(&input_path, get_file_mime_type(&input_path), true).unwrap();
+        let buffer = std::fs::read(&input_path).unwrap();
+        let (w, h) = get_real_resolution(&buffer, get_file_mime_type_from_buffer(&buffer), true).unwrap();
 
         let mut options = setup_options();
         options.no_upscale = true;
         options.width = Some((w + 100) as u32);
-        let params = build_compression_parameters(&options, &input_path).unwrap();
+        let params = build_compression_parameters(&options, &buffer).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 0);
 
         let mut options = setup_options();
         options.no_upscale = true;
         options.height = Some((h + 100) as u32);
-        let params = build_compression_parameters(&options, &input_path).unwrap();
+        let params = build_compression_parameters(&options, &buffer).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 0);
 
         let mut options = setup_options();
         options.no_upscale = true;
         options.long_edge = Some((w.max(h) + 100) as u32);
-        let params = build_compression_parameters(&options, &input_path).unwrap();
+        let params = build_compression_parameters(&options, &buffer).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 0);
 
         let mut options = setup_options();
         options.no_upscale = true;
         options.short_edge = Some((w.min(h) + 100) as u32);
-        let params = build_compression_parameters(&options, &input_path).unwrap();
+        let params = build_compression_parameters(&options, &buffer).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 0);
     }
@@ -914,41 +918,42 @@ mod tests {
     #[test]
     fn test_build_resize_parameters() {
         let input_path = absolute(PathBuf::from("samples/j0.JPG")).unwrap();
-        let mime_type = get_file_mime_type(&input_path);
+        let buffer = std::fs::read(&input_path).unwrap();
+        let mime_type = get_file_mime_type_from_buffer(&buffer);
 
         let mut options = setup_options();
         options.width = Some(100);
         options.height = Some(100);
         let mut params = CSParameters::new();
-        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        build_resize_parameters(&options, &mut params, &buffer, mime_type.clone()).unwrap();
         assert_eq!(params.width, 100);
         assert_eq!(params.height, 100);
 
         let mut options = setup_options();
         options.width = Some(100);
         let mut params = CSParameters::new();
-        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        build_resize_parameters(&options, &mut params, &buffer, mime_type.clone()).unwrap();
         assert_eq!(params.width, 100);
         assert_eq!(params.height, 0);
 
         let mut options = setup_options();
         options.height = Some(100);
         let mut params = CSParameters::new();
-        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        build_resize_parameters(&options, &mut params, &buffer, mime_type.clone()).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 100);
 
         let mut options = setup_options();
         options.long_edge = Some(100);
         let mut params = CSParameters::new();
-        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        build_resize_parameters(&options, &mut params, &buffer, mime_type.clone()).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 100);
 
         let mut options = setup_options();
         options.short_edge = Some(50);
         let mut params = CSParameters::new();
-        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        build_resize_parameters(&options, &mut params, &buffer, mime_type.clone()).unwrap();
         assert_eq!(params.width, 50);
         assert_eq!(params.height, 0);
 
@@ -956,7 +961,7 @@ mod tests {
         options.no_upscale = true;
         options.width = Some(20000);
         let mut params = CSParameters::new();
-        build_resize_parameters(&options, &mut params, &input_path, mime_type.clone()).unwrap();
+        build_resize_parameters(&options, &mut params, &buffer, mime_type.clone()).unwrap();
         assert_eq!(params.width, 0);
         assert_eq!(params.height, 0);
     }
@@ -964,26 +969,27 @@ mod tests {
     #[test]
     fn test_gif_quality_lossless_and_zero() {
         let input_path = absolute(PathBuf::from("samples/level_1_0/level_2_0/level_3_0/g1.gif")).unwrap();
+        let buffer = std::fs::read(&input_path).unwrap();
 
         // Test case 1: lossless = true should set gif.quality to 100
         let mut options = setup_options();
         options.lossless = true;
         options.quality = Some(80);
-        let params = build_compression_parameters(&options, &input_path).unwrap();
+        let params = build_compression_parameters(&options, &buffer).unwrap();
         assert_eq!(params.gif.quality, 100);
 
         // Test case 2: quality = 0 should set gif.quality to 1
         let mut options = setup_options();
         options.lossless = false;
         options.quality = Some(0);
-        let params = build_compression_parameters(&options, &input_path).unwrap();
+        let params = build_compression_parameters(&options, &buffer).unwrap();
         assert_eq!(params.gif.quality, 1);
 
         // Test case 3: normal quality should pass through unchanged
         let mut options = setup_options();
         options.lossless = false;
         options.quality = Some(75);
-        let params = build_compression_parameters(&options, &input_path).unwrap();
+        let params = build_compression_parameters(&options, &buffer).unwrap();
         assert_eq!(params.gif.quality, 75);
     }
 

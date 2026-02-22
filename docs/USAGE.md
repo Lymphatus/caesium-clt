@@ -97,6 +97,9 @@
 - `--threads <THREADS>`  
   Specify the number of parallel jobs. The maximum is the number of processors available. `0` means that the application
   will try to guess the maximum number of parallel jobs available. Default is `0`.
+- `--check-extension-only`
+  Trust file extensions instead of reading magic bytes. This is significantly faster when scanning large directories
+  containing many non-image files, but it will skip valid image files that do not have file extensions.
 - `-Q, --quiet`  
   Suppress all output. Overrides `--verbose`.
 - `--verbose <VERBOSE>`  

@@ -40,7 +40,7 @@ fn main() {
 
     let quiet = args.quiet || args.verbose == 0;
     let verbose = if quiet { 0 } else { args.verbose };
-    let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet);
+    let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet, args.check_extension_only);
     if base_path.is_none() {
         eprintln!("Unable to compute the base path for the files.");
         exit(-1);
@@ -415,6 +415,7 @@ mod tests {
             verbose: 2,
             files: vec!["test1.jpg".to_string(), "test2.png".to_string()],
             strip_icc: false,
+            check_extension_only: false,
         }
     }
 

@@ -5,6 +5,16 @@ use indicatif::ProgressStyle;
 use indicatif::{ProgressBar, ProgressDrawTarget, ProgressIterator};
 use walkdir::WalkDir;
 
+fn has_supported_extension(path: &Path) -> bool {
+    match path.extension().and_then(|e| e.to_str()) {
+        Some(ext) => {
+            let ext_lower = ext.to_lowercase();
+            matches!(ext_lower.as_str(), "jpg" | "jpeg" | "png" | "webp" | "gif")
+        }
+        None => false,
+    }
+}
+
 fn read_first_bytes(path: &Path, count: usize) -> Option<Vec<u8>> {
     use std::fs::File;
     use std::io::Read;
@@ -29,20 +39,20 @@ fn is_filetype_supported(path: &Path) -> bool {
         || infer::image::is_gif(&buffer)
 }
 
-pub fn get_file_mime_type(path: &Path) -> Option<String> {
-    let buffer = read_first_bytes(path, 16)?;
-
-    match infer::get(&buffer) {
-        Some(v) => Option::from(v.mime_type().to_string()),
-        None => None,
+fn is_valid_file(path: &Path, check_extension_only: bool) -> bool {
+    if check_extension_only {
+        return has_supported_extension(path);
     }
+
+    is_filetype_supported(path)
 }
 
-fn is_valid(entry: &Path) -> bool {
-    entry.exists() && entry.is_file() && is_filetype_supported(entry)
-}
-
-pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (Option<PathBuf>, Vec<PathBuf>) {
+pub fn scan_files(
+    args: &[String],
+    recursive: bool,
+    quiet: bool,
+    check_extension_only: bool,
+) -> (Option<PathBuf>, Vec<PathBuf>) {
     if args.is_empty() {
         return (None, vec![]);
     }
@@ -53,21 +63,23 @@ pub fn scan_files(args: &[String], recursive: bool, quiet: bool) -> (Option<Path
     for path in args.iter().progress_with(progress_bar) {
         let input = PathBuf::from(path);
         if input.exists() && input.is_dir() {
-            let mut walk_dir = WalkDir::new(input);
+            let mut walk_dir = WalkDir::new(&input);
             if !recursive {
                 walk_dir = walk_dir.max_depth(1);
             }
             for entry in walk_dir.into_iter().filter_map(|e| e.ok()) {
-                let path = entry.into_path();
-                if is_valid(&path) {
-                    base_path = match compute_base_path(&path, base_path.clone()) {
-                        Some(p) => Some(p),
-                        None => continue,
-                    };
-                    files.push(path);
+                if entry.file_type().is_file() {
+                    let path = entry.into_path();
+                    if is_valid_file(&path, check_extension_only) {
+                        base_path = match compute_base_path(&path, base_path.clone()) {
+                            Some(p) => Some(p),
+                            None => continue,
+                        };
+                        files.push(path);
+                    }
                 }
             }
-        } else if is_valid(&input) {
+        } else if input.is_file() && is_valid_file(&input, check_extension_only) {
             base_path = match compute_base_path(&input, base_path.clone()) {
                 Some(p) => Some(p),
                 None => continue,
@@ -158,6 +170,20 @@ mod tests {
     use tempfile::NamedTempFile;
 
     #[test]
+    fn test_has_supported_extension() {
+        assert!(has_supported_extension(Path::new("test.jpg")));
+        assert!(has_supported_extension(Path::new("test.png")));
+        assert!(has_supported_extension(Path::new("test.webp")));
+        assert!(has_supported_extension(Path::new("test.gif")));
+
+        assert!(!has_supported_extension(Path::new("test.tiff")));
+        assert!(!has_supported_extension(Path::new("test.tif")));
+        assert!(!has_supported_extension(Path::new("test.txt")));
+        assert!(!has_supported_extension(Path::new("test.avif")));
+        assert!(!has_supported_extension(Path::new("test")));
+    }
+
+    #[test]
     fn test_is_filetype_supported() {
         let supported_file_types = [
             image::ImageFormat::Jpeg,
@@ -191,30 +217,6 @@ mod tests {
 
             assert!(!is_filetype_supported(temp_file.path()));
         }
-    }
-
-    #[test]
-    fn test_is_valid() {
-        let mut temp_file = NamedTempFile::new().unwrap();
-        let rgb_image = RgbImage::new(1, 1);
-        let mut bytes: Vec<u8> = Vec::new();
-        rgb_image
-            .write_to(&mut Cursor::new(&mut bytes), image::ImageFormat::Jpeg)
-            .unwrap();
-        temp_file.write_all(bytes.as_slice()).unwrap();
-
-        assert!(is_valid(temp_file.path()));
-        assert!(!is_valid(temp_file.path().parent().unwrap()));
-        assert!(!is_valid(temp_file.path().join("test").as_path()));
-
-        let mut temp_file = NamedTempFile::new().unwrap();
-        let rgb_image = RgbImage::new(1, 1);
-        let mut bytes: Vec<u8> = Vec::new();
-        rgb_image
-            .write_to(&mut Cursor::new(&mut bytes), image::ImageFormat::Avif)
-            .unwrap();
-        temp_file.write_all(bytes.as_slice()).unwrap();
-        assert!(!is_valid(temp_file.path()));
     }
 
     #[test]
@@ -321,27 +323,6 @@ mod tests {
     }
 
     #[test]
-    fn test_get_file_mime_type() {
-        // Create a temporary JPEG file
-        let mut temp_file = NamedTempFile::new().unwrap();
-        let rgb_image = RgbImage::new(1, 1);
-        let mut bytes: Vec<u8> = Vec::new();
-        rgb_image
-            .write_to(&mut Cursor::new(&mut bytes), image::ImageFormat::Jpeg)
-            .unwrap();
-        temp_file.write_all(bytes.as_slice()).unwrap();
-
-        // Test with a JPEG file
-        let mime_type = get_file_mime_type(temp_file.path());
-        assert!(mime_type.is_some());
-        assert_eq!(mime_type.unwrap(), "image/jpeg");
-
-        // Test with a non-existent file
-        let mime_type = get_file_mime_type(Path::new("/non/existent/file.jpg"));
-        assert!(mime_type.is_none());
-    }
-
-    #[test]
     fn test_scan_files() {
         // Create a temporary directory with some image files
         let temp_dir = tempfile::tempdir().unwrap();
@@ -366,32 +347,47 @@ mod tests {
             .unwrap();
         png_file.write_all(bytes.as_slice()).unwrap();
 
+        // Create an extensionless file containing a valid image
+        let extless_path = temp_path.join("test_no_ext");
+        let mut extless_file = File::create(&extless_path).unwrap();
+        let mut bytes: Vec<u8> = Vec::new();
+        rgb_image
+            .write_to(&mut Cursor::new(&mut bytes), image::ImageFormat::Jpeg)
+            .unwrap();
+        extless_file.write_all(bytes.as_slice()).unwrap();
+
         // Create a text file (unsupported)
         let txt_path = temp_path.join("test.txt");
         let mut txt_file = File::create(&txt_path).unwrap();
         txt_file.write_all(b"This is a text file").unwrap();
 
-        // Test with recursive = false, quiet = true
+        // Test with recursive = false, quiet = true, check_extension_only = false
         let args = vec![temp_path.to_string_lossy().to_string()];
-        let (base_path, files) = scan_files(&args, false, true);
+        let (base_path, files) = scan_files(&args, false, true, false);
         assert!(!base_path.unwrap().as_os_str().is_empty());
-        assert_eq!(files.len(), 2); // Should find 2 image files
+        assert_eq!(files.len(), 3); // Should find 3 image files (jpg, png, and the extensionless one)
+
+        // Test with recursive = false, quiet = true, check_extension_only = true
+        let args = vec![temp_path.to_string_lossy().to_string()];
+        let (base_path, files) = scan_files(&args, false, true, true);
+        assert!(!base_path.unwrap().as_os_str().is_empty());
+        assert_eq!(files.len(), 2); // Should find ONLY the 2 files with extensions
 
         // Test with empty args
         let args: Vec<String> = vec![];
-        let (base_path, files) = scan_files(&args, false, true);
+        let (base_path, files) = scan_files(&args, false, true, false);
         assert!(base_path.is_none());
         assert_eq!(files.len(), 0);
 
         // Test with a non-existent path
         let args = vec!["/non/existent/path".to_string()];
-        let (base_path, files) = scan_files(&args, false, true);
+        let (base_path, files) = scan_files(&args, false, true, false);
         assert!(base_path.is_none());
         assert_eq!(files.len(), 0);
 
         // Test with a file path directly
         let args = vec![jpeg_path.to_string_lossy().to_string()];
-        let (base_path, files) = scan_files(&args, false, true);
+        let (base_path, files) = scan_files(&args, false, true, false);
         assert!(!base_path.unwrap().as_os_str().is_empty());
         assert_eq!(files.len(), 1);
     }

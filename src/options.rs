@@ -108,6 +108,10 @@ pub struct CommandLineArgs {
     #[arg(long, default_value = "0")]
     pub threads: u32,
 
+    /// Trust file extensions instead of reading magic bytes (significantly faster on large directories)
+    #[arg(long, default_value = "false")]
+    pub check_extension_only: bool,
+
     /// Policy for handling existing output files
     #[arg(short = 'O', long, value_enum, default_value = "all")]
     pub overwrite: OverwritePolicy,
