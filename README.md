@@ -69,6 +69,12 @@ cargo install caesiumclt
 brew install caesiumclt
 ```
 
+#### Winget
+
+```bash
+winget install SaeraSoft.CaesiumCLT
+```
+
 ## 🛠️ Development
 
 ### Requirements

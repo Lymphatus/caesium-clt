@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.3.0
+
+### Added
+
+- **Fast Scan**: Added option to skip magic bytes checks while scanning (`--check_extension_only`)
+- **Minimum Saving**: Implement min saving feature (#95)
+- Added CHANGELOG.md to fix #94
+
 ## v1.2.0
 
 ### Added
@@ -343,27 +351,3 @@
 ### Added
 
 - Initial development stage
-
----
-
-[v1.2.0]:  https://github.com/Lymphatus/caesium-clt/releases/tag/v1.2.0
-
-[v1.1.1]:  https://github.com/Lymphatus/caesium-clt/releases/tag/v1.1.1
-
-[v1.1.0]: https://github.com/Lymphatus/caesium-clt/releases/tag/v1.1.0
-
-[v1.0.2]: https://github.com/Lymphatus/caesium-clt/releases/tag/v1.0.2
-
-[v1.0.1]: https://github.com/Lymphatus/caesium-clt/releases/tag/v1.0.1
-
-[v1.0.0]: https://github.com/Lymphatus/caesium-clt/releases/tag/v1.0.0
-[v1.0.0-beta.2]: https://github.com/Lymphatus/caesium-clt/releases/tag/v1.0.0-beta. 2
-[v1.0.0-beta.1]: https://github.com/Lymphatus/caesium-clt/releases/tag/v1.0.0-beta.1
-[v1.0.0-beta.0]: https://github.com/Lymphatus/caesium-clt/releases/tag/v1.0.0-beta.0
-[0.21.0]: https://github.com/Lymphatus/caesium-clt/releases/tag/0.21.0
-[0.20.0]: https://github.com/Lymphatus/caesium-clt/releases/tag/0.20.0
-[0.19.3]: https://github.com/Lymphatus/caesium-clt/releases/tag/0.19.3
-[0.12.1-beta]: https://github.com/Lymphatus/caesium-clt/releases/tag/0.12.1-beta
-[0.10.2-beta]: https://github.com/Lymphatus/caesium-clt/releases/tag/0.10.2-beta
-
-CHANGELOG
