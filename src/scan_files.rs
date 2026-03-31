@@ -63,7 +63,7 @@ pub fn scan_files(
     for path in args.iter().progress_with(progress_bar) {
         let input = PathBuf::from(path);
         if input.exists() && input.is_dir() {
-            let mut walk_dir = WalkDir::new(&input);
+            let mut walk_dir = WalkDir::new(&input).follow_links(false);
             if !recursive {
                 walk_dir = walk_dir.max_depth(1);
             }

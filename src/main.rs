@@ -41,14 +41,17 @@ fn main() {
     let quiet = args.quiet || args.verbose == 0;
     let verbose = if quiet { 0 } else { args.verbose };
     let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet, args.check_extension_only);
-    if base_path.is_none() {
-        eprintln!("Unable to compute the base path for the files.");
-        exit(-1);
-    }
+    let base_path = match base_path {
+        Some(bp) => bp,
+        None => {
+            eprintln!("Unable to compute the base path for the files.");
+            exit(-1);
+        }
+    };
     let total_files = input_files.len();
 
     let (multi_progress, progress_bar) = setup_progress_bar(total_files, verbose);
-    let compression_options = build_compression_options(&args, &base_path.unwrap());
+    let compression_options = build_compression_options(&args, &base_path);
     let compression_results = start_compression(
         &input_files,
         &compression_options,
@@ -92,7 +95,11 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
             }
 
             let savings_size = result.original_size as i64 - result.compressed_size as i64;
-            let savings_percent = (savings_size as f64 / result.original_size as f64) * 100.0;
+            let savings_percent = if result.original_size > 0 {
+                (savings_size as f64 / result.original_size as f64) * 100.0
+            } else {
+                0.0
+            };
 
             let savings_size_abs = savings_size.unsigned_abs();
             let (formatted_savings_size, formatted_savings_percentage) = if savings_size >= 0 {
@@ -137,7 +144,11 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
 
     if verbose > 0 {
         let total_saved = total_original_size as i64 - total_compressed_size as i64;
-        let total_saved_percent = (total_saved as f64 / total_original_size as f64) * 100.0;
+        let total_saved_percent = if total_original_size > 0 {
+            (total_saved as f64 / total_original_size as f64) * 100.0
+        } else {
+            0.0
+        };
 
         let total_saved_abs = total_saved.unsigned_abs();
         let (formatted_total_saved_size, formatted_total_saved_percentage) = if total_saved >= 0 {

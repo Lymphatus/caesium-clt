@@ -332,7 +332,7 @@ fn skip_due_to_insufficient_savings(
         MinSavingsThreshold::Percentage(percent) => {
             let savings_percent = (actual_savings as f64 / original_size as f64) * 100.0;
 
-            if savings_percent <= percent {
+            if savings_percent < percent {
                 compression_result.status = CompressionStatus::Skipped;
                 compression_result.compressed_size = original_size;
                 compression_result.message =
@@ -343,7 +343,7 @@ fn skip_due_to_insufficient_savings(
             }
         }
         MinSavingsThreshold::Bytes(min_bytes) => {
-            if actual_savings <= min_bytes {
+            if actual_savings < min_bytes {
                 compression_result.status = CompressionStatus::Skipped;
                 compression_result.compressed_size = original_size;
                 compression_result.message = format!(
