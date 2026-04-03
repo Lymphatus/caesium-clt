@@ -66,12 +66,21 @@ fn main() {
 
     let quiet = args.quiet || args.verbose == 0;
     let verbose = if quiet { 0 } else { args.verbose };
-    let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet || args.json, args.check_extension_only);
+    let (base_path, input_files) = scan_files(
+        &args.files,
+        args.recursive,
+        quiet || args.json,
+        args.check_extension_only,
+    );
     let base_path = match base_path {
         Some(bp) => bp,
         None => {
             if args.json {
-                write_json_output(&[], args.dry_run, Some("Unable to compute the base path for the files."));
+                write_json_output(
+                    &[],
+                    args.dry_run,
+                    Some("Unable to compute the base path for the files."),
+                );
             } else {
                 eprintln!("Unable to compute the base path for the files.");
             }
@@ -80,7 +89,11 @@ fn main() {
     };
     let total_files = input_files.len();
 
-    let progress_target = if args.json { ProgressDrawTarget::stderr() } else { ProgressDrawTarget::stdout() };
+    let progress_target = if args.json {
+        ProgressDrawTarget::stderr()
+    } else {
+        ProgressDrawTarget::stdout()
+    };
     let (multi_progress, progress_bar) = setup_progress_bar(total_files, verbose, progress_target);
     let compression_options = build_compression_options(&args, &base_path);
     let compression_results = start_compression(
@@ -109,17 +122,30 @@ struct CompressionStats {
 
 impl CompressionStats {
     fn from_results(results: &[CompressionResult]) -> Self {
-        let (total_original_size, total_compressed_size, success, skipped, errors) = results
-            .iter()
-            .fold((0u64, 0u64, 0usize, 0usize, 0usize), |(orig, comp, success, skipped, errors), result| {
+        let (total_original_size, total_compressed_size, success, skipped, errors) = results.iter().fold(
+            (0u64, 0u64, 0usize, 0usize, 0usize),
+            |(orig, comp, success, skipped, errors), result| {
                 let (new_success, new_skipped, new_errors) = match result.status {
                     CompressionStatus::Success => (success + 1, skipped, errors),
                     CompressionStatus::Skipped => (success, skipped + 1, errors),
                     CompressionStatus::Error => (success, skipped, errors + 1),
                 };
-                (orig + result.original_size, comp + result.compressed_size, new_success, new_skipped, new_errors)
-            });
-        Self { total_original_size, total_compressed_size, success, skipped, errors }
+                (
+                    orig + result.original_size,
+                    comp + result.compressed_size,
+                    new_success,
+                    new_skipped,
+                    new_errors,
+                )
+            },
+        );
+        Self {
+            total_original_size,
+            total_compressed_size,
+            success,
+            skipped,
+            errors,
+        }
     }
 
     fn savings_bytes(&self) -> i64 {
@@ -166,8 +192,13 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
     }
 
     let stats = CompressionStats::from_results(compression_results);
-    let (total_original_size, total_compressed_size, total_success, total_skipped, total_errors) =
-        (stats.total_original_size, stats.total_compressed_size, stats.success, stats.skipped, stats.errors);
+    let (total_original_size, total_compressed_size, total_success, total_skipped, total_errors) = (
+        stats.total_original_size,
+        stats.total_compressed_size,
+        stats.success,
+        stats.skipped,
+        stats.errors,
+    );
 
     if verbose > 1 {
         for result in compression_results {
