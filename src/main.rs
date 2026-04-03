@@ -6,10 +6,32 @@ use caesium::parameters::ChromaSubsampling;
 use clap::Parser;
 use colored::Colorize;
 use indicatif::{MultiProgress, ProgressBar, ProgressDrawTarget, ProgressStyle};
+use serde::Serialize;
 use std::num::NonZero;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::time::Duration;
+
+#[derive(Serialize)]
+struct JsonSummary {
+    total_files: usize,
+    success: usize,
+    skipped: usize,
+    errors: usize,
+    original_size: u64,
+    compressed_size: u64,
+    savings_bytes: i64,
+    savings_percent: f64,
+}
+
+#[derive(Serialize)]
+struct JsonOutput<'a> {
+    version: &'static str,
+    dry_run: bool,
+    error: Option<&'a str>,
+    files: &'a [CompressionResult],
+    summary: JsonSummary,
+}
 
 mod compressor;
 mod options;
@@ -22,7 +44,11 @@ fn main() {
     let args = CommandLineArgs::parse();
 
     if args.files.is_empty() {
-        eprintln!("No files to compress");
+        if args.json {
+            write_json_output(&[], args.dry_run, Some("No files to compress"));
+        } else {
+            eprintln!("No files to compress");
+        }
         return;
     }
 
@@ -40,17 +66,22 @@ fn main() {
 
     let quiet = args.quiet || args.verbose == 0;
     let verbose = if quiet { 0 } else { args.verbose };
-    let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet, args.check_extension_only);
+    let (base_path, input_files) = scan_files(&args.files, args.recursive, quiet || args.json, args.check_extension_only);
     let base_path = match base_path {
         Some(bp) => bp,
         None => {
-            eprintln!("Unable to compute the base path for the files.");
+            if args.json {
+                write_json_output(&[], args.dry_run, Some("Unable to compute the base path for the files."));
+            } else {
+                eprintln!("Unable to compute the base path for the files.");
+            }
             exit(-1);
         }
     };
     let total_files = input_files.len();
 
-    let (multi_progress, progress_bar) = setup_progress_bar(total_files, verbose);
+    let progress_target = if args.json { ProgressDrawTarget::stderr() } else { ProgressDrawTarget::stdout() };
+    let (multi_progress, progress_bar) = setup_progress_bar(total_files, verbose, progress_target);
     let compression_options = build_compression_options(&args, &base_path);
     let compression_results = start_compression(
         &input_files,
@@ -60,7 +91,73 @@ fn main() {
         args.dry_run,
     );
     progress_bar.finish();
-    write_recap_message(&compression_results, verbose);
+
+    if args.json {
+        write_json_output(&compression_results, args.dry_run, None);
+    } else {
+        write_recap_message(&compression_results, verbose);
+    }
+}
+
+struct CompressionStats {
+    total_original_size: u64,
+    total_compressed_size: u64,
+    success: usize,
+    skipped: usize,
+    errors: usize,
+}
+
+impl CompressionStats {
+    fn from_results(results: &[CompressionResult]) -> Self {
+        let (total_original_size, total_compressed_size, success, skipped, errors) = results
+            .iter()
+            .fold((0u64, 0u64, 0usize, 0usize, 0usize), |(orig, comp, success, skipped, errors), result| {
+                let (new_success, new_skipped, new_errors) = match result.status {
+                    CompressionStatus::Success => (success + 1, skipped, errors),
+                    CompressionStatus::Skipped => (success, skipped + 1, errors),
+                    CompressionStatus::Error => (success, skipped, errors + 1),
+                };
+                (orig + result.original_size, comp + result.compressed_size, new_success, new_skipped, new_errors)
+            });
+        Self { total_original_size, total_compressed_size, success, skipped, errors }
+    }
+
+    fn savings_bytes(&self) -> i64 {
+        self.total_original_size as i64 - self.total_compressed_size as i64
+    }
+
+    fn savings_percent(&self) -> f64 {
+        if self.total_original_size > 0 {
+            (self.savings_bytes() as f64 / self.total_original_size as f64) * 100.0
+        } else {
+            0.0
+        }
+    }
+}
+
+fn build_json_output_string(compression_results: &[CompressionResult], dry_run: bool, error: Option<&str>) -> String {
+    let stats = CompressionStats::from_results(compression_results);
+    let output = JsonOutput {
+        version: "1.0",
+        dry_run,
+        error,
+        files: compression_results,
+        summary: JsonSummary {
+            total_files: compression_results.len(),
+            success: stats.success,
+            skipped: stats.skipped,
+            errors: stats.errors,
+            original_size: stats.total_original_size,
+            compressed_size: stats.total_compressed_size,
+            savings_bytes: stats.savings_bytes(),
+            savings_percent: stats.savings_percent(),
+        },
+    };
+    serde_json::to_string(&output).unwrap_or_else(|e| format!("{{\"error\":\"JSON serialization failed: {e}}}"))
+}
+
+fn write_json_output(compression_results: &[CompressionResult], dry_run: bool, error: Option<&str>) {
+    println!("{}", build_json_output_string(compression_results, dry_run, error));
 }
 
 fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
@@ -68,25 +165,9 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
         return;
     }
 
-    let stats = compression_results.iter().fold(
-        (0u64, 0u64, 0usize, 0usize, 0usize), // (original_size, compressed_size, success, skipped, errors)
-        |(orig, comp, success, skipped, errors), result| {
-            let (new_success, new_skipped, new_errors) = match result.status {
-                CompressionStatus::Success => (success + 1, skipped, errors),
-                CompressionStatus::Skipped => (success, skipped + 1, errors),
-                CompressionStatus::Error => (success, skipped, errors + 1),
-            };
-            (
-                orig + result.original_size,
-                comp + result.compressed_size,
-                new_success,
-                new_skipped,
-                new_errors,
-            )
-        },
-    );
-
-    let (total_original_size, total_compressed_size, total_success, total_skipped, total_errors) = stats;
+    let stats = CompressionStats::from_results(compression_results);
+    let (total_original_size, total_compressed_size, total_success, total_skipped, total_errors) =
+        (stats.total_original_size, stats.total_compressed_size, stats.success, stats.skipped, stats.errors);
 
     if verbose > 1 {
         for result in compression_results {
@@ -143,13 +224,8 @@ fn write_recap_message(compression_results: &[CompressionResult], verbose: u8) {
     }
 
     if verbose > 0 {
-        let total_saved = total_original_size as i64 - total_compressed_size as i64;
-        let total_saved_percent = if total_original_size > 0 {
-            (total_saved as f64 / total_original_size as f64) * 100.0
-        } else {
-            0.0
-        };
-
+        let total_saved = stats.savings_bytes();
+        let total_saved_percent = stats.savings_percent();
         let total_saved_abs = total_saved.unsigned_abs();
         let (formatted_total_saved_size, formatted_total_saved_percentage) = if total_saved >= 0 {
             (
@@ -184,7 +260,7 @@ fn get_parallelism_count(requested_threads: u32, available_threads: usize) -> us
     }
 }
 
-fn setup_progress_bar(len: usize, verbose: u8) -> (MultiProgress, ProgressBar) {
+fn setup_progress_bar(len: usize, verbose: u8, target: ProgressDrawTarget) -> (MultiProgress, ProgressBar) {
     let multi_progress = MultiProgress::new();
     let progress_bar = multi_progress.add(ProgressBar::new(len as u64));
 
@@ -193,6 +269,7 @@ fn setup_progress_bar(len: usize, verbose: u8) -> (MultiProgress, ProgressBar) {
         return (multi_progress, progress_bar);
     }
 
+    multi_progress.set_draw_target(target);
     progress_bar.set_style(
         ProgressStyle::default_bar()
             .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {pos}/{len}\n{msg}")
@@ -272,13 +349,13 @@ mod tests {
 
     #[test]
     fn test_setup_progress_bar() {
-        // Test with verbose = 0 (hidden)
-        let (_multi, progress_bar) = setup_progress_bar(10, 0);
+        // Test with verbose = 0 (hidden regardless of target)
+        let (_multi, progress_bar) = setup_progress_bar(10, 0, ProgressDrawTarget::stdout());
         assert!(progress_bar.is_hidden());
         assert_eq!(progress_bar.length(), Some(10));
 
         // Test with different lengths
-        let (_multi, progress_bar) = setup_progress_bar(0, 1);
+        let (_multi, progress_bar) = setup_progress_bar(0, 1, ProgressDrawTarget::stdout());
         assert_eq!(progress_bar.length(), Some(0));
     }
 
@@ -425,6 +502,7 @@ mod tests {
             min_savings: None,
             quiet: false,
             verbose: 2,
+            json: false,
             files: vec!["test1.jpg".to_string(), "test2.png".to_string()],
             strip_icc: false,
             check_extension_only: false,
@@ -461,6 +539,160 @@ mod tests {
         assert_eq!(options.short_edge, None);
         assert_eq!(options.base_path, PathBuf::from(base_path));
         assert!(options.no_upscale);
+    }
+
+    #[test]
+    fn test_compression_stats_from_results() {
+        let results = vec![
+            CompressionResult {
+                original_path: "a.jpg".to_string(),
+                output_path: "a_out.jpg".to_string(),
+                original_size: 1000,
+                compressed_size: 800,
+                status: CompressionStatus::Success,
+                message: "".to_string(),
+            },
+            CompressionResult {
+                original_path: "b.jpg".to_string(),
+                output_path: "b_out.jpg".to_string(),
+                original_size: 2000,
+                compressed_size: 2000,
+                status: CompressionStatus::Skipped,
+                message: "".to_string(),
+            },
+            CompressionResult {
+                original_path: "c.jpg".to_string(),
+                output_path: "c_out.jpg".to_string(),
+                original_size: 500,
+                compressed_size: 0,
+                status: CompressionStatus::Error,
+                message: "".to_string(),
+            },
+        ];
+
+        let stats = CompressionStats::from_results(&results);
+        assert_eq!(stats.success, 1);
+        assert_eq!(stats.skipped, 1);
+        assert_eq!(stats.errors, 1);
+        assert_eq!(stats.total_original_size, 3500);
+        assert_eq!(stats.total_compressed_size, 2800);
+        assert_eq!(stats.savings_bytes(), 700);
+        assert!((stats.savings_percent() - 20.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_compression_stats_empty() {
+        let stats = CompressionStats::from_results(&[]);
+        assert_eq!(stats.success, 0);
+        assert_eq!(stats.skipped, 0);
+        assert_eq!(stats.errors, 0);
+        assert_eq!(stats.total_original_size, 0);
+        assert_eq!(stats.total_compressed_size, 0);
+        assert_eq!(stats.savings_bytes(), 0);
+        assert_eq!(stats.savings_percent(), 0.0);
+    }
+
+    #[test]
+    fn test_compression_stats_size_increase() {
+        let results = vec![CompressionResult {
+            original_path: "a.jpg".to_string(),
+            output_path: "a_out.jpg".to_string(),
+            original_size: 800,
+            compressed_size: 1000,
+            status: CompressionStatus::Success,
+            message: "".to_string(),
+        }];
+
+        let stats = CompressionStats::from_results(&results);
+        assert_eq!(stats.savings_bytes(), -200);
+        assert!(stats.savings_percent() < 0.0);
+    }
+
+    #[test]
+    fn test_build_json_output_success() {
+        let results = vec![CompressionResult {
+            original_path: "input.jpg".to_string(),
+            output_path: "output.jpg".to_string(),
+            original_size: 1000,
+            compressed_size: 600,
+            status: CompressionStatus::Success,
+            message: "".to_string(),
+        }];
+
+        let json = build_json_output_string(&results, false, None);
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["version"], "1.0");
+        assert_eq!(parsed["dry_run"], false);
+        assert!(parsed["error"].is_null());
+        assert_eq!(parsed["files"].as_array().unwrap().len(), 1);
+        assert_eq!(parsed["files"][0]["original_path"], "input.jpg");
+        assert_eq!(parsed["files"][0]["status"], "success");
+        assert_eq!(parsed["summary"]["total_files"], 1);
+        assert_eq!(parsed["summary"]["success"], 1);
+        assert_eq!(parsed["summary"]["skipped"], 0);
+        assert_eq!(parsed["summary"]["errors"], 0);
+        assert_eq!(parsed["summary"]["original_size"], 1000);
+        assert_eq!(parsed["summary"]["compressed_size"], 600);
+        assert_eq!(parsed["summary"]["savings_bytes"], 400);
+        assert!((parsed["summary"]["savings_percent"].as_f64().unwrap() - 40.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_build_json_output_with_error() {
+        let json = build_json_output_string(&[], false, Some("No files to compress"));
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["error"], "No files to compress");
+        assert_eq!(parsed["files"].as_array().unwrap().len(), 0);
+        assert_eq!(parsed["summary"]["total_files"], 0);
+    }
+
+    #[test]
+    fn test_build_json_output_dry_run() {
+        let json = build_json_output_string(&[], true, None);
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["dry_run"], true);
+    }
+
+    #[test]
+    fn test_build_json_output_status_variants() {
+        let results = vec![
+            CompressionResult {
+                original_path: "a.jpg".to_string(),
+                output_path: "a_out.jpg".to_string(),
+                original_size: 100,
+                compressed_size: 80,
+                status: CompressionStatus::Success,
+                message: "".to_string(),
+            },
+            CompressionResult {
+                original_path: "b.jpg".to_string(),
+                output_path: "b_out.jpg".to_string(),
+                original_size: 100,
+                compressed_size: 100,
+                status: CompressionStatus::Skipped,
+                message: "min savings not met".to_string(),
+            },
+            CompressionResult {
+                original_path: "c.jpg".to_string(),
+                output_path: "c_out.jpg".to_string(),
+                original_size: 100,
+                compressed_size: 0,
+                status: CompressionStatus::Error,
+                message: "read error".to_string(),
+            },
+        ];
+
+        let json = build_json_output_string(&results, false, None);
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(parsed["files"][0]["status"], "success");
+        assert_eq!(parsed["files"][1]["status"], "skipped");
+        assert_eq!(parsed["files"][2]["status"], "error");
+        assert_eq!(parsed["summary"]["success"], 1);
+        assert_eq!(parsed["summary"]["skipped"], 1);
+        assert_eq!(parsed["summary"]["errors"], 1);
     }
 
     #[test]

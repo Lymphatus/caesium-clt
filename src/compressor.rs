@@ -1,4 +1,5 @@
 use crate::options::{MinSavingsThreshold, OutputFormat, OverwritePolicy};
+use serde::Serialize;
 // use crate::scan_files::get_file_mime_type;
 use caesium::parameters::{CSParameters, ChromaSubsampling};
 use caesium::{compress_in_memory, compress_to_size_in_memory, convert_in_memory, SupportedFileTypes};
@@ -15,7 +16,8 @@ use std::os::windows::fs::FileTimesExt;
 use std::path::{absolute, Path, PathBuf};
 use std::{fs, io};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum CompressionStatus {
     Success,
     Skipped,
@@ -31,7 +33,7 @@ impl Display for CompressionStatus {
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct CompressionResult {
     pub original_path: String,
     pub output_path: String,

@@ -129,6 +129,10 @@ pub struct CommandLineArgs {
     #[arg(long, default_value = "1", group = "verbosity", value_parser = verbosity_validator)]
     pub verbose: u8,
 
+    /// Output results as structured JSON
+    #[arg(long, group = "verbosity")]
+    pub json: bool,
+
     /// Input files or directories to process
     pub files: Vec<String>,
 }

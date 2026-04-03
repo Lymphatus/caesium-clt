@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.4.0
+
+### Added
+
+- **JSON Output**: Added `--json` flag for structured JSON output to stdout (progress written to stderr)
+
+---
+
 ## v1.3.0
 
 ### Added
