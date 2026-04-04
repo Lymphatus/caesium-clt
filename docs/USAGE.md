@@ -108,6 +108,9 @@
     - `1`: Show only progress and final results
     - `2`: Show also skipped and error messages
     - `3`: Print all
+- `--json`  
+  Output results as structured JSON to stdout. Progress is written to stderr so the JSON can be piped directly.
+  Cannot be used with `--quiet` or `--verbose`.
 - `-h, --help`  
   Print help. A summary can be seen with `-h`.
 - `-V, --version`  

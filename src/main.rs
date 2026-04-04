@@ -164,7 +164,7 @@ impl CompressionStats {
 fn build_json_output_string(compression_results: &[CompressionResult], dry_run: bool, error: Option<&str>) -> String {
     let stats = CompressionStats::from_results(compression_results);
     let output = JsonOutput {
-        version: "1.0",
+        version: "1.0.0",
         dry_run,
         error,
         files: compression_results,
@@ -653,7 +653,7 @@ mod tests {
         let json = build_json_output_string(&results, false, None);
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
-        assert_eq!(parsed["version"], "1.0");
+        assert_eq!(parsed["version"], "1.0.0");
         assert_eq!(parsed["dry_run"], false);
         assert!(parsed["error"].is_null());
         assert_eq!(parsed["files"].as_array().unwrap().len(), 1);
