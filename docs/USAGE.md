@@ -69,7 +69,7 @@
   Adds a suffix to the output filename, before the file extension.
 - `-S, --keep-structure`  
   Preserves the folder tree structure of the input files. Can be used only with `-R`.
-- `-o, --overwrite <OVERWRITE>`  
+- `-O, --overwrite <OVERWRITE>`  
   Sets the overwrite policy if the output file already exists. Possible values are:
     - `all`: Always overwrite
     - `never`: Never overwrite
